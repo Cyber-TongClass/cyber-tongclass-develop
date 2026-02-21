@@ -2,35 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useMutation, useQuery } from "@convex-dev/react"
-import { api } from "@/convex/_generated/api"
 import { useAuth } from "@/lib/hooks/use-auth"
+import { changePassword, updateCurrentUser } from "@/lib/mock-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-interface UserProfile {
-  _id: string
-  email: string
-  username: string
-  englishName: string
-  organization: "pku" | "thu"
-  cohort: number
-  studentId: string
-  personalEmail?: string
-  bio?: string
-  researchInterests?: string[]
-  titles?: { title: string; link: string }[]
-  scholarUrl?: string
-  orcidUrl?: string
-  avatar?: string
-}
-
 export default function SettingsPage() {
   const router = useRouter()
   const { currentUser, isAuthenticated, isLoading: authLoading } = useAuth()
-  const updateUser = useMutation(api.users.update)
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
@@ -81,8 +62,7 @@ export default function SettingsPage() {
     setSuccessMessage("")
     
     try {
-      await updateUser({
-        id: currentUser._id,
+      const result = updateCurrentUser({
         englishName,
         personalEmail: personalEmail || undefined,
         bio: bio || undefined,
@@ -91,7 +71,11 @@ export default function SettingsPage() {
         orcidUrl: orcidUrl || undefined,
         titles: titles.length > 0 ? titles : undefined,
       })
-      
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+
       setSuccessMessage("Profile updated successfully!")
       setTimeout(() => setSuccessMessage(""), 3000)
     } catch (err) {
@@ -125,6 +109,11 @@ export default function SettingsPage() {
   }
 
   const handleChangePassword = async () => {
+    if (!currentPassword) {
+      setError("Please enter your current password")
+      return
+    }
+
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match")
       return
@@ -137,9 +126,17 @@ export default function SettingsPage() {
     
     setError("")
     setSuccessMessage("")
-    // Password change would be implemented with Convex Auth
-    // For now, just show a placeholder message
-    setSuccessMessage("Password change feature requires Convex Auth setup")
+
+    const result = changePassword(currentPassword, newPassword)
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+
+    setCurrentPassword("")
+    setNewPassword("")
+    setConfirmPassword("")
+    setSuccessMessage("Password updated successfully.")
     setTimeout(() => setSuccessMessage(""), 3000)
   }
 

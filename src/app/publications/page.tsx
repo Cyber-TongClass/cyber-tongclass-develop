@@ -2,8 +2,6 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useQuery } from "@convex-dev/react"
-import { api } from "@/convex/_generated/api"
 import { Search, FileText, ExternalLink, Filter, BookOpen, User, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"

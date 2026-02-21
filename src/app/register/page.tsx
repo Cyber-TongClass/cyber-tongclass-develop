@@ -3,19 +3,13 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useMutation, useQuery } from "@convex-dev/react"
-import { api } from "@/convex/_generated/api"
+import { register } from "@/lib/mock-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 type Organization = "pku" | "thu"
-
-interface StepProps {
-  onNext: () => void
-  onBack?: () => void
-}
 
 const ORGANIZATIONS: Record<Organization, { label: string; cohorts: number[] }> = {
   pku: {
@@ -32,6 +26,7 @@ export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [error, setError] = useState("")
+  const [info, setInfo] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Form data
@@ -51,8 +46,12 @@ export default function RegisterPage() {
   const [researchInterests, setResearchInterests] = useState<string[]>([])
   const [newInterest, setNewInterest] = useState("")
 
-  const createUser = useMutation(api.users.create)
-  const sendVerificationEmail = useMutation(api.auth.sendVerificationEmail)
+  const getExpectedEmailHint = () => {
+    if (organization === "pku") {
+      return `${studentId || "your_student_id"}@stu.pku.edu.cn`
+    }
+    return `${studentId || "your_student_id"}@mails.tsinghua.edu.cn`
+  }
 
   const validateStep1 = () => {
     if (!organization || !cohort || !studentId) {
@@ -68,11 +67,25 @@ export default function RegisterPage() {
   }
 
   const validateStep2 = () => {
-    const expectedEmail = `${studentId}@stu.pku.edu.cn`
-    if (email !== expectedEmail) {
-      setError(`Email must be ${expectedEmail}`)
+    const normalized = email.trim().toLowerCase()
+    if (organization === "pku") {
+      const expectedEmail = `${studentId.toLowerCase()}@stu.pku.edu.cn`
+      if (normalized !== expectedEmail) {
+        setError(`Email must be ${expectedEmail}`)
+        return false
+      }
+      return true
+    }
+
+    const isThuFormat =
+      normalized.startsWith(`${studentId.toLowerCase()}@`) &&
+      (normalized.endsWith("@mails.tsinghua.edu.cn") || normalized.endsWith("@tsinghua.edu.cn"))
+
+    if (!isThuFormat) {
+      setError(`Email must match ${studentId}@mails.tsinghua.edu.cn`)
       return false
     }
+
     return true
   }
 
@@ -90,6 +103,7 @@ export default function RegisterPage() {
 
   const handleNext = () => {
     setError("")
+    setInfo("")
     
     if (step === 1 && !validateStep1()) return
     if (step === 2 && !validateStep2()) return
@@ -102,18 +116,14 @@ export default function RegisterPage() {
 
   const handleBack = () => {
     setError("")
+    setInfo("")
     if (step > 1) {
       setStep(step - 1)
     }
   }
 
   const handleSendCode = async () => {
-    try {
-      await sendVerificationEmail({ email })
-      alert("Verification code sent (placeholder)")
-    } catch (err) {
-      setError("Failed to send verification code")
-    }
+    setInfo(`Verification interface is reserved. For now, continue directly with ${email}.`)
   }
 
   const handleSubmit = async () => {
@@ -124,23 +134,29 @@ export default function RegisterPage() {
 
     setIsSubmitting(true)
     setError("")
+    setInfo("")
 
     try {
-      const userId = await createUser({
+      const result = register({
         email,
         username,
         englishName,
         organization: organization as Organization,
         cohort: Number(cohort),
         studentId,
+        password,
         personalEmail: personalEmail || undefined,
         bio: bio || undefined,
         researchInterests: researchInterests.length > 0 ? researchInterests : undefined,
       })
-      
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+
       router.push("/login?registered=true")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed")
+    } catch {
+      setError("Registration failed")
     } finally {
       setIsSubmitting(false)
     }
@@ -189,6 +205,11 @@ export default function RegisterPage() {
           {error && (
             <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
               {error}
+            </div>
+          )}
+          {info && (
+            <div className="p-3 text-sm text-blue-700 bg-blue-50 rounded-md">
+              {info}
             </div>
           )}
 
@@ -260,13 +281,13 @@ export default function RegisterPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder={`${studentId || "your_student_id"}@stu.pku.edu.cn`}
+                  placeholder={getExpectedEmailHint()}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Your school email address (student ID @stu.pku.edu.cn or @tsinghua.edu.cn)
+                  Use the school mailbox bound to your student ID and organization.
                 </p>
               </div>
 

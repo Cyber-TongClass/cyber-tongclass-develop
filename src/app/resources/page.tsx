@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useAuth } from "@/lib/hooks/use-auth"
 
 // 模拟课程数据
 const mockCourses = [
@@ -52,8 +53,37 @@ const mockCourses = [
 ]
 
 export default function ResourcesPage() {
+  const { isAuthenticated, isLoading } = useAuth()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [sortBy, setSortBy] = React.useState("rating")
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-lg w-full">
+          <CardHeader>
+            <CardTitle>成员资源需登录后访问</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              课程评测和学习资源仅对通班成员开放。请先登录，再进入资源页面。
+            </p>
+            <Button asChild className="w-full">
+              <Link href="/login?next=%2Fresources">前往登录</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   // 搜索筛选
   const filteredCourses = mockCourses

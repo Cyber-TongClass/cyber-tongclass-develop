@@ -1,77 +1,63 @@
-import { useMutation, useQuery } from "@convex-dev/react"
-import { useCallback, useState } from "react"
-import { useRouter } from "next/navigation"
+"use client"
 
-/**
- * Auth hooks for login, registration, and session management
- */
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { getCurrentUser, roleCanManage, signOut, subscribeAuth } from "@/lib/mock-auth"
+import type { UserRole } from "@/types"
 
 export function useAuth() {
-  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  
-  // Get current user
-  const currentUser = useQuery(api.auth.currentUser)
-  const currentRole = useQuery(api.auth.currentUserRole)
-  const isAdmin = useQuery(api.auth.isAdmin)
-  const isSuperAdmin = useQuery(api.auth.isSuperAdmin)
-  
-  // Check if student ID is allowed to register
-  const isStudentIdAllowed = useMutation(api.auth.isStudentIdAllowed)
-  
-  const signOut = useMutation(api.auth.signOut)
-  
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser())
+  const [isLoading, setIsLoading] = useState(true)
+
+  const refreshUser = useCallback(() => {
+    setCurrentUser(getCurrentUser())
+    setIsLoading(false)
+  }, [])
+
+  useEffect(() => {
+    refreshUser()
+    return subscribeAuth(refreshUser)
+  }, [refreshUser])
+
   const logout = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      await signOut()
-      router.push("/")
-      router.refresh()
-    } finally {
-      setIsLoading(false)
-    }
-  }, [signOut, router])
-  
+    signOut()
+    refreshUser()
+    router.push("/")
+    router.refresh()
+  }, [refreshUser, router])
+
+  const currentRole = currentUser?.role ?? null
+  const isAdmin = currentRole === "admin" || currentRole === "super_admin"
+  const isSuperAdmin = currentRole === "super_admin"
+
   return {
     currentUser,
     currentRole,
-    isAdmin: isAdmin ?? false,
-    isSuperAdmin: isSuperAdmin ?? false,
+    isAdmin,
+    isSuperAdmin,
     isLoading,
     isAuthenticated: !!currentUser,
     logout,
-    isStudentIdAllowed,
+    // Local demo mode keeps this open; backend validation should happen server-side.
+    isStudentIdAllowed: async () => true,
   }
 }
 
-/**
- * Hook for checking if user has required role
- */
-export function useRole(requiredRole: "member" | "admin" | "super_admin") {
-  const currentRole = useQuery(api.auth.currentUserRole)
-  
+export function useRole(requiredRole: UserRole) {
+  const { currentRole } = useAuth()
+
   if (requiredRole === "super_admin") {
     return currentRole === "super_admin"
   }
   if (requiredRole === "admin") {
     return currentRole === "admin" || currentRole === "super_admin"
   }
-  return currentRole === "member" || currentRole === "admin" || currentRole === "super_admin"
+  return !!currentRole
 }
 
-/**
- * Hook for checking if user can perform action based on role hierarchy
- */
-export function useCanManage(targetRole: "member" | "admin" | "super_admin") {
-  const currentRole = useQuery(api.auth.currentUserRole)
-  
-  if (!currentRole) return false
-  
-  const roleHierarchy = {
-    member: 0,
-    admin: 1,
-    super_admin: 2,
-  }
-  
-  return roleHierarchy[currentRole] > roleHierarchy[targetRole]
+export function useCanManage(targetRole: UserRole) {
+  const { currentRole } = useAuth()
+
+  return useMemo(() => roleCanManage(currentRole, targetRole), [currentRole, targetRole])
 }

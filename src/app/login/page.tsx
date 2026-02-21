@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useSignInEmailPassword } from "@convex-dev/auth/react"
+import { signIn } from "@/lib/mock-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,22 +11,29 @@ import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signInEmailPassword, isLoading } = useSignInEmailPassword()
+  const [isLoading, setIsLoading] = useState(false)
   
-  const [email, setEmail] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
 
     try {
-      await signInEmailPassword(email, password)
+      const result = signIn(identifier, password)
+      if (!result.ok) {
+        setError("邮箱/用户名或密码错误，请重试")
+        return
+      }
       router.push("/")
       router.refresh()
-    } catch (err) {
+    } catch {
       setError("邮箱或密码错误，请重试")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -57,15 +64,15 @@ export default function LoginPage() {
               )}
               
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  邮箱
+                <label htmlFor="identifier" className="text-sm font-medium">
+                  邮箱或用户名
                 </label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="学号@stu.pku.edu.cn"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="identifier"
+                  type="text"
+                  placeholder="学号邮箱或用户名"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                   disabled={isLoading}
                 />

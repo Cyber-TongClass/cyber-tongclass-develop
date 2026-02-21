@@ -33,8 +33,8 @@ export const list = query({
 
 // Get a single user by ID
 export const getById = query({
- id: v.id("users") },
-  args: {  handler: async (ctx, args) => {
+  args: { id: v.id("users") },
+  handler: async (ctx, args) => {
     const user = await ctx.db.get(args.id)
     return user
   },

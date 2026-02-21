@@ -1,6 +1,5 @@
 import { mutation, query } from "../_generated/server"
 import { v } from "convex/values"
-import { internal } from "./_generated/internal"
 
 // Check if student ID is allowed to register
 export const isStudentIdAllowed = query({
@@ -91,7 +90,14 @@ export const currentUserRole = query({
 // Check if user is admin
 export const isAdmin = query({
   handler: async (ctx) => {
-    const role = await ctx.runQuery(api.auth.currentUserRole)
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return false
+
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), identity.email!))
+      .first()
+    const role = user?.role
     return role === "admin" || role === "super_admin"
   },
 })
@@ -99,7 +105,14 @@ export const isAdmin = query({
 // Check if user is super admin
 export const isSuperAdmin = query({
   handler: async (ctx) => {
-    const role = await ctx.runQuery(api.auth.currentUserRole)
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return false
+
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), identity.email!))
+      .first()
+    const role = user?.role
     return role === "super_admin"
   },
 })
