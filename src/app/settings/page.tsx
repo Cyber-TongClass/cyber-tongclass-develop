@@ -1,0 +1,398 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useMutation, useQuery } from "@convex-dev/react"
+import { api } from "@/convex/_generated/api"
+import { useAuth } from "@/lib/hooks/use-auth"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+
+interface UserProfile {
+  _id: string
+  email: string
+  username: string
+  englishName: string
+  organization: "pku" | "thu"
+  cohort: number
+  studentId: string
+  personalEmail?: string
+  bio?: string
+  researchInterests?: string[]
+  titles?: { title: string; link: string }[]
+  scholarUrl?: string
+  orcidUrl?: string
+  avatar?: string
+}
+
+export default function SettingsPage() {
+  const router = useRouter()
+  const { currentUser, isAuthenticated, isLoading: authLoading } = useAuth()
+  const updateUser = useMutation(api.users.update)
+  
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
+  const [error, setError] = useState("")
+  
+  // Profile form
+  const [englishName, setEnglishName] = useState("")
+  const [personalEmail, setPersonalEmail] = useState("")
+  const [bio, setBio] = useState("")
+  const [researchInterests, setResearchInterests] = useState<string[]>([])
+  const [newInterest, setNewInterest] = useState("")
+  const [scholarUrl, setScholarUrl] = useState("")
+  const [orcidUrl, setOrcidUrl] = useState("")
+  
+  // Password form
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  
+  // Title/Links
+  const [titles, setTitles] = useState<{ title: string; link: string }[]>([])
+  const [newTitle, setNewTitle] = useState("")
+  const [newLink, setNewLink] = useState("")
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login")
+    }
+  }, [authLoading, isAuthenticated, router])
+
+  useEffect(() => {
+    if (currentUser) {
+      setEnglishName(currentUser.englishName || "")
+      setPersonalEmail(currentUser.personalEmail || "")
+      setBio(currentUser.bio || "")
+      setResearchInterests(currentUser.researchInterests || [])
+      setScholarUrl(currentUser.scholarUrl || "")
+      setOrcidUrl(currentUser.orcidUrl || "")
+      setTitles(currentUser.titles || [])
+    }
+  }, [currentUser])
+
+  const handleSaveProfile = async () => {
+    if (!currentUser) return
+    
+    setIsSubmitting(true)
+    setError("")
+    setSuccessMessage("")
+    
+    try {
+      await updateUser({
+        id: currentUser._id,
+        englishName,
+        personalEmail: personalEmail || undefined,
+        bio: bio || undefined,
+        researchInterests: researchInterests.length > 0 ? researchInterests : undefined,
+        scholarUrl: scholarUrl || undefined,
+        orcidUrl: orcidUrl || undefined,
+        titles: titles.length > 0 ? titles : undefined,
+      })
+      
+      setSuccessMessage("Profile updated successfully!")
+      setTimeout(() => setSuccessMessage(""), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update profile")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleAddInterest = () => {
+    if (newInterest && !researchInterests.includes(newInterest)) {
+      setResearchInterests([...researchInterests, newInterest])
+      setNewInterest("")
+    }
+  }
+
+  const handleRemoveInterest = (interest: string) => {
+    setResearchInterests(researchInterests.filter(i => i !== interest))
+  }
+
+  const handleAddTitle = () => {
+    if (newTitle && newLink) {
+      setTitles([...titles, { title: newTitle, link: newLink }])
+      setNewTitle("")
+      setNewLink("")
+    }
+  }
+
+  const handleRemoveTitle = (index: number) => {
+    setTitles(titles.filter((_, i) => i !== index))
+  }
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+    
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters")
+      return
+    }
+    
+    setError("")
+    setSuccessMessage("")
+    // Password change would be implemented with Convex Auth
+    // For now, just show a placeholder message
+    setSuccessMessage("Password change feature requires Convex Auth setup")
+    setTimeout(() => setSuccessMessage(""), 3000)
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated || !currentUser) {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
+        
+        {successMessage && (
+          <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md">
+            {successMessage}
+          </div>
+        )}
+        
+        {error && (
+          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+            {error}
+          </div>
+        )}
+        
+        {/* Profile Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+            <CardDescription>
+              Update your public profile information
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Organization</Label>
+                <Input value={currentUser.organization === "pku" ? "北大通班" : "清华通班"} disabled />
+              </div>
+              <div className="space-y-2">
+                <Label>Cohort</Label>
+                <Input value={`${currentUser.cohort}级`} disabled />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="englishName">English Name *</Label>
+              <Input
+                id="englishName"
+                value={englishName}
+                onChange={(e) => setEnglishName(e.target.value)}
+                placeholder="Your public display name"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="personalEmail">Personal Email</Label>
+              <Input
+                id="personalEmail"
+                type="email"
+                value={personalEmail}
+                onChange={(e) => setPersonalEmail(e.target.value)}
+                placeholder="your.personal@email.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                Changing email requires verification
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <textarea
+                id="bio"
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="Tell us about yourself..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Research Interests</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add research interest"
+                  value={newInterest}
+                  onChange={(e) => setNewInterest(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddInterest())}
+                />
+                <Button type="button" variant="outline" onClick={handleAddInterest}>
+                  Add
+                </Button>
+              </div>
+              {researchInterests.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {researchInterests.map((interest) => (
+                    <span
+                      key={interest}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full"
+                    >
+                      {interest}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveInterest(interest)}
+                        className="hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="scholarUrl">Google Scholar URL</Label>
+                <Input
+                  id="scholarUrl"
+                  value={scholarUrl}
+                  onChange={(e) => setScholarUrl(e.target.value)}
+                  placeholder="https://scholar.google.com/..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="orcidUrl">ORCID</Label>
+                <Input
+                  id="orcidUrl"
+                  value={orcidUrl}
+                  onChange={(e) => setOrcidUrl(e.target.value)}
+                  placeholder="https://orcid.org/..."
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Title & Links</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Title (e.g., PhD Student)"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+                <Input
+                  placeholder="Link URL"
+                  value={newLink}
+                  onChange={(e) => setNewLink(e.target.value)}
+                />
+                <Button type="button" variant="outline" onClick={handleAddTitle}>
+                  Add
+                </Button>
+              </div>
+              {titles.length > 0 && (
+                <div className="space-y-2 mt-2">
+                  {titles.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-sm">{item.title}</span>
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                        {item.link}
+                      </a>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveTitle(index)}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handleSaveProfile} disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        {/* Password Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Change Password</CardTitle>
+            <CardDescription>
+              Update your password
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handleChangePassword}>
+              Change Password
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        {/* Account Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-muted-foreground">Email</span>
+              <span className="font-medium">{currentUser.email}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-muted-foreground">Student ID</span>
+              <span className="font-medium">{currentUser.studentId}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-muted-foreground">Role</span>
+              <span className="font-medium capitalize">{currentUser.role.replace("_", " ")}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}

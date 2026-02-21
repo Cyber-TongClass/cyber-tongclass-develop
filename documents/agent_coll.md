@@ -77,18 +77,27 @@
 - `/admin/reviews` 评测审核
 - 数据导入功能
 
-### Agent 4: 部署与运维
+### Agent 4: 部署与运维 ✅
+**状态**: 已完成
+**Agent**: Agent 4 (本人)
 **职责**:
 - Docker 配置
 - CI/CD
 - 环境变量管理
 
-**待完成任务**:
-- Dockerfile
-- docker-compose.yml
-- GitHub Actions
-- Env 文件 (dev, prod, local)
-- Nginx 配置
+**已完成任务** (2026-02-21):
+- [x] Dockerfile
+- [x] docker-compose.yml
+- [x] GitHub Actions CI/CD
+- [x] Env 文件 (dev, local, production)
+- [x] Nginx 配置
+
+**相关文件**:
+- `Dockerfile` - Docker 镜像构建
+- `docker-compose.yml` - Docker 编排
+- `.github/workflows/ci-cd.yml` - CI/CD 自动化
+- `deployments/` - 环境配置文件
+- `nginx.conf` - Nginx 配置
 
 ---
 
