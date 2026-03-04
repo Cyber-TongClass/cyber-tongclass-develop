@@ -9,11 +9,11 @@ export function usePublications(args?: { skip?: number; limit?: number; category
 }
 
 export function usePublicationsByUser(userId: string) {
-  return useQuery(api.publications.listByUser, { userId })
+  return useQuery(api.publications.listByUser, { userId: userId as any })
 }
 
 export function usePublicationById(id: string) {
-  return useQuery(api.publications.getById, { id })
+  return useQuery(api.publications.getById, { id: id as any })
 }
 
 export function usePublicationsCount(args?: { category?: string; year?: number }) {

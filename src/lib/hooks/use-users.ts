@@ -9,7 +9,7 @@ export function useUsers(args?: { skip?: number; limit?: number; organization?: 
 }
 
 export function useUserById(id: string) {
-  return useQuery(api.users.getById, { id })
+  return useQuery(api.users.getById, { id: id as any })
 }
 
 export function useUserByEmail(email: string) {

@@ -47,7 +47,7 @@ export default function AdminPublicationsPage() {
   )
 
   const userNameMap = useMemo(() => {
-    return new Map(users.map((user) => [user._id, user.englishName]))
+    return new Map(users.map((user) => [String(user._id), user.englishName]))
   }, [users])
 
   const categoryOptions = useMemo(() => {
@@ -62,7 +62,7 @@ export default function AdminPublicationsPage() {
   const filteredPublications = useMemo(() => {
     return publications.filter((publication) => {
       const query = searchQuery.trim().toLowerCase()
-      const ownerName = (userNameMap.get(publication.userId) || "").toLowerCase()
+      const ownerName = (userNameMap.get(String(publication.userId)) || "").toLowerCase()
       const matchesSearch =
         !query ||
         publication.title.toLowerCase().includes(query) ||
@@ -70,7 +70,7 @@ export default function AdminPublicationsPage() {
         publication.authors.some((author) => author.toLowerCase().includes(query)) ||
         ownerName.includes(query)
       const matchesCategory = !categoryFilter || publication.category === categoryFilter
-      const matchesOwner = !ownerFilter || publication.userId === ownerFilter
+      const matchesOwner = !ownerFilter || String(publication.userId) === ownerFilter
       return matchesSearch && matchesCategory && matchesOwner
     })
   }, [categoryFilter, ownerFilter, publications, searchQuery, userNameMap])
@@ -81,7 +81,9 @@ export default function AdminPublicationsPage() {
       description: `将永久删除《${publication.title}》。此操作不可撤销。`,
       confirmLabel: "删除",
       variant: "danger",
-      onConfirm: () => deletePublication(publication._id),
+      onConfirm: async () => {
+        await deletePublication(publication._id as any)
+      },
     })
   }
 
@@ -138,7 +140,7 @@ export default function AdminPublicationsPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setOwnerFilter(null)}>全部归属用户</DropdownMenuItem>
                 {users.map((user) => (
-                  <DropdownMenuItem key={user._id} onClick={() => setOwnerFilter(user._id)}>
+                  <DropdownMenuItem key={String(user._id)} onClick={() => setOwnerFilter(String(user._id))}>
                     {user.englishName}
                   </DropdownMenuItem>
                 ))}
@@ -180,7 +182,7 @@ export default function AdminPublicationsPage() {
                         {categoryLabelMap.get(publication.category) || publication.category}
                       </Badge>
                     </TableCell>
-                    <TableCell>{userNameMap.get(publication.userId) || "未知用户"}</TableCell>
+                    <TableCell>{userNameMap.get(String(publication.userId)) || "未知用户"}</TableCell>
                     <TableCell>{publication.venue}</TableCell>
                     <TableCell>{publication.year}</TableCell>
                     <TableCell className="text-gray-500">

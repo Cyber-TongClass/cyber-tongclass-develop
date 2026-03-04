@@ -5,11 +5,11 @@ import { api } from "@/../convex/_generated/api"
 
 // Courses hooks
 export function useCourses() {
-  return useQuery(api.courses.list)
+  return useQuery(api.courses.list, {})
 }
 
 export function useCourseById(id: string) {
-  return useQuery(api.courses.getById, { id })
+  return useQuery(api.courses.getById, { id: id as any })
 }
 
 export function useCourseByName(name: string) {
@@ -17,7 +17,7 @@ export function useCourseByName(name: string) {
 }
 
 export function useCoursesCount() {
-  return useQuery(api.courses.count)
+  return useQuery(api.courses.count, {})
 }
 
 export function useSearchCourses(query: string) {

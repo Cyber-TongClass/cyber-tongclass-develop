@@ -82,7 +82,9 @@ export default function MyPublicationsPage() {
       description: `将永久删除《${publication.title}》。此操作不可撤销。`,
       confirmLabel: "删除",
       variant: "danger",
-      onConfirm: () => deletePublication(publication._id),
+      onConfirm: async () => {
+        await deletePublication(publication._id as any)
+      },
     })
   }
 

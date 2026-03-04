@@ -13,7 +13,7 @@ export function useAllNews(args?: { skip?: number; limit?: number; category?: st
 }
 
 export function useNewsById(id: string) {
-  return useQuery(api.news.getById, { id })
+  return useQuery(api.news.getById, { id: id as any })
 }
 
 export function useNewsCount(category?: string) {

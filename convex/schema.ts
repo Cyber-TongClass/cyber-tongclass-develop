@@ -118,6 +118,7 @@ export default defineSchema({
   authCredentials: defineTable({
     userId: v.id("users"),
     passwordHash: v.string(),
+    salt: v.string(),
   })
     .index("by_userId", ["userId"]),
 })

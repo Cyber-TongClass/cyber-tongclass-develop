@@ -9,11 +9,11 @@ export function useEvents(args?: { skip?: number; limit?: number; fromDate?: str
 }
 
 export function useEventById(id: string) {
-  return useQuery(api.events.getById, { id })
+  return useQuery(api.events.getById, { id: id as any })
 }
 
 export function useEventsCount() {
-  return useQuery(api.events.count)
+  return useQuery(api.events.count, {})
 }
 
 export function useCreateEvent() {

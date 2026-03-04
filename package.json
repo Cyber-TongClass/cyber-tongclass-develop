@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:push": "npx convex dev --push",
-    "db:generate": "npx convex dev --generate"
+    "db:push": "npx convex dev --once",
+    "db:generate": "npx convex dev --codegen enable --once"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.90",
