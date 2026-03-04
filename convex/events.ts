@@ -10,17 +10,17 @@ export const list = query({
     toDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("events")
+    const allEvents = await ctx.db.query("events").order("asc").collect()
+    let filtered = allEvents
     if (args.fromDate) {
-      query = query.filter((q) => q.ge(q.field("date"), args.fromDate!))
+      filtered = filtered.filter((e) => e.date >= args.fromDate!)
     }
     if (args.toDate) {
-      query = query.filter((q) => q.le(q.field("date"), args.toDate!))
+      filtered = filtered.filter((e) => e.date <= args.toDate!)
     }
-    const allEvents = await query.order("asc").collect()
     const skip = args.skip || 0
     const limit = args.limit || 50
-    return allEvents.slice(skip, skip + limit)
+    return filtered.slice(skip, skip + limit)
   },
 })
 

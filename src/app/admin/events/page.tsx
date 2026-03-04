@@ -76,7 +76,9 @@ export default function EventsPage() {
       description: `将删除活动「${title}」。此操作不可撤销。`,
       confirmLabel: "删除",
       variant: "danger",
-      onConfirm: () => deleteEventMutation(id),
+      onConfirm: async () => {
+        await deleteEventMutation(id as any)
+      },
     })
   }
 

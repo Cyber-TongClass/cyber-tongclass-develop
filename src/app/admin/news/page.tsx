@@ -67,7 +67,9 @@ export default function NewsPage() {
       description: `将永久删除《${title}》。此操作不可撤销。`,
       confirmLabel: "删除",
       variant: "danger",
-      onConfirm: () => deleteNewsMutation(id),
+      onConfirm: async () => {
+        await deleteNewsMutation(id as any)
+      },
     })
   }
 

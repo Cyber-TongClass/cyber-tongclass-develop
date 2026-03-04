@@ -165,7 +165,7 @@ export default function MyPublicationEditorPage() {
         userId: currentUser._id,
       })
     } else if (publication) {
-      await updatePublicationFn({ id: publication._id, ...payload })
+      await updatePublicationFn({ id: publication._id as any, ...payload })
     }
 
     router.push("/my-publications")

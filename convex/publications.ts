@@ -157,17 +157,14 @@ export const count = query({
 export const search = query({
   args: { query: v.string() },
   handler: async (ctx, args) => {
-    const publications = await ctx.db
-      .query("publications")
-      .filter((q) =>
-        q.or(
-          q.contains(q.field("title"), args.query),
-          q.contains(q.field("authors"), args.query)
-        )
-      )
-      .take(20)
-      .collect()
-
-    return publications
+    const all = await ctx.db.query("publications").collect()
+    const q = args.query.trim().toLowerCase()
+    if (!q) return []
+    const filtered = all.filter((p) => {
+      const inTitle = p.title && p.title.toLowerCase().includes(q)
+      const inAuthors = p.authors && p.authors.join(" ").toLowerCase().includes(q)
+      return inTitle || inAuthors
+    }).slice(0, 20)
+    return filtered
   },
 })

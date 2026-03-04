@@ -67,7 +67,9 @@ export default function UsersPage() {
       description: `将删除 ${englishName} 的账号信息。此操作不可撤销。`,
       confirmLabel: "确认删除",
       variant: "danger",
-      onConfirm: () => deleteUserMutation(id),
+      onConfirm: async () => {
+        await deleteUserMutation(id as any)
+      },
     })
   }
 

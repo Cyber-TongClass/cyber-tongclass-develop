@@ -153,12 +153,10 @@ export const count = query({
 export const search = query({
   args: { query: v.string() },
   handler: async (ctx, args) => {
-    const courses = await ctx.db
-      .query("courses")
-      .filter((q) => q.contains(q.field("name"), args.query))
-      .take(20)
-      .collect()
-
-    return courses
+    const all = await ctx.db.query("courses").collect()
+    const q = args.query.trim().toLowerCase()
+    if (!q) return []
+    const filtered = all.filter((c) => c.name && c.name.toLowerCase().includes(q)).slice(0, 20)
+    return filtered
   },
 })

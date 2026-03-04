@@ -4,6 +4,19 @@
 
 import { mutation } from "./_generated/server"
 
+const generateSalt = (len = 16) => {
+  const cryptoImpl = (globalThis as any).crypto || (global as any).crypto
+  const arr = cryptoImpl.getRandomValues(new Uint8Array(len)) as Uint8Array
+  return Array.from(arr).map((b: number) => b.toString(16).padStart(2, "0")).join("")
+}
+
+const sha256Hex = async (input: string) => {
+  const cryptoImpl = (globalThis as any).crypto || (global as any).crypto
+  const enc = new TextEncoder().encode(input)
+  const hashBuffer = await cryptoImpl.subtle.digest("SHA-256", enc)
+  return Array.from(new Uint8Array(hashBuffer)).map((b: number) => b.toString(16).padStart(2, "0")).join("")
+}
+
 export default mutation({
   handler: async (ctx) => {
     const now = Date.now()
@@ -72,11 +85,16 @@ export default mutation({
       updatedAt: now,
     })
 
-    // 创建管理员凭据
-    await ctx.db.insert("authCredentials", {
-      userId: adminId,
-      passwordHash: "admin123",
-    })
+    // 创建管理员凭据 (salted hash)
+    {
+      const salt = generateSalt()
+      const hash = await sha256Hex("admin123" + salt)
+      await ctx.db.insert("authCredentials", {
+        userId: adminId,
+        passwordHash: hash,
+        salt,
+      })
+    }
 
     const memberId = await ctx.db.insert("users", {
       email: "member@pku.edu.cn",
@@ -98,11 +116,16 @@ export default mutation({
       updatedAt: now,
     })
 
-    // 创建成员凭据
-    await ctx.db.insert("authCredentials", {
-      userId: memberId,
-      passwordHash: "member123",
-    })
+    // 创建成员凭据 (salted hash)
+    {
+      const salt = generateSalt()
+      const hash = await sha256Hex("member123" + salt)
+      await ctx.db.insert("authCredentials", {
+        userId: memberId,
+        passwordHash: hash,
+        salt,
+      })
+    }
 
     // 创建种子新闻
     await ctx.db.insert("news", {
