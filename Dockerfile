@@ -18,6 +18,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm install -g npm@11.11.0
 
+# Allow passing public Convex URLs at build time so Next can embed them
+ARG NEXT_PUBLIC_CONVEX_URL
+ARG NEXT_PUBLIC_CONVEX_SITE_URL
+ENV NEXT_PUBLIC_CONVEX_URL=${NEXT_PUBLIC_CONVEX_URL}
+ENV NEXT_PUBLIC_CONVEX_SITE_URL=${NEXT_PUBLIC_CONVEX_SITE_URL}
+
 # Set environment variables
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
