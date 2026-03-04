@@ -12,11 +12,8 @@ const nextConfig = {
     ],
   },
   reactStrictMode: true,
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
+  // Note: Next.js no longer supports an `eslint` key in `next.config.js`.
+  // ESLint should be handled via CI or the `next lint` command.
   typescript: {
     // Ignore TypeScript errors in production builds
     ignoreBuildErrors: true,
