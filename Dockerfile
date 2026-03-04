@@ -1,9 +1,9 @@
 # Dockerfile for tongclass.ac.cn
 
 # Stage 1: Install dependencies
-FROM node:18-alpine AS deps
-RUN apk add --no-cache libc6-compat
+FROM node:24.14.0-slim AS deps
 WORKDIR /app
+RUN npm install -g npm@11.11.0
 
 # Copy package files
 COPY package.json package-lock.json* ./
@@ -12,10 +12,11 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 # Stage 2: Build the application
-FROM node:18-alpine AS builder
+FROM node:24.14.0-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN npm install -g npm@11.11.0
 
 # Set environment variables
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -25,7 +26,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Stage 3: Run the application
-FROM node:18-alpine AS runner
+FROM node:24.14.0-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
