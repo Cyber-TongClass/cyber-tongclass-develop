@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUserById, usePublicationsByUser } from "@/lib/api"
 import { normalizeUrl } from "@/lib/utils"
+import { MarkdownRenderer } from "@/components/markdown/markdown-renderer"
 import type { Publication } from "@/types"
 
 export default function MemberDetailPage() {
@@ -17,10 +18,10 @@ export default function MemberDetailPage() {
   // Fetch user and publications from Convex
   const userData = useUserById(memberId as string)
   const publicationsData = usePublicationsByUser(memberId as string)
-  
+
   const member = userData ? { ...userData, id: userData._id } : null
   const publications: Publication[] = publicationsData || []
-  
+
   const loading = userData === undefined || publicationsData === undefined
 
   if (loading) {
@@ -87,6 +88,13 @@ export default function MemberDetailPage() {
                 )}
               </div>
 
+              {member.bio && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">Bio</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{member.bio}</p>
+                </div>
+              )}
+
               {member.researchInterests && member.researchInterests.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
@@ -133,16 +141,16 @@ export default function MemberDetailPage() {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          {member.bio && (
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-xl">关于</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">{member.bio}</p>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="border-0 shadow-sm">
+            <CardContent className="pt-6 pb-6">
+              <div className="my-2">
+                <MarkdownRenderer
+                  content={member.profileMarkdown || ""}
+                  emptyFallback="You've reached the inhabited"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           <Card className="border-0 shadow-sm">
             <CardHeader>

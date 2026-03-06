@@ -44,7 +44,7 @@ export default function RegisterPage() {
   const [verificationCode, setVerificationCode] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  
+
   // Profile data
   const [englishName, setEnglishName] = useState("")
   const [username, setUsername] = useState("")
@@ -55,6 +55,16 @@ export default function RegisterPage() {
   const [titles, setTitles] = useState<{ title: string; link: string }[]>([])
   const [newTitle, setNewTitle] = useState("")
   const [newLink, setNewLink] = useState("")
+
+  const getExpectedEmailValue = () => {
+    const normalizedStudentId = studentId.trim().toLowerCase()
+    if (!normalizedStudentId) return ""
+
+    if (organization === "pku") {
+      return `${normalizedStudentId}@stu.pku.edu.cn`
+    }
+    return `${normalizedStudentId}@mails.tsinghua.edu.cn`
+  }
 
   const getExpectedEmailHint = () => {
     if (organization === "pku") {
@@ -77,7 +87,8 @@ export default function RegisterPage() {
   }
 
   const validateStep2 = () => {
-    const normalized = email.trim().toLowerCase()
+    const fallbackEmail = getExpectedEmailValue()
+    const normalized = (email.trim() || fallbackEmail).toLowerCase()
     if (organization === "pku") {
       const expectedEmail = `${studentId.toLowerCase()}@stu.pku.edu.cn`
       if (normalized !== expectedEmail) {
@@ -114,11 +125,19 @@ export default function RegisterPage() {
   const handleNext = () => {
     setError("")
     setInfo("")
-    
+
     if (step === 1 && !validateStep1()) return
+
+    if (step === 1) {
+      const defaultEmail = getExpectedEmailValue()
+      if (defaultEmail) {
+        setEmail(defaultEmail)
+      }
+    }
+
     if (step === 2 && !validateStep2()) return
     if (step === 3 && !validateStep3()) return
-    
+
     if (step < 4) {
       setStep(step + 1)
     }
@@ -133,7 +152,9 @@ export default function RegisterPage() {
   }
 
   const handleSendCode = async () => {
-    setInfo(`Verification interface is reserved. For now, continue directly with ${email}.`)
+    const defaultEmail = getExpectedEmailValue()
+    const effectiveEmail = (email.trim() || defaultEmail).trim()
+    setInfo(`Verification interface is reserved. For now, continue directly with ${effectiveEmail}.`)
   }
 
   const handleSubmit = async () => {
@@ -147,9 +168,12 @@ export default function RegisterPage() {
     setInfo("")
 
     try {
+      const defaultEmail = getExpectedEmailValue()
+      const effectiveEmail = (email.trim() || defaultEmail).trim().toLowerCase()
+
       // First sign up with our custom auth
       const signUpResult = await signUp({
-        email,
+        email: effectiveEmail,
         password,
         englishName,
         username,
@@ -165,7 +189,7 @@ export default function RegisterPage() {
 
       // Then sign in to get the session
       const signInResult = await signIn({
-        email,
+        email: effectiveEmail,
         password,
       })
 
@@ -219,20 +243,19 @@ export default function RegisterPage() {
             {step === 3 && "Set Password"}
             {step === 4 && "Complete Profile"}
           </CardDescription>
-          
+
           {/* Progress bar */}
           <div className="flex justify-center gap-1 mt-4">
             {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
-                className={`h-1.5 w-8 rounded-full transition-colors ${
-                  s <= step ? "bg-primary" : "bg-gray-200"
-                }`}
+                className={`h-1.5 w-8 rounded-full transition-colors ${s <= step ? "bg-primary" : "bg-gray-200"
+                  }`}
               />
             ))}
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {error && (
             <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
@@ -314,12 +337,14 @@ export default function RegisterPage() {
                   id="email"
                   type="email"
                   placeholder={getExpectedEmailHint()}
-                  value={email}
+                  value={email || getExpectedEmailValue()}
                   onChange={(e) => setEmail(e.target.value)}
+                  readOnly
+                  className="bg-muted text-muted-foreground"
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use the school mailbox bound to your student ID and organization.
+                  Auto-filled from your student ID and organization. You can proceed directly.
                 </p>
               </div>
 
@@ -338,7 +363,7 @@ export default function RegisterPage() {
                     type="button"
                     variant="outline"
                     onClick={handleSendCode}
-                    disabled={!email}
+                    disabled={!(email || getExpectedEmailValue())}
                   >
                     Send Code
                   </Button>
@@ -512,7 +537,7 @@ export default function RegisterPage() {
             </div>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex justify-between">
           <Button
             type="button"
@@ -522,7 +547,7 @@ export default function RegisterPage() {
           >
             Back
           </Button>
-          
+
           {step < 4 ? (
             <Button type="button" onClick={handleNext}>
               Continue

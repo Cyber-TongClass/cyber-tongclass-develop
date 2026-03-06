@@ -13,6 +13,7 @@ export default defineSchema({
     studentId: v.string(),
     personalEmail: v.optional(v.string()),
     bio: v.optional(v.string()),
+    profileMarkdown: v.optional(v.string()),
     researchInterests: v.optional(v.array(v.string())),
     titles: v.optional(v.array(v.object({ title: v.string(), link: v.string() }))),
     scholarUrl: v.optional(v.string()),

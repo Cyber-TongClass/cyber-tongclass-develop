@@ -4,6 +4,9 @@ import { v } from "convex/values"
 const normalizeEmail = (email: string) => email.trim().toLowerCase()
 const normalizeUsername = (username: string) => username.trim().toLowerCase()
 const normalizeStudentId = (studentId: string) => studentId.trim()
+const PROFILE_MARKDOWN_MAX_LENGTH = 20_000
+
+const normalizeProfileMarkdown = (value: string) => value.replace(/\r\n/g, "\n").trim()
 
 const pickDefined = <T extends Record<string, any>>(input: T) => {
     return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined)) as Partial<T>
@@ -100,6 +103,7 @@ export const create = mutation({
         password: v.optional(v.string()),
         personalEmail: v.optional(v.string()),
         bio: v.optional(v.string()),
+        profileMarkdown: v.optional(v.string()),
         researchInterests: v.optional(v.array(v.string())),
         titles: v.optional(v.array(v.object({ title: v.string(), link: v.string() }))),
         scholarUrl: v.optional(v.string()),
@@ -151,6 +155,7 @@ export const create = mutation({
             studentId,
             personalEmail: args.personalEmail,
             bio: args.bio,
+            profileMarkdown: args.profileMarkdown ? normalizeProfileMarkdown(args.profileMarkdown) : undefined,
             researchInterests: args.researchInterests,
             titles: args.titles,
             scholarUrl: args.scholarUrl,
@@ -203,6 +208,7 @@ export const update = mutation({
         password: v.optional(v.string()),
         personalEmail: v.optional(v.string()),
         bio: v.optional(v.string()),
+        profileMarkdown: v.optional(v.string()),
         researchInterests: v.optional(v.array(v.string())),
         titles: v.optional(v.array(v.object({ title: v.string(), link: v.string() }))),
         scholarUrl: v.optional(v.string()),
@@ -256,8 +262,13 @@ export const update = mutation({
             }
         }
 
+        if (updates.profileMarkdown && updates.profileMarkdown.length > PROFILE_MARKDOWN_MAX_LENGTH) {
+            throw new Error(`Profile markdown cannot exceed ${PROFILE_MARKDOWN_MAX_LENGTH} characters`)
+        }
+
         const patchData = pickDefined({
             ...updates,
+            profileMarkdown: updates.profileMarkdown ? normalizeProfileMarkdown(updates.profileMarkdown) : updates.profileMarkdown,
             email: nextEmail,
             username: nextUsername,
             studentId: nextStudentId,
@@ -311,6 +322,45 @@ export const updateRole = mutation({
         })
 
         return args.id
+    },
+})
+
+// Update user profile markdown with owner/super_admin authorization.
+export const updateProfileMarkdown = mutation({
+    args: {
+        userId: v.id("users"),
+        requesterId: v.id("users"),
+        profileMarkdown: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const [targetUser, requester] = await Promise.all([
+            ctx.db.get(args.userId),
+            ctx.db.get(args.requesterId),
+        ])
+
+        if (!targetUser) {
+            throw new Error("User not found")
+        }
+
+        if (!requester) {
+            throw new Error("Requester not found")
+        }
+
+        const canEdit = requester._id === targetUser._id || requester.role === "super_admin"
+        if (!canEdit) {
+            throw new Error("Unauthorized to edit profile markdown")
+        }
+
+        if (args.profileMarkdown.length > PROFILE_MARKDOWN_MAX_LENGTH) {
+            throw new Error(`Profile markdown cannot exceed ${PROFILE_MARKDOWN_MAX_LENGTH} characters`)
+        }
+
+        await ctx.db.patch(args.userId, {
+            profileMarkdown: normalizeProfileMarkdown(args.profileMarkdown),
+            updatedAt: Date.now(),
+        })
+
+        return args.userId
     },
 })
 
