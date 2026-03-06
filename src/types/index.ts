@@ -12,6 +12,7 @@ export interface User {
   studentId: string
   personalEmail?: string
   bio?: string // Markdown
+  profileMarkdown?: string
   researchInterests?: string[]
   titles?: { title: string; link: string }[]
   scholarUrl?: string

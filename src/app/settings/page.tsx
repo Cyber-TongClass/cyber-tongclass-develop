@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/hooks/use-auth"
-import { useUpdateUser, useUserById, useCurrentUser } from "@/lib/api"
+import { useUpdateUser } from "@/lib/api"
 import { normalizeUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { MarkdownSplitEditor } from "@/components/markdown/markdown-split-editor"
 import { Upload, Camera, User } from "lucide-react"
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
@@ -17,25 +18,27 @@ export default function SettingsPage() {
   const router = useRouter()
   const { currentUser, isAuthenticated, isLoading: authLoading } = useAuth()
   const updateUser = useUpdateUser()
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSavingProfileMarkdown, setIsSavingProfileMarkdown] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [error, setError] = useState("")
-  
+
   // Profile form
   const [englishName, setEnglishName] = useState("")
   const [personalEmail, setPersonalEmail] = useState("")
   const [bio, setBio] = useState("")
+  const [profileMarkdown, setProfileMarkdown] = useState("")
   const [researchInterests, setResearchInterests] = useState<string[]>([])
   const [newInterest, setNewInterest] = useState("")
   const [scholarUrl, setScholarUrl] = useState("")
   const [orcidUrl, setOrcidUrl] = useState("")
-  
+
   // Password form
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  
+
   // Title/Links
   const [titles, setTitles] = useState<{ title: string; link: string }[]>([])
   const [newTitle, setNewTitle] = useState("")
@@ -96,6 +99,7 @@ export default function SettingsPage() {
       setEnglishName(currentUser.englishName || "")
       setPersonalEmail(currentUser.personalEmail || "")
       setBio(currentUser.bio || "")
+      setProfileMarkdown(currentUser.profileMarkdown || "")
       setResearchInterests(currentUser.researchInterests || [])
       setScholarUrl(currentUser.scholarUrl || "")
       setOrcidUrl(currentUser.orcidUrl || "")
@@ -109,11 +113,11 @@ export default function SettingsPage() {
 
   const handleSaveProfile = async () => {
     if (!currentUser) return
-    
+
     setIsSubmitting(true)
     setError("")
     setSuccessMessage("")
-    
+
     try {
       await updateUser({
         id: currentUser._id,
@@ -133,6 +137,28 @@ export default function SettingsPage() {
       setError(err instanceof Error ? err.message : "Failed to update profile")
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleSaveProfileMarkdown = async () => {
+    if (!currentUser) return
+
+    setIsSavingProfileMarkdown(true)
+    setError("")
+    setSuccessMessage("")
+
+    try {
+      await updateUser({
+        id: currentUser._id,
+        profileMarkdown,
+      } as any)
+
+      setSuccessMessage("Profile markdown updated successfully!")
+      setTimeout(() => setSuccessMessage(""), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update profile markdown")
+    } finally {
+      setIsSavingProfileMarkdown(false)
     }
   }
 
@@ -181,19 +207,19 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-        
+
         {successMessage && (
           <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md">
             {successMessage}
           </div>
         )}
-        
+
         {error && (
           <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
             {error}
           </div>
         )}
-        
+
         {/* Profile Settings */}
         <Card>
           <CardHeader>
@@ -282,7 +308,7 @@ export default function SettingsPage() {
                 <Input value={`${currentUser.cohort}级`} disabled />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="englishName">English Name *</Label>
               <Input
@@ -292,7 +318,7 @@ export default function SettingsPage() {
                 placeholder="Your public display name"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="personalEmail">Personal Email</Label>
               <Input
@@ -306,7 +332,7 @@ export default function SettingsPage() {
                 Changing email requires verification
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="bio">Bio</Label>
               <textarea
@@ -317,7 +343,31 @@ export default function SettingsPage() {
                 onChange={(e) => setBio(e.target.value)}
               />
             </div>
-            
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="profileMarkdown">Profile Markdown</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveProfileMarkdown}
+                  disabled={isSavingProfileMarkdown}
+                >
+                  {isSavingProfileMarkdown ? "Saving Markdown..." : "Save Markdown"}
+                </Button>
+              </div>
+              <MarkdownSplitEditor
+                id="profileMarkdown"
+                value={profileMarkdown}
+                onChange={setProfileMarkdown}
+                placeholder="Write your profile in Markdown (supports code blocks and LaTeX: $E=mc^2$)."
+                sourceLabel="Markdown Source"
+                previewLabel="Rendered Profile"
+                minHeightClassName="min-h-[280px]"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label>Research Interests</Label>
               <div className="flex gap-2">
@@ -351,7 +401,7 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="scholarUrl">Google Scholar URL</Label>
@@ -372,7 +422,7 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Title & Links</Label>
               <div className="flex gap-2">
@@ -418,7 +468,7 @@ export default function SettingsPage() {
             </Button>
           </CardFooter>
         </Card>
-        
+
         {/* Password Settings */}
         <Card>
           <CardHeader>
@@ -462,7 +512,7 @@ export default function SettingsPage() {
             </Button>
           </CardFooter>
         </Card>
-        
+
         {/* Account Info */}
         <Card>
           <CardHeader>

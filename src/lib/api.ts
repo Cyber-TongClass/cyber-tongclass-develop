@@ -7,8 +7,8 @@ import { api } from "../../convex/_generated/api"
 type IdLike =
   | string
   | {
-      id: string | { __id?: string }
-    }
+    id: string | { __id?: string }
+  }
   | { __id?: string }
 
 const toIdArg = (input: IdLike) => {
@@ -281,8 +281,8 @@ export function useCourseReviews(args?: string | { courseName?: string; semester
   const normalized =
     typeof args === "string"
       ? {
-          courseName: args,
-        }
+        courseName: args,
+      }
       : args
 
   return useQuery(api.courseReviews.listByCourse, normalized?.courseName ? (normalized as any) : "skip")

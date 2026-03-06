@@ -1,11 +1,13 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
-import "katex/dist/katex.min.css" // 引入 KaTeX 样式
+import rehypeHighlight from "rehype-highlight"
+import "katex/dist/katex.min.css"
+import "highlight.js/styles/github-dark.css"
 import { cn } from "@/lib/utils"
 
 interface MarkdownRendererProps {
@@ -30,14 +32,15 @@ const markdownBaseClassName = [
   "[&_li]:my-1 [&_li]:text-muted-foreground",
   "[&_hr]:my-6 [&_hr]:border-border",
   "[&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:bg-muted [&_pre]:p-3",
-  "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs",
+  "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:break-words",
   "[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-sm",
+  "[&_pre_.hljs]:bg-transparent [&_pre_.hljs]:p-0",
+  "[&_.hljs]:rounded-md [&_.hljs]:border [&_.hljs]:border-border/50 [&_.hljs]:bg-slate-900 [&_.hljs]:p-3",
   "[&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_table]:text-left",
   "[&_thead]:border-b [&_thead]:border-border",
   "[&_tr]:border-b [&_tr]:border-border/70",
   "[&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold",
   "[&_td]:px-2 [&_td]:py-1.5",
-  // KaTeX 公式样式
   "[&_.katex]:text-base",
   "[&_.katex-display]:my-4 [&_&_.katex-display]:overflow-x-auto [&_&_.katex-display]:overflow-y-hidden",
 ].join(" ")
@@ -51,7 +54,19 @@ export function MarkdownRenderer({ content, className, emptyFallback = "暂无�
     <div className={cn(markdownBaseClassName, className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        components={{
+          a: ({ ...props }) => {
+            const href = props.href || ""
+            const safeHref = /^(https?:|mailto:|\/|#)/i.test(href) ? href : "#"
+            return <a {...props} href={safeHref} target="_blank" rel="noopener noreferrer" />
+          },
+          img: ({ ...props }) => {
+            const src = props.src || ""
+            const safeSrc = /^(https?:|\/)/i.test(src) ? src : ""
+            return safeSrc ? <img {...props} src={safeSrc} loading="lazy" /> : null
+          },
+        }}
       >
         {content}
       </ReactMarkdown>
