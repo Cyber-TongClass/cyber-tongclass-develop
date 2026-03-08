@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/hooks/use-auth"
-import { useUpdateUser } from "@/lib/api"
+import { useUpdatePasswordWithCurrent, useUpdateUser } from "@/lib/api"
 import { normalizeUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const { currentUser, isAuthenticated, isLoading: authLoading } = useAuth()
   const updateUser = useUpdateUser()
+  const updatePasswordWithCurrent = useUpdatePasswordWithCurrent()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSavingProfileMarkdown, setIsSavingProfileMarkdown] = useState(false)
@@ -186,9 +187,43 @@ export default function SettingsPage() {
   }
 
   const handleChangePassword = async () => {
-    // Password change requires Convex Auth to be fully configured
-    // For now, we'll show a message that this feature needs to be implemented
-    setError("Password change is not yet available with the new authentication system. Please contact the administrator.")
+    if (!currentUser) {
+      setError("You must be logged in to change your password")
+      return
+    }
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError("Please fill in all password fields")
+      return
+    }
+
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters")
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match")
+      return
+    }
+
+    setError("")
+    setSuccessMessage("")
+
+    try {
+      await updatePasswordWithCurrent({
+        userId: currentUser._id,
+        currentPassword,
+        newPassword,
+      } as any)
+
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      setSuccessMessage("Password updated successfully")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update password")
+    }
   }
 
   if (authLoading) {

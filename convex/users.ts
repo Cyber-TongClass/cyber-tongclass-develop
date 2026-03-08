@@ -5,6 +5,7 @@ const normalizeEmail = (email: string) => email.trim().toLowerCase()
 const normalizeUsername = (username: string) => username.trim().toLowerCase()
 const normalizeStudentId = (studentId: string) => studentId.trim()
 const PROFILE_MARKDOWN_MAX_LENGTH = 20_000
+const PASSWORD_MIN_LENGTH = 8
 
 const normalizeProfileMarkdown = (value: string) => value.replace(/\r\n/g, "\n").trim()
 
@@ -300,6 +301,134 @@ export const update = mutation({
         }
 
         return id
+    },
+})
+
+export const markEmailVerified = mutation({
+    args: {
+        userId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.get(args.userId)
+        if (!user) {
+            throw new Error("User not found")
+        }
+
+        await ctx.db.patch(args.userId, {
+            isEmailVerified: true,
+            updatedAt: Date.now(),
+        })
+
+        return args.userId
+    },
+})
+
+export const touchVerificationRequest = mutation({
+    args: {
+        userId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.get(args.userId)
+        if (!user) {
+            throw new Error("User not found")
+        }
+
+        await ctx.db.patch(args.userId, {
+            lastVerificationRequestedAt: Date.now(),
+            updatedAt: Date.now(),
+        })
+
+        return args.userId
+    },
+})
+
+export const updatePasswordByUserId = mutation({
+    args: {
+        userId: v.id("users"),
+        newPassword: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (args.newPassword.length < PASSWORD_MIN_LENGTH) {
+            throw new Error(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
+        }
+
+        const user = await ctx.db.get(args.userId)
+        if (!user) {
+            throw new Error("User not found")
+        }
+
+        const salt = generateSalt()
+        const hash = await sha256Hex(args.newPassword + salt)
+
+        const existingCredential = await ctx.db
+            .query("authCredentials")
+            .filter((q) => q.eq(q.field("userId"), args.userId))
+            .first()
+
+        if (existingCredential) {
+            await ctx.db.patch(existingCredential._id, {
+                passwordHash: hash,
+                salt,
+            })
+        } else {
+            await ctx.db.insert("authCredentials", {
+                userId: args.userId,
+                passwordHash: hash,
+                salt,
+            })
+        }
+
+        await ctx.db.patch(args.userId, {
+            updatedAt: Date.now(),
+        })
+
+        return args.userId
+    },
+})
+
+export const updatePasswordWithCurrent = mutation({
+    args: {
+        userId: v.id("users"),
+        currentPassword: v.string(),
+        newPassword: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (args.newPassword.length < PASSWORD_MIN_LENGTH) {
+            throw new Error(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
+        }
+
+        const user = await ctx.db.get(args.userId)
+        if (!user) {
+            throw new Error("User not found")
+        }
+
+        const credential = await ctx.db
+            .query("authCredentials")
+            .filter((q) => q.eq(q.field("userId"), args.userId))
+            .first()
+
+        if (!credential) {
+            throw new Error("No password is set for this account")
+        }
+
+        const currentHash = await sha256Hex(args.currentPassword + credential.salt)
+        if (currentHash !== credential.passwordHash) {
+            throw new Error("Current password is incorrect")
+        }
+
+        const newSalt = generateSalt()
+        const newHash = await sha256Hex(args.newPassword + newSalt)
+
+        await ctx.db.patch(credential._id, {
+            passwordHash: newHash,
+            salt: newSalt,
+        })
+
+        await ctx.db.patch(args.userId, {
+            updatedAt: Date.now(),
+        })
+
+        return args.userId
     },
 })
 

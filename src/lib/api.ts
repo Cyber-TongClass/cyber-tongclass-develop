@@ -142,6 +142,10 @@ export function useUpdateUserRole() {
   return useMutation(api.users.updateRole)
 }
 
+export function useUpdatePasswordWithCurrent() {
+  return useMutation(api.users.updatePasswordWithCurrent)
+}
+
 export function useDeleteUser() {
   const remove = useMutation(api.users.remove)
   return useCallback((input: IdLike) => remove(toIdArg(input) as any), [remove])

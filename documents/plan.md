@@ -23,226 +23,239 @@ This plan is implementation-focused and staged to reduce risk.
   - H1..H6 (`# ` to `###### `)
   - Hyperlink (`[text](url)`)
   - Photo (`![alt](url)`)
-  - Quote (`> `)
-- Cursor-aware insertion and selection wrapping behavior.
-- Host-side markdown rendering in profile view.
-- Code highlight support.
-- Optional LaTeX support.
-- Basic validation/sanitization and persistence.
+  Concise plan: Email verification, password reset, SMTP (163-mail), Cloudflare Turnstile
 
-### Out of Scope (Phase 1)
-- Collaborative real-time editing.
-- File upload backend for image hosting (URL insertion only initially).
-- Full WYSIWYG rich text editor replacement.
-- Version history/diff UI.
+  Overview
+  - Purpose: Add secure email verification and password-reset flows so users can verify email and change passwords without admin intervention. Protect verification requests with Cloudflare Turnstile and server-side rate limits. Use your 163-mail SMTP for sending.
 
-## 3. Current Codebase Fit (Observed)
-- Existing markdown infra appears in:
-  - `src/components/markdown/markdown-renderer.tsx`
-  - `src/components/markdown/markdown-split-editor.tsx`
-- Existing profile routes exist under:
-  - `src/app/settings/page.tsx`
-  - `src/app/users/[id]/...`
-  - possibly `src/app/members/[id]/...`
-- Existing auth/profile hooks under:
-  - `src/lib/hooks/use-auth.ts`
-  - `src/lib/hooks/use-users.ts`
-- Convex backend already handles user records in `convex/users.ts` and schema in `convex/schema.ts`.
+  Data model (Convex)
+  - New table: `email_verifications` with fields: `id`, `tokenHash` (sha256), `purpose` (`email_verification`|`password_reset`), `userId?`, `sentTo`, `ip`, `createdAt`, `expiresAt`, `usedAt?`, `meta`.
 
-Do not use the existing markdown editor components because it is not yet good. Instead, since it is in components, you should directly fix the `markdown-split-editor` and `markdown-renderer` components to support the new toolbar and rendering features. The split-editor UI is a brilliant design, keep it. Currently the renderer doesn't seem to have code highlighting, add this feature. Also make sure you implement code highlighting in the markdown editor for markdown syntaxes too.  
+  Convex mutations (server-side)
+  - `createEmailVerification({ tokenHash, purpose, userId?, sentTo, ip, expiresAt, meta })`
+  - `useEmailVerification({ tokenHash })` → validates unused & not expired, marks `usedAt`, returns record
+  - `applyEmailVerification({ tokenHash })` (optional helper): atomically apply effect (set `users.emailVerified`, or return `userId` for password reset)
 
-## 4. UX Plan
-### Editing Surface Options
-Offer two modes (configurable with a feature toggle or prop):
-1. Embedded editor block in profile settings page.
-2. Floating dialog editor (for focus mode).
+  Server API endpoints (Next.js)
+  - `POST /api/request-verification` — body: `{ email, purpose, turnstileToken, userId? }`
+    - Verify Turnstile server-side, rate-limit by email/ip, generate raw token (crypto.randomBytes(32) base64url), hash (sha256), call `createEmailVerification`, send email (Nodemailer).
+  - `POST /api/verify-token` — body: `{ token, purpose }` or query for link flows
+    - Hash token, call `useEmailVerification` / `applyEmailVerification`, return success or short-lived proof for password reset.
+  - `POST /api/reset-password` — body: `{ token, newPassword }` or `{ proof, newPassword }`
+    - Validate token/proof, hash new password (`bcryptjs`), call Convex mutation to update `users.passwordHash`.
 
-Recommendation: start with embedded editor + optional "Open in Dialog" button. The recommendation is accepted. 
+  Frontend changes
+  - After register: call `POST /api/request-verification` and show Turnstile widget when requesting codes.
+  - Add pages: request-verify, verify-result (called from link), reset-password.
 
-### Toolbar Layout
-Top bar controls (left to right):
-- Bold
-- Italic
-- Strikethrough
-- Divider
-- H1/H2/H3/H4/H5/H6 dropdown or segmented selector
-- Link
-- Image
-- Divider
-- Preview toggle (Edit / Split / Preview)
+  Turnstile
+  - Client: include `TURNSTILE_SITE_KEY` widget on verification request forms.
+  - Server: verify via `https://challenges.cloudflare.com/turnstile/v0/siteverify` using `TURNSTILE_SECRET` and `response`.
 
-### Interaction Rules
-- If text is selected:
-  - wrap selected text with chosen token (`**`, `*`, `~~` etc).
-- If no selection:
-  - insert token template with placeholder and move cursor to placeholder.
-- Heading action:
-  - if selection spans line start, prefix each selected line with heading marker;
-  - otherwise insert heading marker at current line start.
-- Link/image:
-  - insert template and place cursor in `text`/`alt` first.
+  SMTP (163-mail) env vars
+  - `SMTP_HOST=smtp.163.com`, `SMTP_PORT=465` (or 587), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+  - Other envs: `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET`, `EMAIL_TOKEN_EXPIRY_MIN` (e.g., 15), `EMAIL_VERIFY_EXPIRY_HOURS` (e.g., 24), `EMAIL_SIGNING_KEY` (optional HMAC for short proofs)
 
-## 5. Data Model and Persistence Plan
-### Schema
-Add profile markdown field in user data model (Convex):
-- `profileMarkdown?: string`
-- Optional derived/cache fields for optimization (later):
-  - `profileMarkdownUpdatedAt`
-  - `profileMarkdownPreview` (plain text excerpt)
+  Security & anti-abuse
+  - Store only `tokenHash` (sha256). Tokens are single-use and expire.
+  - Rate-limit by email and IP (e.g., 5/hour per email, 20/hour per IP) using Convex queries.
+  - Require Turnstile for unauthenticated requests; also require session check or Turnstile for authenticated email change.
+  - Hash passwords with `bcryptjs` before storing.
 
-### Mutations/Queries
-- Add mutation: `users.updateProfileMarkdown` with auth checks.
-- Update existing `users.update` flow if preferred, but isolate markdown path for clearer permissions and size limits.
+  Implementation phases (minimal, ordered)
+  1. Add `email_verifications` table and Convex mutations (create/use/apply).
+  2. Implement `POST /api/request-verification` with Turnstile check and Nodemailer send (use your 163 SMTP for testing).
+  3. Implement `POST /api/verify-token` and `POST /api/reset-password` and wire Convex updates.
+  4. Integrate frontend flows (register, request-verify, verify-result, reset-password).
+  5. Add rate-limits, cooldown fields, logging; test and harden.
 
-### Validation
-- Max length (e.g. 20k chars initially).
-- Trim and normalize newlines on save.
-- Reject unsupported binary content.
+  Testing & deploy
+  - Locally: set SMTP envs and TURNSTILE secrets; run `npx convex codegen && npx convex dev --once` to apply Convex changes; test flows.
+  *** Begin Elaboration ***
 
-## 6. Rendering Architecture (Host Provides Rendering)
-### Rendering Location
-Render markdown server-side where feasible (page/server component path), then hydrate client UI.
+  This is the full, elaborated plan. Use it as the canonical implementation roadmap. Each section includes actionable steps, example code, and configuration details so you can review or edit before I implement.
 
-Rationale:
-- Consistent output,
-- centralized sanitization,
-- easier SEO/profile sharing.
+  1) Detailed Convex schema (exact patch to add)
 
-### Renderer Pipeline
-Use/extend existing renderer stack with these plugins:
-- `remark-gfm`
-- `remark-math` (for LaTeX)
-- `rehype-katex` (preferred lightweight math rendering)
-- `rehype-highlight` (code highlighting)
+  Add to `convex/schema.ts` (TypeScript-like schema snippet):
 
+    users: {
+      // existing fields...
+      emailVerified: v.optional(v.boolean()),
+    }
 
-## 7. LaTeX Support Plan
-### Supported Syntax
-- Inline math: `$...$`
-- Block math: `$$...$$`
+    email_verifications: {
+      tokenHash: v.string(),
+      purpose: v.union(v.literal('email_verification'), v.literal('password_reset')),
+      userId: v.optional(v.string()),
+      sentTo: v.string(),
+      ip: v.optional(v.string()),
+      createdAt: v.datetime(),
+      expiresAt: v.datetime(),
+      usedAt: v.optional(v.datetime()),
+      meta: v.optional(v.object())
+    }
 
-### Dependencies
-- Keep using existing `remark-math` + `rehype-katex` (already present in dependencies).
-- Ensure KaTeX CSS is included globally or within renderer boundary.
+  Indexes: add index on `tokenHash` and `sentTo` to speed lookup/count queries.
 
-### Graceful Degradation
-- If math parse fails, render original text with warning style (non-blocking).
+  2) Convex mutation and helper functions (server-only)
 
-## 8. Code Highlighting Plan
-### Scope
-- Fenced code blocks with language labels:
-  - ```ts
-  - ```python
-  - etc.
+  File: `convex/email.ts` (high level):
 
-### Implementation
-- Reuse current `rehype-highlight` setup in markdown renderer.
-- Add default theme CSS (if not already applied) with design-system-compatible overrides.
+    import { mutation, query } from 'convex-server'
 
-## 9. Component Design Plan
-### New/Updated Components
-1. `src/components/markdown/profile-markdown-editor.tsx`
-   - wraps textarea/editor state + toolbar + insertion logic.
-2. `src/components/markdown/markdown-toolbar.tsx`
-   - pure action bar with callbacks.
-3. Extend `src/components/markdown/markdown-renderer.tsx`
-   - confirm plugin chain for GFM + math + highlight + sanitization.
-4. Integrate into profile settings page:
-   - `src/app/settings/page.tsx` (primary), optionally `src/app/users/[id]/page.tsx` for public profile view.
-   - Also fix up and use the newly designed editor for the admin's add news page at `src/app/admin/news/page.tsx`.
+    export const createEmailVerification = mutation(async ({ db }, { tokenHash, purpose, userId, sentTo, ip, expiresAt, meta }) => {
+      // Basic validation
+      const now = new Date()
+      await db.insert('email_verifications', { tokenHash, purpose, userId, sentTo, ip, createdAt: now, expiresAt, usedAt: null, meta })
+    })
 
-### State Flow
-- Local editor state for immediate typing.
-- Debounced autosave optional (Phase 2).
-- Explicit Save button in Phase 1.
+    export const useVerification = mutation(async ({ db }, { tokenHash }) => {
+      // Atomically find an active verification and mark usedAt
+      const row = await db.findOne('email_verifications', q.eq(q.field('tokenHash'), tokenHash), q.isNull(q.field('usedAt')), q.gt(q.field('expiresAt'), new Date()))
+      if (!row) throw new Error('Invalid or expired token')
+      await db.update('email_verifications', row._id, { usedAt: new Date() })
+      return row
+    })
 
-## 10. API/Auth Plan
-### Authorization
-- Only profile owner (or super_admin role) can update markdown content.
-- Public readers can view rendered output depending on profile visibility rules.
+    export const applyVerification = mutation(async ({ db }, { tokenHash }) => {
+      const row = await useVerification({ tokenHash })
+      if (row.purpose === 'email_verification') {
+        // Set user.emailVerified = true
+        await db.update('users', row.userId, { emailVerified: true })
+        return { status: 'ok', type: 'email_verified' }
+      }
+      if (row.purpose === 'password_reset') {
+        return { status: 'ok', type: 'password_reset', userId: row.userId }
+      }
+    })
 
-### Error Handling
-- Surface save errors with toast + retry.
-- Preserve unsaved local draft in memory (and optionally localStorage).
+  Notes: the above is pseudocode; adapt to Convex APIs used in this repo (the repo already has many mutations; mirror style and auth checks).
 
-## 11. Accessibility and Mobile Plan
-- Toolbar buttons must have `aria-label` and keyboard focus states.
-- Keyboard shortcuts (Phase 2):
-  - Ctrl/Cmd+B, I, K.
-- On mobile:
-  - sticky toolbar,
-  - larger touch targets,
-  - collapse heading buttons into dropdown.
+  3) Server API route: request-verification (detailed)
 
-## 12. Testing Plan
-### Unit Tests
-- Insertion helper logic:
-  - wrap selection,
-  - insert templates,
-  - cursor placement,
-  - heading insertion line behavior.
+  Path: `src/app/api/request-verification/route.ts`
 
-### Integration Tests
-- Save markdown -> fetch profile -> render output path.
-- Render code blocks and math without runtime errors.
-- Sanitization blocks unsafe link payloads.
+  Behavior (Pseudo-implementation):
 
-### Manual QA Checklist
-- Bold/italic/underline/delete actions work both with and without selection.
-- H1..H6 action modifies expected lines.
-- Link/image templates inserted at cursor.
-- Code fence highlight appears.
-- LaTeX inline/block renders.
-- Mobile toolbar usable.
+    import { NextResponse } from 'next/server'
+    import crypto from 'crypto'
+    import fetch from 'node-fetch'
+    import nodemailer from 'nodemailer'
 
-## 13. Rollout Plan
-### Phase 1 (MVP)
-- Embedded editor + toolbar + save.
-- Host-rendered markdown with syntax highlight.
-- Optional LaTeX enabled.
+    export async function POST(req) {
+      const { email, purpose, turnstileToken, userId } = await req.json()
+      const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown'
 
-### Phase 2
-- Dialog/floating full-screen editor.
-- Autosave + draft restore.
-- Keyboard shortcuts.
+      // 1) Turnstile verify
+      const verifyResp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: new URLSearchParams({ secret: process.env.TURNSTILE_SECRET, response: turnstileToken, remoteip: ip }) })
+      const verifyJson = await verifyResp.json()
+      if (!verifyJson.success) return NextResponse.json({ ok: true }) // generic response
 
-### Phase 3
-- Image upload integration and markdown insertion automation.
-- Revision history/versioning.
+      // 2) Rate-limit checks (call Convex query to count recent rows)
 
-## 14. Risks and Mitigations
-- Risk: XSS via markdown/HTML.
-  - Mitigation: strict sanitization, protocol validation.
-- Risk: Large markdown causes slow render.
-  - Mitigation: size limits + memoized render.
-- Risk: Editor UX confusion around underline in markdown.
-  - Mitigation: explicit tooltip "Underline uses safe HTML tag".
-- Risk: Styling mismatch for code/math themes.
-  - Mitigation: design-system scoped CSS tokens.
+      // 3) Create token
+      const raw = crypto.randomBytes(32).toString('base64url')
+      const tokenHash = crypto.createHash('sha256').update(raw).digest('hex')
+      const expiresAt = new Date(Date.now() + (purpose === 'password_reset' ? Number(process.env.EMAIL_TOKEN_EXPIRY_MIN || 15) * 60 * 1000 : Number(process.env.EMAIL_VERIFY_EXPIRY_HOURS || 24) * 3600 * 1000))
 
-## 15. Acceptance Criteria
-- User can edit profile markdown and save successfully.
-- Toolbar buttons perform required insert/wrap behavior with correct cursor movement.
-- Profile markdown renders on host with syntax-highlighted code blocks.
-- LaTeX renders for inline/block math (when enabled).
-- Unauthorized users cannot edit another profile's markdown.
-- No critical security issues from markdown rendering path.
+      // 4) Convex create
+      await createEmailVerification({ tokenHash, purpose, userId, sentTo: email, ip, expiresAt, meta: { ua: req.headers.get('user-agent') } })
 
-## 16. Implementation Checklist (Actionable)
-1. Confirm profile data model field and migration strategy.
-2. Implement markdown insertion utility functions.
-3. Build toolbar component and wire actions.
-4. Build/extend editor container component.
-5. Add profile save mutation + auth checks in Convex.
-6. Integrate editor into profile settings route.
-7. Integrate renderer into public/private profile view.
-8. Add sanitization and protocol-safe link/image handling.
-9. Add unit/integration tests and manual QA pass.
-10. Deploy behind feature flag if desired.
+      // 5) Send email (Nodemailer)
+      const transporter = nodemailer.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT), secure: Number(process.env.SMTP_PORT) === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } })
+      const link = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/verify?token=${encodeURIComponent(raw)}&purpose=${purpose}`
+      await transporter.sendMail({ from: process.env.SMTP_FROM, to: email, subject: purpose === 'password_reset' ? 'Reset your password' : 'Verify your email', html: `<p>Click <a href="${link}">this link</a> to ${purpose === 'password_reset' ? 'reset your password' : 'verify your email'}.</p><p>Link expires in ${purpose === 'password_reset' ? process.env.EMAIL_TOKEN_EXPIRY_MIN : process.env.EMAIL_VERIFY_EXPIRY_HOURS} minutes.</p>` })
 
-## 17. Open Questions for Review
-- Should markdown be public by default or private/profile-owner only? - public rendering, but only editable by owner. Can be hidden. If not set, use "You've reached the inhabited" as default text.
-- Should underline be supported via HTML `<u>` or omitted for strict markdown purity? - Answered above, omit it. 
-- Do we need image upload now, or URL-only is sufficient for MVP? - URL only, we do not have a CDN
-- Embedded editor only, or embedded + floating dialog in MVP? - Embedded only for MVP, dialog can come in Phase 2.
-- Should math rendering be enabled by default for all profiles? - Yes
+      // 6) Generic success
+      return NextResponse.json({ ok: true })
+    }
+
+  Notes: return generic success to prevent email enumeration. Adjust wording and templates to match project branding.
+
+  4) Server API route: verify-token and reset-password (detailed)
+
+  verify-token: hash incoming token, call `applyVerification`. If password_reset, return signed proof (HMAC) containing userId and expiry (e.g., 10 minutes). Use `EMAIL_SIGNING_KEY`.
+
+  reset-password: accept `{ proof, newPassword }` or `{ token, newPassword }`. Verify proof or token, hash password (bcrypt), call Convex `updateUserPassword(userId, passwordHash)`, and mark token used.
+
+  Security: never log raw tokens.
+
+  5) Rate limiting & counters (Convex pattern)
+
+  Example Convex query to count requests in last hour:
+
+    const since = new Date(Date.now() - 60 * 60 * 1000)
+    const count = await db.query('email_verifications').filter(r => r.sentTo === email && r.createdAt > since).count()
+
+  Reject if count exceeds threshold. For IP-based counts, filter by `ip`.
+
+  If you need stronger guarantees at scale, add Redis or a managed rate-limit service.
+
+  6) Email templates and UX copy
+
+  - Keep emails short and actionable. Include link and plain text fallback for clients that block HTML.
+  - Example subject lines:
+    - Verify your TongClass email
+    - Reset your TongClass password
+
+  Include the expiry time and a short contact/help link.
+
+  7) Logging, monitoring, and alerting
+
+  - Emit structured log events for: `verification_requested`, `turnstile_failed`, `email_sent`, `email_send_failed`, `token_used`, `token_expired`.
+  - Add alerts for high rate of `turnstile_failed` or `email_send_failed`.
+
+  8) Tests and QA
+
+  - Automated tests:
+    - Unit tests for Convex mutations (verify create/use semantics and edge cases).
+    - Integration tests with a test SMTP server (MailHog or Ethereal) or using your 163 SMTP in a staging environment.
+
+  - Manual QA checklist:
+    - Register a new account and verify email flow end-to-end.
+    - Request password reset and complete flow.
+    - Attempt reuse of token and ensure rejected.
+    - Test Turnstile failure paths.
+
+  9) Deployment checklist
+
+  - Add env vars to Vercel/CI: `SMTP_*`, `TURNSTILE_*`, `EMAIL_*`, `EMAIL_SIGNING_KEY`, `NEXT_PUBLIC_SITE_URL`.
+  - Run `npx convex codegen` and `npx convex deploy` (or `npx convex dev --once` for dev) after schema changes.
+  - Deploy Next app and run smoke tests.
+
+  10) Rollout and rollback
+
+  - Rollout: merge feature branch → staging deployment → smoke tests → production deploy.
+  - Rollback: remove ability to request new tokens (temporary feature flag) and invalidate tokens by marking future tokens unusable if critical issue found.
+
+  11) Phase-by-phase implementation plan (concrete tasks)
+
+  - Phase 1 (Convex schema + mutations):
+    - Edit `convex/schema.ts` and add `email_verifications`.
+    - Add `convex/email.ts` with `createEmailVerification`, `useVerification`, `applyVerification`.
+    - Run `npx convex codegen` and `npx convex dev --once` locally.
+
+  - Phase 2 (request-verification API):
+    - Add `src/app/api/request-verification/route.ts`.
+    - Implement Turnstile verify, rate checks, token gen, Convex create, Nodemailer send.
+    - Test email delivery using your 163 SMTP credentials in staging.
+
+  - Phase 3 (verify-token + reset-password):
+    - Add `src/app/api/verify-token/route.ts` and `src/app/api/reset-password/route.ts`.
+    - Implement proof generation (HMAC) for password reset if desired.
+
+  - Phase 4 (frontend & hardening):
+    - Integrate into `src/app/register/page.tsx` and add `src/app/auth/*` pages.
+    - Add UI cooldowns, resend UX, and error handling.
+    - Add rate-limit improvements, logging, and tests.
+
+  Questions for you (repeat & final):
+
+  1) Tokens: link tokens (recommended) or numeric codes? (I recommend link tokens + optional displayed code fallback.)
+  2) Password hashing: `bcryptjs` or `argon2`? (Recommend `bcryptjs` unless you prefer `argon2`.)
+  3) Rate-limit backend: Convex-only or add Redis? (Start Convex; move to Redis if scale requires.)
+
+  If you confirm the answers, I'll start implementing Phase 1 now.
+
+  *** End Elaboration ***

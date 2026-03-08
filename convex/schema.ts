@@ -21,6 +21,7 @@ export default defineSchema({
     avatar: v.optional(v.string()),
     realPhoto: v.optional(v.string()),
     isEmailVerified: v.boolean(),
+    lastVerificationRequestedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -122,4 +123,21 @@ export default defineSchema({
     salt: v.string(),
   })
     .index("by_userId", ["userId"]),
+
+  emailVerifications: defineTable({
+    tokenHash: v.string(),
+    codeHash: v.optional(v.string()),
+    purpose: v.union(v.literal("email_verification"), v.literal("password_reset")),
+    userId: v.optional(v.id("users")),
+    sentTo: v.string(),
+    ip: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+  })
+    .index("by_tokenHash", ["tokenHash"])
+    .index("by_sentTo", ["sentTo"])
+    .index("by_ip", ["ip"])
+    .index("by_createdAt", ["createdAt"]),
 })

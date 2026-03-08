@@ -19,6 +19,8 @@ export interface User {
   orcidUrl?: string
   avatar?: string
   realPhoto?: string
+  isEmailVerified?: boolean
+  lastVerificationRequestedAt?: number
   createdAt: number
   updatedAt: number
 }

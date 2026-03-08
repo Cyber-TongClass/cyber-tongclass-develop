@@ -1,16 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { normalizeUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useSignUp, useSignIn, useCurrentUser } from "@/lib/api"
+import { TurnstileWidget } from "@/components/auth/turnstile-widget"
 
 type Organization = "pku" | "thu"
+type PkuDomain = "@stu.pku.edu.cn" | "@pku.edu.cn" | "@alumni.pku.edu.cn"
+
+const REGISTER_DRAFT_KEY = "tongclass_register_draft"
 
 const CURRENT_YEAR = new Date().getFullYear()
 const cohortOptions = Array.from({ length: CURRENT_YEAR - 2019 }, (_, idx) => CURRENT_YEAR - idx)
@@ -28,6 +32,7 @@ const ORGANIZATIONS: Record<Organization, { label: string; cohorts: number[] }> 
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const signUp = useSignUp()
   const signIn = useSignIn()
   const currentUser = useCurrentUser()
@@ -37,11 +42,19 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Form data
-  const [organization, setOrganization] = useState<Organization | "">("")
+  const [organization, setOrganization] = useState<Organization | "">("pku")
   const [cohort, setCohort] = useState<number | "">("")
   const [studentId, setStudentId] = useState("")
-  const [email, setEmail] = useState("")
+  const [emailDomain, setEmailDomain] = useState<PkuDomain>("@stu.pku.edu.cn")
   const [verificationCode, setVerificationCode] = useState("")
+  const [isCodeSending, setIsCodeSending] = useState(false)
+  const [isCodeVerifying, setIsCodeVerifying] = useState(false)
+  const [isEmailStepVerified, setIsEmailStepVerified] = useState(false)
+  const [emailVerificationProof, setEmailVerificationProof] = useState("")
+  const [requiresTurnstile, setRequiresTurnstile] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState("")
+  const [showCodeInput, setShowCodeInput] = useState(false)
+  const [resendSecondsRemaining, setResendSecondsRemaining] = useState(0)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
@@ -60,21 +73,87 @@ export default function RegisterPage() {
     const normalizedStudentId = studentId.trim().toLowerCase()
     if (!normalizedStudentId) return ""
 
-    if (organization === "pku") {
-      return `${normalizedStudentId}@stu.pku.edu.cn`
-    }
-    return `${normalizedStudentId}@mails.tsinghua.edu.cn`
+    return `${normalizedStudentId}${emailDomain}`
   }
 
-  const getExpectedEmailHint = () => {
-    if (organization === "pku") {
-      return `${studentId || "your_student_id"}@stu.pku.edu.cn`
+  const getExpectedEmailHint = () => `${studentId || "your_student_id"}${emailDomain}`
+  const effectiveEmail = useMemo(() => getExpectedEmailValue(), [studentId, emailDomain])
+
+  useEffect(() => {
+    if (resendSecondsRemaining <= 0) return
+
+    const timer = window.setInterval(() => {
+      setResendSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0))
+    }, 1000)
+
+    return () => window.clearInterval(timer)
+  }, [resendSecondsRemaining])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const resumeToken = searchParams.get("resume")
+    if (!resumeToken) return
+
+    const resumeKey = `tongclass_register_resume_${resumeToken}`
+    const resumeRaw = localStorage.getItem(resumeKey)
+    if (!resumeRaw) return
+
+    const draftRaw = localStorage.getItem(REGISTER_DRAFT_KEY)
+
+    try {
+      const resume = JSON.parse(resumeRaw) as { email?: string; proof?: string; createdAt?: number }
+      const draft = draftRaw
+        ? (JSON.parse(draftRaw) as {
+          organization?: Organization
+          cohort?: number | ""
+          studentId?: string
+          emailDomain?: PkuDomain
+        })
+        : null
+
+      if (!resume.email || !resume.proof || !resume.createdAt) return
+      if (Date.now() - resume.createdAt > 30 * 60_000) {
+        localStorage.removeItem(resumeKey)
+        return
+      }
+
+      if (draft?.organization) setOrganization(draft.organization)
+      if (typeof draft?.cohort === "number") setCohort(draft.cohort)
+      if (draft?.studentId) setStudentId(draft.studentId)
+      if (draft?.emailDomain) setEmailDomain(draft.emailDomain)
+
+      const left = (draft?.studentId || "").trim().toLowerCase()
+      const computed = left && draft?.emailDomain ? `${left}${draft.emailDomain}` : ""
+      if (computed && computed === resume.email.trim().toLowerCase()) {
+        setEmailVerificationProof(resume.proof)
+        setIsEmailStepVerified(true)
+        setShowCodeInput(true)
+        setStep(3)
+        setInfo("Email was verified from link. Continuing at Step 3.")
+        localStorage.removeItem(resumeKey)
+      }
+    } catch {
+      // Ignore malformed cache
     }
-    return `${studentId || "your_student_id"}@mails.tsinghua.edu.cn`
-  }
+  }, [searchParams])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    localStorage.setItem(
+      REGISTER_DRAFT_KEY,
+      JSON.stringify({
+        organization,
+        cohort,
+        studentId,
+        emailDomain,
+      })
+    )
+  }, [organization, cohort, studentId, emailDomain])
 
   const validateStep1 = () => {
-    if (!organization || !cohort || !studentId) {
+    if (!cohort || !studentId) {
       setError("Please fill in all fields")
       return false
     }
@@ -83,27 +162,27 @@ export default function RegisterPage() {
       setError("Invalid student ID")
       return false
     }
+
+    if (organization !== "pku") {
+      setError("Only PKU registration is currently available")
+      return false
+    }
     return true
   }
 
   const validateStep2 = () => {
-    const fallbackEmail = getExpectedEmailValue()
-    const normalized = (email.trim() || fallbackEmail).toLowerCase()
-    if (organization === "pku") {
-      const expectedEmail = `${studentId.toLowerCase()}@stu.pku.edu.cn`
-      if (normalized !== expectedEmail) {
-        setError(`Email must be ${expectedEmail}`)
-        return false
-      }
-      return true
+    const normalized = effectiveEmail.toLowerCase()
+    const validDomains: PkuDomain[] = ["@stu.pku.edu.cn", "@pku.edu.cn", "@alumni.pku.edu.cn"]
+    const isValidDomain = validDomains.some((domain) => normalized.endsWith(domain))
+    const hasFixedPrefix = normalized.startsWith(`${studentId.toLowerCase()}@`) || validDomains.some((domain) => normalized === `${studentId.toLowerCase()}${domain}`)
+
+    if (!isValidDomain || !hasFixedPrefix) {
+      setError("Email must use one of: @stu.pku.edu.cn, @pku.edu.cn, @alumni.pku.edu.cn")
+      return false
     }
 
-    const isThuFormat =
-      normalized.startsWith(`${studentId.toLowerCase()}@`) &&
-      (normalized.endsWith("@mails.tsinghua.edu.cn") || normalized.endsWith("@tsinghua.edu.cn"))
-
-    if (!isThuFormat) {
-      setError(`Email must match ${studentId}@mails.tsinghua.edu.cn`)
+    if (!isEmailStepVerified) {
+      setError("Please verify your email code before continuing")
       return false
     }
 
@@ -129,10 +208,7 @@ export default function RegisterPage() {
     if (step === 1 && !validateStep1()) return
 
     if (step === 1) {
-      const defaultEmail = getExpectedEmailValue()
-      if (defaultEmail) {
-        setEmail(defaultEmail)
-      }
+      setInfo("")
     }
 
     if (step === 2 && !validateStep2()) return
@@ -152,9 +228,103 @@ export default function RegisterPage() {
   }
 
   const handleSendCode = async () => {
-    const defaultEmail = getExpectedEmailValue()
-    const effectiveEmail = (email.trim() || defaultEmail).trim()
-    setInfo(`Verification interface is reserved. For now, continue directly with ${effectiveEmail}.`)
+    const targetEmail = effectiveEmail.trim()
+
+    if (!targetEmail) {
+      setError("Email is missing")
+      return
+    }
+
+    if (resendSecondsRemaining > 0) {
+      setInfo(`Resend after ${resendSecondsRemaining}s`)
+      return
+    }
+
+    setIsCodeSending(true)
+    setError("")
+    setInfo("")
+
+    try {
+      const response = await fetch("/api/request-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: targetEmail,
+          purpose: "email_verification",
+          turnstileToken: turnstileToken || undefined,
+        }),
+      })
+
+      const data = await response.json()
+      if (data?.requiresTurnstile) {
+        setRequiresTurnstile(true)
+        setInfo("Please complete Turnstile verification, then send code again.")
+        return
+      }
+
+      if (typeof data?.cooldownRemainingMs === "number" && data.cooldownRemainingMs > 0) {
+        const seconds = Math.ceil(data.cooldownRemainingMs / 1000)
+        setResendSecondsRemaining(seconds)
+        setInfo(`Resend after ${seconds}s`)
+        return
+      }
+
+      if (!response.ok || !data?.ok) {
+        setError(data?.message || "Failed to send verification code")
+        return
+      }
+
+      setShowCodeInput(true)
+      setResendSecondsRemaining(60)
+      setInfo("Verification code sent. Please check your mailbox.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send verification code")
+    } finally {
+      setIsCodeSending(false)
+    }
+  }
+
+  const handleVerifyCode = async () => {
+    const targetEmail = effectiveEmail.trim()
+
+    if (!targetEmail || !verificationCode.trim()) {
+      setError("Please enter the verification code")
+      return
+    }
+
+    setIsCodeVerifying(true)
+    setError("")
+    setInfo("")
+
+    try {
+      const response = await fetch("/api/verify-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          purpose: "email_verification",
+          email: targetEmail,
+          code: verificationCode.trim(),
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data?.ok) {
+        setError(data?.message || "Verification code is invalid or expired")
+        return
+      }
+
+      setIsEmailStepVerified(true)
+      setEmailVerificationProof(typeof data?.proof === "string" ? data.proof : "")
+      setInfo("Email verification succeeded. You can continue.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to verify code")
+    } finally {
+      setIsCodeVerifying(false)
+    }
   }
 
   const handleSubmit = async () => {
@@ -168,12 +338,11 @@ export default function RegisterPage() {
     setInfo("")
 
     try {
-      const defaultEmail = getExpectedEmailValue()
-      const effectiveEmail = (email.trim() || defaultEmail).trim().toLowerCase()
+      const normalizedEmail = effectiveEmail.trim().toLowerCase()
 
       // First sign up with our custom auth
       const signUpResult = await signUp({
-        email: effectiveEmail,
+        email: normalizedEmail,
         password,
         englishName,
         username,
@@ -187,9 +356,27 @@ export default function RegisterPage() {
         return
       }
 
+      if (isEmailStepVerified && emailVerificationProof) {
+        const completeResponse = await fetch("/api/complete-email-verification", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: signUpResult,
+            email: normalizedEmail,
+            proof: emailVerificationProof,
+          }),
+        })
+
+        if (!completeResponse.ok) {
+          setInfo("Account created, but email verification status could not be persisted. You can verify via email link later.")
+        }
+      }
+
       // Then sign in to get the session
       const signInResult = await signIn({
-        email: effectiveEmail,
+        email: normalizedEmail,
         password,
       })
 
@@ -277,19 +464,13 @@ export default function RegisterPage() {
                   id="organization"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   value={organization}
-                  onChange={(e) => {
-                    setOrganization(e.target.value as Organization)
-                    setCohort("")
-                  }}
+                  onChange={(e) => setOrganization(e.target.value as Organization)}
                   required
+                  disabled
                 >
-                  <option value="">Select your organization</option>
-                  {Object.entries(ORGANIZATIONS).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value.label}
-                    </option>
-                  ))}
+                  <option value="pku">北大通班</option>
                 </select>
+                <p className="text-xs text-muted-foreground">THU registration is temporarily unavailable.</p>
               </div>
 
               <div className="space-y-2">
@@ -332,44 +513,79 @@ export default function RegisterPage() {
           {step === 2 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder={getExpectedEmailHint()}
-                  value={email || getExpectedEmailValue()}
-                  onChange={(e) => setEmail(e.target.value)}
-                  readOnly
-                  className="bg-muted text-muted-foreground"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Auto-filled from your student ID and organization. You can proceed directly.
-                </p>
+                <Label htmlFor="emailStudentPrefix">Email Address</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+                  <Input
+                    id="emailStudentPrefix"
+                    type="text"
+                    value={studentId}
+                    readOnly
+                    className="bg-muted text-muted-foreground"
+                  />
+                  <select
+                    value={emailDomain}
+                    onChange={(e) => {
+                      setEmailDomain(e.target.value as PkuDomain)
+                      setIsEmailStepVerified(false)
+                      setEmailVerificationProof("")
+                    }}
+                    className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="@stu.pku.edu.cn">@stu.pku.edu.cn</option>
+                    <option value="@pku.edu.cn">@pku.edu.cn</option>
+                    <option value="@alumni.pku.edu.cn">@alumni.pku.edu.cn</option>
+                  </select>
+                </div>
+                <p className="text-xs text-muted-foreground">Current target email: {getExpectedEmailHint()}</p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="verificationCode">Verification Code</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="verificationCode"
-                    type="text"
-                    placeholder="Enter code"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleSendCode}
-                    disabled={!(email || getExpectedEmailValue())}
-                  >
-                    Send Code
-                  </Button>
-                </div>
+              <div className="space-y-3">
+                <Button
+                  type="button"
+                  className="w-full font-semibold"
+                  onClick={handleSendCode}
+                  disabled={isCodeSending || resendSecondsRemaining > 0 || (requiresTurnstile && !turnstileToken)}
+                >
+                  {isCodeSending
+                    ? "Sending..."
+                    : resendSecondsRemaining > 0
+                      ? `Resend after ${resendSecondsRemaining}s`
+                      : "Verify Email"}
+                </Button>
+
+                {requiresTurnstile && (
+                  <div className="rounded-md border p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Additional safety verification is required before sending another code.
+                    </p>
+                    <TurnstileWidget onVerify={setTurnstileToken} />
+                  </div>
+                )}
+
+                {showCodeInput && (
+                  <>
+                    <Label htmlFor="verificationCode">Verification Code</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="verificationCode"
+                        type="text"
+                        placeholder="Enter code"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleVerifyCode}
+                        disabled={!verificationCode.trim() || isCodeVerifying}
+                      >
+                        {isCodeVerifying ? "Verifying..." : "Verify"}
+                      </Button>
+                    </div>
+                  </>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  Verification feature is placeholder - you can proceed without code
+                  Click the verification link in email first. If link fails, use the code input above.
                 </p>
               </div>
             </div>
