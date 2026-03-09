@@ -1,31 +1,4 @@
-# User Profile Markdown Palette + Host Rendering Plan
-
-## 1. Objective
-Add a profile markdown editing experience where users can edit profile content in either:
-- an embedded editor section on the profile page, or
-- a floating modal/dialog editor,
-
-and the platform renders the markdown output on the host side with:
-- basic syntax highlighting for code blocks,
-- optional LaTeX rendering,
-- a top toolbar for common markdown insertions.
-
-This plan is implementation-focused and staged to reduce risk.
-
-## 2. Scope
-### In Scope
-- Add markdown source storage on user profile data.
-- Add editor UI with toolbar actions:
-  - Bold (`**cursor**`)
-  - Underline (HTML `<u>cursor</u>` as markdown has no native underline)
-  - Italic (`*cursor*`)
-  - Delete/Strikethrough (`~~cursor~~`)
-  - H1..H6 (`# ` to `###### `)
-  - Hyperlink (`[text](url)`)
-  - Photo (`![alt](url)`)
-  Concise plan: Email verification, password reset, SMTP (163-mail), Cloudflare Turnstile
-
-  Overview
+ Overview
   - Purpose: Add secure email verification and password-reset flows so users can verify email and change passwords without admin intervention. Protect verification requests with Cloudflare Turnstile and server-side rate limits. Use your 163-mail SMTP for sending.
 
   Data model (Convex)
