@@ -1,21 +1,62 @@
 # Tong Class Website — Frontend Aesthetics & Contributor Guide
 
-> By [Xiyao Tian](https://github.com/Prince-cjml), last updated Mar 4, 2026
+> By [Xiyao Tian](https://github.com/Prince-cjml), last updated Mar 9, 2026
 
-This repository contains the full website for Tong Class. The backend (Convex) is implemented and should be treated as a finished service; frontend contributors are expected to focus on aesthetic polish, layout, and UX improvements only. See `documents/api.md` for backend API details and how to interact with Convex.
+This repository contains the full website code for Tong Class. The backend (Convex) is implemented and should be treated as a finished service, do **NOT** change any of the backend logic; frontend contributors are expected to focus on aesthetic polish, layout, and UX improvements only. See `documents/api.md` for backend API details and how to interact with Convex.
 
 Quick orientation
 - Backend: Convex — server code lives in `convex/` and the schema is in `convex/schema.ts`. The frontend consumes Convex via `NEXT_PUBLIC_CONVEX_URL` and the generated API in `convex/_generated/api`.
 - Frontend: Next.js (app dir), Tailwind CSS, shadcn/ui components, `src/` contains the UI and hooks.
 
-This README focuses on frontend aesthetics: design tokens, layout, component library, style system, imagery, motion, accessibility, and the practical steps for contributors to implement production-grade visuals.
+This README focuses on a basic development guide, and the requirements for frontend aesthetics: design tokens, layout, component library, style system, imagery, motion, accessibility, and the practical steps for contributors to implement production-grade visuals.
 
 ---
 
 ## 1. Project constraints & what contributors must know
-- The backend is already implemented — do NOT change backend logic unless absolutely necessary. To understand available API endpoints and data shapes, open `documents/api.md`.
-- Frontend changes should call Convex via the hooks in `src/lib/hooks` or the generated `api` client — prefer existing hooks to direct DB calls.
+- The backend is already implemented — do NOT change backend logic unless absolutely necessary. In the latter case, contact [Xiyao Tian](https://github.com/Prince-cjml) or [Shaoheng Yan](https://github.com/PhotonYan). To understand available API endpoints and data shapes, open `documents/api.md`.
+- Frontend changes should call Convex via the hooks in `src/lib/hooks`. Do not directly call Convex from components, and avoid calling Convex directly from generated apis. 
+- The pipeline for development is as follows:
+  1. Request read access to the repository from any of the maintainers: [Xiyao Tian](https://github.com/Prince-cjml), [Shaoheng Yan](https://github.com/PhotonYan), [Yinghan Chen](https://github.com/chenyinghan) and [Jiangyue Zeng](https://github.com/qqqqingmo); 
+  2. Fork this repository on this page first, then clone it locally: 
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/Cyber-TongClass.git
+    cd Cyber-TongClass
+    ```
+  3. Connect your local branch to the original repository to keep it updated:
+    ```bash
+    git remote add upstream https://github.com/Cyber-TongClass/Cyber-TongClass.git
+    ```
+  4. Create a new branch for your changes:
+    ```bash
+    git fetch upstream
+    git checkout -b feature/your-contribution upstream/develop
+    ```
+  5. After making changes, commit and push to your fork. Before making any changes, make sure you pull the latest changes from the original repository to avoid conflicts:
+    ```bash
+    git pull upstream develop
+    # resolve any conflicts if necessary, then add your changes, commit, and push
+    git add . # or specify files to add
+    git commit -m "Your commit message"
+    git push origin feature/your-contribution
+    ```
+  6. Finally, create a pull request on github from your fork's branch to the original repository's `develop` branch. Provide a clear description of your changes and any relevant screenshots or details for reviewers. 
+- For local development, developers must first install Node.js with npm. Then, run the following commands in the project directory:
+  ```bash
+  npm ci
+  npx convex dev
+  npm run dev
+  ```
+  When a convex auth is required, **LOGIN WITHOUT EMAIL**. You do not need to handle the remote database, hence a local Convex instance is sufficient for frontend development. 
 
+  After this process, the frontend will be running at `http://localhost:3000` and the Convex backend will be running at `http://localhost:3001`. The frontend is configured to use the local Convex instance by default, so no additional configuration is needed for API calls.
+
+  Before you create a pull request, make sure you have tested the full feature by running:
+  ```bash
+  npx convex codegen
+  npm run build
+  npm run start
+  ```
+  Only pull request production-ready code that has been tested in a production-like environment (i.e., with `npm run build` and `npm run start`), and ensure that all new features are visually polished, responsive, and accessible. 
 ## 2. Goals for frontend aesthetics
 - Make the site feel polished, academic, and modern while remaining lightweight and accessible.
 - Key deliverables for a publish-ready theme:
@@ -27,6 +68,9 @@ This README focuses on frontend aesthetics: design tokens, layout, component lib
   - Consistent spacing, icons, and imagery strategy
 
 ## 3. Design tokens (single source of truth)
+
+From this point on, the whole `README.md` is written for vibe coding agents. You need not read this part, but feed it to your agent to understand the design system and token strategy for the frontend.
+
 Where: `src/styles/design-system.ts` (or add it if missing). Store tokens both as TypeScript constants and CSS variables for runtime theming.
 
 Here is a list of example tokens for pure demonstration purpose:

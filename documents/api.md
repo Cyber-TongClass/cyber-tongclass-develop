@@ -1,221 +1,279 @@
-# API Documentation
+# API Reference
 
-本文档记录了 tongclass.ac.cn 项目所有的 API 接口。
+This document describes the public and server APIs implemented by the TongClass project (Convex functions, Next.js server routes, and client hooks). It is intended as a developer reference for both frontend and backend integration.
+
+Contents
+- Overview
+- Convex RPC (by module)
+- Next.js HTTP endpoints (/api/*)
+- Client helper hooks (src/lib/api.ts)
+- Email verification / password reset flow
+- Environment variables used by the APIs
+- Notes and examples
 
 ---
 
-## 技术架构
+## Overview
 
-- **后端**: Convex (BaaS)
-- **API风格**: TypeScript Functions
-- **调用方式**: `useQuery` / `useMutation` from `@convex-dev/react`
+- Backend: Convex (serverless functions + database)
+- Runtime server routes: Next.js App Router API routes (under `src/app/api/*`)
+- Client usage: Convex React hooks and wrapper helpers in `src/lib/api.ts`
+
+Two common invocation patterns:
+
+- Client-to-Convex (browser): use the generated `api` via `convex/react` hooks (`useQuery`, `useMutation`). See `src/lib/api.ts` for typed helpers.
+- Server-side (Next API routes): use the Convex HTTP client helper (`getConvexHttpClient()` in `src/lib/server/convex-http`) to call `api.*` from server code.
 
 ---
 
-## 用户 API
+## Convex RPC (summary by module)
 
-### 查询接口
+All Convex functions are available via the generated `convex/_generated/api` utility. Below is a concise summary of the modules and their public functions (name, type, main args, behavior).
 
-#### `users:getById`
-根据用户ID获取用户信息
+Note: type signatures in code are authoritative. This section summarizes common usage.
 
-```typescript
-const user = useQuery(api.users.getById, { id: "user_xxx" })
+### Module: `users`
+- `list` (query)
+  - args: { skip?: number, limit?: number, organization?: 'pku'|'thu', cohort?: number }
+  - returns: array of user objects (paginated slice)
+- `getById` (query)
+  - args: { id: Id }
+  - returns: user object or null
+- `getByEmail` (query)
+  - args: { email: string }
+  - returns: user object or null
+- `getByStudentId` (query)
+  - args: { studentId: string }
+  - returns: user object or null
+- `create` (mutation)
+  - args: { email, username, englishName, organization, cohort, studentId, password?, ...profileFields }
+  - behavior: validates uniqueness, inserts user, optionally creates salted password credential
+  - returns: new user id
+- `update` (mutation)
+  - args: { id, email?, username?, password?, ... }
+  - behavior: updates user, handles password update with salted hash
+  - returns: id
+- `markEmailVerified` (mutation)
+  - args: { userId }
+  - behavior: sets `isEmailVerified` = true
+- `touchVerificationRequest` (mutation)
+  - args: { userId }
+  - behavior: writes `lastVerificationRequestedAt` timestamp
+- `updatePasswordByUserId` (mutation)
+  - args: { userId, newPassword }
+  - behavior: set password (salt+hash)
+- `updatePasswordWithCurrent` (mutation)
+  - args: { userId, currentPassword, newPassword }
+  - behavior: validates current password then updates
+- `updateRole`, `updateProfileMarkdown`, `remove` (mutations) — admin/owner operations
+- `simpleLogin` (mutation)
+  - args: { email, password }
+  - behavior: simplified local login for development; returns success + userId + role
+- `count`, `search` (queries)
+
+### Module: `auth`
+- `isStudentIdAllowed` (query) — checks registration whitelist in `authConfig`
+- `currentUser`, `getUserByEmail`, `currentUserRole`, `isAdmin`, `isSuperAdmin`, `signOut` — lightweight auth-related queries/mutations used by the app
+
+### Module: `emailVerifications`
+- `create` (mutation)
+  - args: { tokenHash, codeHash?, purpose: 'email_verification'|'password_reset', userId?, sentTo, ip?, userAgent?, expiresAt }
+  - behavior: inserts a verification row (token/code hashed before storing)
+- `consume` (mutation)
+  - args: { tokenHash?, codeHash?, sentTo?, purpose }
+  - behavior: validates token/code, marks usedAt, returns { ok, userId?, sentTo?, purpose } or failure reason ('invalid'|'used'|'expired')
+- `getRecentStats` (query)
+  - args: { email, ip?, withinMs }
+  - returns: counts and timestamps used for rate limiting/cooldown logic
+
+### Module: `courseReviews`
+- Queries: `listByCourse`, `listByCourseAll`, `listPending`, `listCourses`
+- Mutations: `create`, `update`, `approve`, `reject`, `remove`, `updateCourseName`
+
+### Module: `courses`
+- Queries: `list`, `getById`, `getByName`, `count`, `search`
+- Mutations: `create`, `update`, `updateReviewStats`, `remove`
+
+### Module: `events`
+- Queries: `list`, `getById`, `count`
+- Mutations: `create`, `update`, `remove`
+
+### Module: `news`
+- Queries: `list` (published), `listAll` (admin), `getById`, `count`
+- Mutations: `create`, `update`, `remove`
+
+### Module: `publications`
+- Queries: `list`, `listByUser`, `getById`, `count`, `search`
+- Mutations: `create`, `update`, `remove`
+
+### Utility modules
+- `seed` (mutation): create seed data (development)
+- `addCredentials` (mutation): helper to add initial credentials
+
+---
+
+## Next.js HTTP endpoints (server routes)
+
+The app exposes REST-like HTTP endpoints under `/api/*` used for email verification and password reset flows. These are server-only and call Convex via the server HTTP client.
+
+All routes accept and return JSON.
+
+### POST /api/request-verification
+- Purpose: request a verification email (email verification or password reset)
+- Request body:
+
+  {
+    "email": "user@domain",
+    "purpose": "email_verification" | "password_reset",
+    "turnstileToken": "..." // optional, when required
+  }
+
+- Behavior:
+  - Validates email and purpose
+  - Checks recent sending stats (rate limit / cooldown)
+  - Optionally verifies Turnstile token if site/ip/email requires extra verification
+  - Generates a random token and 6-digit code, stores hashed values in `emailVerifications` with expiry
+  - Sends email via mailer (Nodemailer) containing a link and code
+
+- Responses (status 200):
+  - { ok: true, message: "If the email exists, a verification message has been sent." }
+  - If in cooldown: { ok: false, cooldownRemainingMs, message }
+  - If requires Turnstile: { ok: false, requiresTurnstile: true, message }
+
+### POST /api/verify-token
+- Purpose: consume a token or a code (used by verify-email and reset-password pages)
+- Request body:
+
+  {
+    "purpose": "email_verification" | "password_reset",
+    "token": "<token-from-link>",    // optional
+    "code": "123456",               // optional
+    "email": "user@domain"          // required when verifying by code
+  }
+
+- Behavior:
+  - Calls `emailVerifications.consume` with hashed token/code
+  - For `email_verification`: marks user email verified (if user exists) and returns a signed email proof
+  - For `password_reset`: returns a signed password-reset proof containing `userId` and `email`
+
+- Responses:
+  - success: { ok: true, message?, proof?, email? }
+  - failure: { ok: false, message } (HTTP 400 for invalid/expired/used)
+
+### POST /api/reset-password
+- Purpose: finish password reset using a signed proof
+- Request body:
+
+  {
+    "proof": "<signed-reset-proof>",
+    "newPassword": "..."
+  }
+
+- Behavior:
+  - Verifies the proof using server-side HMAC + `EMAIL_SIGNING_KEY`
+  - If valid, runs `users.updatePasswordByUserId` to set the new password
+
+- Responses:
+  - success: { ok: true, message: "Password updated successfully." }
+  - failure: { ok: false, message }
+
+### POST /api/complete-email-verification
+- Purpose: attach email verification proof to a newly created user (used in registration flow)
+- Request body:
+
+  {
+    "userId": "convex_user_id",
+    "email": "user@domain",
+    "proof": "<signed-email-proof>"
+  }
+
+- Behavior: verifies proof and marks `isEmailVerified` on the target user
+
+- Responses: { ok: true } or { ok: false, message }
+
+---
+
+## Client helper hooks (src/lib/api.ts)
+
+The project exposes convenience React hooks around Convex `api` calls. These wrap `useQuery` and `useMutation` and are the recommended way to access backend functions from the UI.
+
+Key hooks (examples):
+
+- Authentication
+  - `useCurrentUser()` → returns `useQuery(api.auth.currentUser)`
+  - `useSignUp()` → returns a callback that calls `api.users.create` (sign up)
+  - `useSignIn()` → calls `api.users.simpleLogin` and returns `{ success, userId, email, role }`
+  - `useSimpleLogin()` → raw mutation for development login
+
+- Users
+  - `useUsers({ organization?, cohort?, skip?, limit? })` → `api.users.list`
+  - `useUserById(id)` → `api.users.getById`
+  - `useCreateUser()`, `useUpdateUser()`, `useDeleteUser()` → mutations
+  - `useUpdatePasswordWithCurrent()` → `api.users.updatePasswordWithCurrent`
+
+- News / Events / Publications / Courses / CourseReviews
+  - Hooks mapped to the module functions: `useNews`, `useCreateNews`, `useEvents`, `usePublications`, `useCourses`, `useCourseReviews`, etc.
+
+- Verification helpers
+  - The frontend calls the Next API routes above (`/api/request-verification`, `/api/verify-token`, `/api/reset-password`, `/api/complete-email-verification`) directly via `fetch`.
+
+Examples
+
+```ts
+// Sign up (using helper)
+const signUp = useSignUp()
+await signUp({ email, username, englishName, organization: 'pku', cohort: 2024, studentId, password })
+
+// Query users
+const users = useUsers({ organization: 'pku', cohort: 2024 })
+
+// Request verification (client-side)
+await fetch('/api/request-verification', { method: 'POST', body: JSON.stringify({ email, purpose: 'email_verification' }) })
 ```
 
-**参数**: `id`: 用户ID
+---
+
+## Email verification & password reset flow (implementation notes)
+
+- Tokens & codes:
+  - The system generates a long random token (`generateVerificationToken`) and a 6-digit numeric code (`generateVerificationCode`). Only hashes (SHA-256 hex) are stored in the database (`emailVerifications.tokenHash` / `codeHash`).
+- Proofs:
+  - After consuming a token, the server may return a signed proof (HMAC-SHA256) for email verification and password reset.
+  - Proofs are created with `EMAIL_SIGNING_KEY` and include an expiration timestamp.
+  - Verification functions: `signEmailVerificationProof`, `signPasswordResetProof`, and verification `verifyEmailVerificationProof`, `verifyPasswordResetProof` in `src/lib/server/verification.ts`.
+- Next API route responsibilities:
+  - `/api/request-verification`: throttle/cooldown checks (email & IP), optional Turnstile verification, email sending via server mailer.
+  - `/api/verify-token`: consume token/code and return signed proofs or mark user email verified.
+  - `/api/reset-password`: verify proof and update password.
+  - `/api/complete-email-verification`: attach proof to newly created account (registration flow).
 
 ---
 
-#### `users:list`
-获取用户列表
+## Environment variables used by the API & server routes
 
-```typescript
-const users = useQuery(api.users.list, { 
-  skip: 0, 
-  limit: 20,
-  organization: "pku",
-  cohort: 2024
-})
-```
-
----
-
-#### `users:search`
-搜索用户
-
-```typescript
-const users = useQuery(api.users.search, { query: "张三" })
-```
+- `EMAIL_SIGNING_KEY` (required) — HMAC secret used to sign verification/reset proofs. Must be set on server.
+- `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_API_URL` / `NEXTAUTH_URL` — used to construct verification links (fallbacks supported).
+- Mailer (used by `src/lib/server/mailer`):
+  - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — SMTP transport configuration.
+  - `SMTP_FORCE_AUTH_FROM` — when true, forces envelope From to the authenticated user (useful for providers that require it).
+- Turnstile (optional): `TURNSTILE_SECRET`, `TURNSTILE_SITEKEY` — used to verify human interaction when rate limiting triggers.
+- Token expiry overrides:
+  - `EMAIL_TOKEN_EXPIRY_MIN` (password reset default minutes)
+  - `EMAIL_VERIFY_EXPIRY_MIN` (email verification default minutes)
 
 ---
 
-### 变更接口
+## Error handling and common responses
 
-#### `users:create`
-创建新用户
-
-```typescript
-const userId = useMutation(api.users.create)({
-  email: "xxx@stu.pku.edu.cn",
-  username: "zhangsan",
-  englishName: "John Zhang",
-  organization: "pku",
-  cohort: 2024,
-  studentId: "2100012345",
-})
-```
+- Convex function errors: throw errors on validation/authorization issues; these propagate to client hooks and should be handled by callers.
+- Next API routes return JSON `{ ok: boolean, message?: string, ... }` with HTTP 400 for invalid requests and 500 for server errors.
+- Verification failures: `/api/verify-token` returns 400 with message for invalid/expired/used tokens.
 
 ---
 
-#### `users:update`
-更新用户信息
+## Extending APIs
 
-```typescript
-useMutation(api.users.update)({
-  id: "user_xxx",
-  englishName: "New Name",
-})
-```
+- Add a Convex function in `convex/*.ts` and run `npx convex codegen` (or the project's build) to regenerate `convex/_generated/api`.
+- Add client helpers in `src/lib/api.ts` to expose typed hooks for new functions.
 
----
-
-## 成果 API
-
-### 查询接口
-
-#### `publications:list`
-获取成果列表
-
-```typescript
-const publications = useQuery(api.publications.list, {
-  category: "ML",
-  year: 2024,
-})
-```
-
----
-
-#### `publications:listByUser`
-获取用户的成果列表
-
-```typescript
-const publications = useQuery(api.publications.listByUser, {
-  userId: "user_xxx",
-})
-```
-
----
-
-## 新闻 API
-
-### 查询接口
-
-#### `news:list`
-获取新闻列表
-
-```typescript
-const news = useQuery(api.news.list, {
-  category: "学术",
-})
-```
-
----
-
-## 活动 API
-
-### 查询接口
-
-#### `events:list`
-获取活动列表
-
-```typescript
-const events = useQuery(api.events.list, {
-  fromDate: "2024-01-01",
-  toDate: "2024-12-31",
-})
-```
-
----
-
-## 课程评测 API
-
-### 查询接口
-
-#### `courseReviews:listByCourse`
-获取课程评测列表
-
-```typescript
-const reviews = useQuery(api.courseReviews.listByCourse, {
-  courseName: "人工智能导论",
-})
-```
-
----
-
-#### `courseReviews:listCourses`
-获取所有课程列表
-
-```typescript
-const courses = useQuery(api.courseReviews.listCourses)
-```
-
----
-
-### 变更接口
-
-#### `courseReviews:create`
-提交课程评测
-
-```typescript
-const reviewId = useMutation(api.courseReviews.create)({
-  courseName: "人工智能导论",
-  semester: "2024 Spring",
-  rating: 9,
-  content: "Great course!",
-  isAnonymous: true,
-})
-```
-
----
-
-## 设计思路
-
-### 1. 数据分层
-- 公开数据: 新闻、活动、成果、成员列表
-- 用户私有数据: 个人主页、个人成果
-- 管理数据: 用户管理、审核内容
-
-### 2. 权限控制
-- 通过 Convex 的 action 进行服务端权限验证
-- 前端根据用户角色显示/隐藏功能
-
-### 3. 实时性
-- Convex 内置实时同步
-- 使用 useQuery 自动处理缓存和更新
-
----
-
-## 前端本地认证接口（开发模式）
-
-为保证在未连接 Convex deployment 的本地开发环境中可运行，前端新增了本地认证工具：
-
-- **实现文件**: `src/lib/mock-auth.ts`
-- **会话 Hook**: `src/lib/hooks/use-auth.ts`
-
-### 主要方法
-
-#### `register(input)`
-本地注册账号，写入浏览器 `localStorage`。
-
-#### `signIn(identifier, password)`
-使用邮箱或用户名登录并建立本地会话。
-
-#### `signOut()`
-清除当前会话。
-
-#### `updateCurrentUser(updates)`
-更新当前登录用户资料。
-
-#### `changePassword(currentPassword, nextPassword)`
-修改当前用户密码（本地开发模式）。
+End of document.
