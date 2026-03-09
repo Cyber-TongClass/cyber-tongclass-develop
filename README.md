@@ -40,7 +40,7 @@ This README focuses on a basic development guide, and the requirements for front
     git push origin feature/your-contribution
     ```
   6. Finally, create a pull request on github from your fork's branch to the original repository's `develop` branch. Provide a clear description of your changes and any relevant screenshots or details for reviewers. 
-- For local development, developers must first install Node.js with npm. Then, run the following commands in the project directory:
+- For local development, developers must first install [Node.js with npm](https://nodejs.org/zh-cn/download). Then, run the following commands in the project directory:
   ```bash
   npm ci
   npx convex dev
