@@ -22,7 +22,7 @@ const navigation = [
   { name: "动态", href: "/news" },
   { name: "成员", href: "/members" },
   { name: "成果", href: "/publications" },
-  { name: "资源", href: "/resources", auth: true },
+  { name: "课程", href: "/courses", auth: true },
   { name: "活动", href: "/events" },
   { name: "关于", href: "/about" },
 ]

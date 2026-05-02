@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { MarkdownSplitEditor } from "@/components/markdown/markdown-split-editor"
 import { getUserLinks, getUserPersonalEmails, sanitizePersonalEmails, sanitizeUserLinks } from "@/lib/user-profile"
 import type { UserLink } from "@/types"
-import { Upload, Camera, User } from "lucide-react"
+import { Upload, Camera, User, CheckCircle, XCircle } from "lucide-react"
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
@@ -27,6 +27,30 @@ export default function SettingsPage() {
   const [isSavingProfileMarkdown, setIsSavingProfileMarkdown] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [error, setError] = useState("")
+  const [showSaveToast, setShowSaveToast] = useState(false)
+  const [saveToastOpacity, setSaveToastOpacity] = useState(0)
+  const [saveToastMessage, setSaveToastMessage] = useState("")
+  const [saveToastType, setSaveToastType] = useState<"success" | "error" | "info">("info")
+  const saveToastTimerRef = useRef<number | null>(null)
+
+  const showToast = (type: "success" | "error" | "info", message: string, duration = 2000) => {
+    setSaveToastType(type)
+    setSaveToastMessage(message)
+    setShowSaveToast(true)
+    setSaveToastOpacity(1)
+    if (saveToastTimerRef.current) window.clearTimeout(saveToastTimerRef.current)
+    saveToastTimerRef.current = window.setTimeout(() => {
+      setSaveToastOpacity(0)
+      saveToastTimerRef.current = window.setTimeout(() => setShowSaveToast(false), 300)
+    }, duration)
+
+    if (type === "error") {
+      // scroll to top so the toast and error message are visible
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" })
+      }
+    }
+  }
 
   // Profile form
   const [englishName, setEnglishName] = useState("")
@@ -93,28 +117,36 @@ export default function SettingsPage() {
     }
   }, [authLoading, isAuthenticated, router])
 
+  // Initialize form state when the user first loads (or when switching accounts).
+  // Avoid re-initializing on every `currentUser` change to prevent overwriting
+  // in-progress, unsaved edits (e.g., saving markdown should not reset other fields).
+  const initializedUserRef = useRef<string | null>(null)
   useEffect(() => {
-    if (currentUser) {
-      setEnglishName(currentUser.englishName || "")
-      setChineseName(currentUser.chineseName || "")
-      setPersonalEmails(getUserPersonalEmails(currentUser))
-      setBio(currentUser.bio || "")
-      setProfileMarkdown(currentUser.profileMarkdown || "")
-      setResearchInterests(currentUser.researchInterests || [])
-      setLinks(getUserLinks(currentUser))
-      setAvatar(currentUser.avatar)
-      setRealPhoto(currentUser.realPhoto)
-      if (currentUser.avatar) setAvatarPreview(currentUser.avatar)
-      if (currentUser.realPhoto) setRealPhotoPreview(currentUser.realPhoto)
-    }
+    if (!currentUser) return
+    if (initializedUserRef.current === currentUser._id) return
+    initializedUserRef.current = currentUser._id
+
+    setEnglishName(currentUser.englishName || "")
+    setChineseName(currentUser.chineseName || "")
+    setPersonalEmails(getUserPersonalEmails(currentUser))
+    setBio(currentUser.bio || "")
+    setProfileMarkdown(currentUser.profileMarkdown || "")
+    setResearchInterests(currentUser.researchInterests || [])
+    setLinks(getUserLinks(currentUser))
+    setAvatar(currentUser.avatar)
+    setRealPhoto(currentUser.realPhoto)
+    if (currentUser.avatar) setAvatarPreview(currentUser.avatar)
+    if (currentUser.realPhoto) setRealPhotoPreview(currentUser.realPhoto)
   }, [currentUser])
 
   const handleSaveProfile = async () => {
     if (!currentUser) return
 
     if (!englishName.trim() || !chineseName.trim()) {
-      setError("English name and Chinese name are required")
+      const msg = "English name and Chinese name are required"
+      setError(msg)
       setSuccessMessage("")
+      showToast("error", msg)
       return
     }
 
@@ -129,6 +161,8 @@ export default function SettingsPage() {
         chineseName: chineseName.trim(),
         personalEmails: sanitizePersonalEmails(personalEmails),
         bio: bio.trim(),
+        // Also persist profile markdown when saving the profile form
+        profileMarkdown,
         researchInterests: researchInterests
           .map((interest) => interest.trim())
           .filter(Boolean),
@@ -138,9 +172,12 @@ export default function SettingsPage() {
       })
 
       setSuccessMessage("Profile updated successfully!")
+      showToast("success", "Profile updated successfully!", 2000)
       setTimeout(() => setSuccessMessage(""), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update profile")
+      const msg = err instanceof Error ? err.message : "Failed to update profile"
+      setError(msg)
+      showToast("error", msg, 4000)
     } finally {
       setIsSubmitting(false)
     }
@@ -160,9 +197,12 @@ export default function SettingsPage() {
       } as any)
 
       setSuccessMessage("Profile markdown updated successfully!")
+      showToast("success", "Profile markdown updated successfully!", 2000)
       setTimeout(() => setSuccessMessage(""), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update profile markdown")
+      const msg = err instanceof Error ? err.message : "Failed to update profile markdown"
+      setError(msg)
+      showToast("error", msg, 4000)
     } finally {
       setIsSavingProfileMarkdown(false)
     }
@@ -233,6 +273,26 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
+      {showSaveToast && (
+        <div className="fixed top-4 right-4 z-50 pointer-events-none">
+          <div
+            className={
+              "flex items-center gap-3 px-4 py-2 rounded-md shadow-lg transition-opacity duration-300 font-sans font-bold text-white text-lg " +
+              (saveToastType === "success" ? "bg-green-600" : saveToastType === "error" ? "bg-red-600" : "bg-black/80")
+            }
+            style={{ opacity: saveToastOpacity }}
+          >
+            <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white/10">
+              {saveToastType === "success" ? (
+                <CheckCircle className="h-5 w-5 text-white" />
+              ) : saveToastType === "error" ? (
+                <XCircle className="h-5 w-5 text-white" />
+              ) : null}
+            </span>
+            <span>{saveToastMessage}</span>
+          </div>
+        </div>
+      )}
       <div className="max-w-3xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
 
@@ -443,7 +503,11 @@ export default function SettingsPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleSaveProfile} disabled={isSubmitting}>
+            <Button
+              onClick={handleSaveProfile}
+              disabled={isSubmitting}
+              className={isSubmitting ? "opacity-70 grayscale" : ""}
+            >
               {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </CardFooter>

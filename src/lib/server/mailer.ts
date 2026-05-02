@@ -23,6 +23,46 @@ function getTransporter() {
     })
 }
 
+async function sendViaMailtrapApi(opts: {
+    to: string
+    subject: string
+    text?: string
+    html?: string
+}) {
+    const token = process.env.MAILTRAP_API_TOKEN
+    if (!token) throw new Error("MAILTRAP_API_TOKEN not configured")
+
+    // dynamic import so package is optional
+    const mod = await import("mailtrap").catch((err) => {
+        throw new Error("mailtrap package not available: " + String(err))
+    })
+    const { MailtrapClient } = mod
+    const client = new MailtrapClient({ token })
+
+    const senderEmail = process.env.MAILTRAP_SENDER_EMAIL || DEFAULT_FROM
+    const senderName = process.env.MAILTRAP_SENDER_NAME || "TongClass"
+
+    const from = {
+        email: senderEmail,
+        name: senderName,
+    }
+
+    const recipients = [
+        {
+            email: opts.to,
+        },
+    ]
+
+    return client.send({
+        from,
+        to: recipients,
+        subject: opts.subject,
+        text: opts.text,
+        html: opts.html,
+        category: "Verification",
+    })
+}
+
 export async function sendVerificationEmail(params: {
     to: string
     purpose: VerificationMailPurpose
@@ -30,18 +70,37 @@ export async function sendVerificationEmail(params: {
     code: string
     expiryMinutes: number
 }) {
-    const transporter = getTransporter()
-    const smtpUser = process.env.SMTP_USER
-    if (!smtpUser) {
-        throw new Error("SMTP_USER is not configured")
-    }
-
     const { subject, html, text } = buildVerificationEmailContent({
         purpose: params.purpose,
         link: params.link,
         code: params.code,
         expiryMinutes: params.expiryMinutes,
     })
+
+    // Prefer Mailtrap API when token present
+    const mailtrapToken = process.env.MAILTRAP_API_TOKEN
+    if (mailtrapToken) {
+        try {
+            await sendViaMailtrapApi({
+                to: params.to,
+                subject,
+                text,
+                html,
+            })
+            return
+        } catch (err) {
+            // if Mailtrap API fails, fallthrough to SMTP path
+            // log and continue
+            console.error("Mailtrap API send failed:", err)
+        }
+    }
+
+    // Fallback to SMTP
+    const transporter = getTransporter()
+    const smtpUser = process.env.SMTP_USER
+    if (!smtpUser) {
+        throw new Error("SMTP_USER is not configured")
+    }
 
     const preferredFrom = process.env.SMTP_FROM || DEFAULT_FROM
     const forceAuthFrom = process.env.SMTP_FORCE_AUTH_FROM !== "false"

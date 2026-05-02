@@ -140,7 +140,22 @@ export const remove = mutation({
       throw new Error("Course not found")
     }
 
-    await ctx.db.delete(args.id)
+    // Soft-delete the course so we keep a record
+    await ctx.db.patch(args.id, { isActive: false, removedAt: Date.now(), updatedAt: Date.now() })
+
+    // Mark related reviews inactive and add a removed-course tag
+    const tag = `[removed course] ${course.name}`
+    const reviews = await ctx.db
+      .query("courseReviews")
+      .filter((q) => q.eq(q.field("courseName"), course.name))
+      .collect()
+
+    for (const review of reviews) {
+      const existingTags = Array.isArray(review.tags) ? review.tags : []
+      const nextTags = existingTags.includes(tag) ? existingTags : [...existingTags, tag]
+      await ctx.db.patch(review._id, { tags: nextTags, active: false, updatedAt: Date.now() })
+    }
+
     return args.id
   },
 })

@@ -40,6 +40,7 @@ export interface User {
   realPhoto?: string
   isEmailVerified?: boolean
   lastVerificationRequestedAt?: number
+  approvedContributions?: number
   createdAt: number
   updatedAt: number
 }
@@ -80,6 +81,8 @@ export interface CourseReview {
   isAnonymous: boolean
   authorId?: string // Optional, for admin
   status: 'pending' | 'approved' | 'rejected'
+  tags?: string[]
+  active?: boolean
   createdAt: number
   updatedAt: number
 }
@@ -88,6 +91,8 @@ export interface Course {
   _id: string
   name: string
   isTongClassCourse?: boolean
+  isActive?: boolean
+  removedAt?: number
   reviewCount: number
   averageRating: number
   createdAt: number

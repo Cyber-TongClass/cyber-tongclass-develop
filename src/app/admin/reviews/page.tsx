@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,8 +45,15 @@ import {
   useCreateCourse,
   useCreateCourseReview,
   useDeleteCourseReview,
+  useDeleteCourse,
   useRejectCourseReview,
   useUpdateCourse,
+  useAssignReviewsByTags,
+  useCommonReviewTags,
+  useEditReviewTag,
+  useReviewTags,
+  useSetReviewTagColor,
+  useUpdateCourseReview,
 } from "@/lib/api"
 import type { Course, CourseReview } from "@/types"
 
@@ -79,6 +86,35 @@ const statusColors: Record<CourseReview["status"], string> = {
   pending: "bg-yellow-100 text-yellow-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
+}
+
+const TAG_PALETTE = [
+  { bg: "#E8F5E9", text: "#1B5E20", border: "#C8E6C9" },
+  { bg: "#E3F2FD", text: "#0D47A1", border: "#BBDEFB" },
+  { bg: "#FFF3E0", text: "#E65100", border: "#FFE0B2" },
+  { bg: "#F3E5F5", text: "#4A148C", border: "#E1BEE7" },
+  { bg: "#E0F7FA", text: "#006064", border: "#B2EBF2" },
+  { bg: "#FFFDE7", text: "#827717", border: "#FFF9C4" },
+  { bg: "#FBE9E7", text: "#BF360C", border: "#FFCCBC" },
+  { bg: "#ECEFF1", text: "#263238", border: "#CFD8DC" },
+] as const
+
+const hashTag = (tag: string) => {
+  const bytes = new TextEncoder().encode(tag)
+  let hash = 0
+  for (const b of bytes) {
+    hash = (hash * 31 + b) % 1_000_000
+  }
+  return hash
+}
+
+const getReadableTextColor = (hexColor: string) => {
+  const hex = hexColor.replace("#", "")
+  const r = parseInt(hex.slice(0, 2), 16) / 255
+  const g = parseInt(hex.slice(2, 4), 16) / 255
+  const b = parseInt(hex.slice(4, 6), 16) / 255
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return luminance > 0.6 ? "#1F2937" : "#FFFFFF"
 }
 
 function createEmptyReviewForm(currentYear: number, defaultCourseName = ""): ReviewFormState {
@@ -153,6 +189,14 @@ export default function ReviewsPage() {
   const [courseError, setCourseError] = useState("")
   const [courseName, setCourseName] = useState("")
   const [courseIsTongClass, setCourseIsTongClass] = useState(false)
+  const [tagEditMode, setTagEditMode] = useState(false)
+  const [tagEditValue, setTagEditValue] = useState("")
+  const [assignTagsInput, setAssignTagsInput] = useState("")
+  const [assignTargetCourse, setAssignTargetCourse] = useState<string | "">("")
+  const [tagEditFrom, setTagEditFrom] = useState("")
+  const [tagEditTo, setTagEditTo] = useState("")
+  const [tagEditAction, setTagEditAction] = useState<"rename" | "delete" | "setColor">("setColor")
+  const [tagEditColor, setTagEditColor] = useState("#2563EB")
 
   const coursesData = useCourses()
   const courses: Course[] = coursesData || []
@@ -164,8 +208,15 @@ export default function ReviewsPage() {
   const approveReview = useApproveCourseReview()
   const rejectReview = useRejectCourseReview()
   const deleteReview = useDeleteCourseReview()
+  const deleteCourse = useDeleteCourse()
   const createCourse = useCreateCourse()
   const updateCourse = useUpdateCourse()
+  const assignByTags = useAssignReviewsByTags()
+  const commonTagList = useCommonReviewTags() || []
+  const reviewTags = useReviewTags() || []
+  const editTag = useEditReviewTag()
+  const setTagColor = useSetReviewTagColor()
+  const updateReview = useUpdateCourseReview()
 
   const [reviewForm, setReviewForm] = useState<ReviewFormState>(() =>
     createEmptyReviewForm(currentYear, courses[0]?.name ?? "")
@@ -178,6 +229,17 @@ export default function ReviewsPage() {
   }, [courses, reviewForm.courseName])
 
   const { confirm, ConfirmDialog } = useConfirmDialog()
+  const [showToast, setShowToast] = useState(false)
+  const [toastMsg, setToastMsg] = useState("")
+  const [toastType, setToastType] = useState<"success" | "error" | "info">("info")
+  const toastTimer = useRef<number | null>(null)
+  const showAdminToast = (type: "success" | "error" | "info", msg: string, duration = 2000) => {
+    setToastType(type)
+    setToastMsg(msg)
+    setShowToast(true)
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setShowToast(false), duration)
+  }
 
   const filteredReviews = reviews.filter((review) => {
     const query = searchQuery.trim().toLowerCase()
@@ -194,6 +256,53 @@ export default function ReviewsPage() {
     () => reviews.find((review) => review._id === selectedReviewId) ?? null,
     [reviews, selectedReviewId]
   )
+
+  const tagColorMap = useMemo(() => {
+    return new Map(reviewTags.map((item: { name: string; color?: string }) => [item.name, item.color]))
+  }, [reviewTags])
+
+  const getHashedTagColor = (tag: string) => {
+    return TAG_PALETTE[hashTag(tag) % TAG_PALETTE.length].bg
+  }
+
+  const tagChoices = useMemo(() => {
+    if (reviewTags.length > 0) {
+      return reviewTags
+    }
+    return commonTagList.map((name: string) => ({ name }))
+  }, [reviewTags, commonTagList])
+
+  const getTagStyle = (tag: string) => {
+    const override = tagColorMap.get(tag)
+    if (override) {
+      return {
+        backgroundColor: override,
+        borderColor: override,
+        color: getReadableTextColor(override),
+      }
+    }
+    const palette = TAG_PALETTE[hashTag(tag) % TAG_PALETTE.length]
+    return {
+      backgroundColor: palette.bg,
+      borderColor: palette.border,
+      color: palette.text,
+    }
+  }
+
+  useEffect(() => {
+    setTagEditValue(selectedReview?.tags?.join(", ") || "")
+    setTagEditMode(false)
+  }, [selectedReview])
+
+  useEffect(() => {
+    if (!tagEditFrom.trim()) return
+    const nextColor = tagColorMap.get(tagEditFrom)
+    if (nextColor) {
+      setTagEditColor(nextColor)
+      return
+    }
+    setTagEditColor(getHashedTagColor(tagEditFrom))
+  }, [tagEditFrom, tagColorMap])
 
   const resetManualForm = () => {
     setManualAddError("")
@@ -701,10 +810,35 @@ export default function ReviewsPage() {
                   <TableCell>{course.reviewCount}</TableCell>
                   <TableCell>{course.averageRating.toFixed(1)}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => openEditCourseDialog(course)}>
-                      <Pencil className="mr-1 h-4 w-4" />
-                      编辑
-                    </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openEditCourseDialog(course)}>
+                          <Pencil className="mr-1 h-4 w-4" />
+                          编辑
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() =>
+                            confirm({
+                              title: "确认删除课程",
+                              description: `将删除课程「${course.name}」，并可能影响关联的评测数据。此操作不可撤销。`,
+                              confirmLabel: "删除",
+                              variant: "danger",
+                              onConfirm: async () => {
+                                try {
+                                  await deleteCourse({ id: course._id as any })
+                                  showAdminToast("success", `已删除课程：${course.name}`)
+                                } catch (err) {
+                                  showAdminToast("error", `删除失败：${err instanceof Error ? err.message : String(err)}`)
+                                }
+                              },
+                            })
+                          }
+                        >
+                          <Trash2 className="mr-1 h-4 w-4" />
+                          删除
+                        </Button>
+                      </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -742,6 +876,170 @@ export default function ReviewsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="text-lg">按标签批量归类评测</CardTitle>
+          </CardHeader>
+          <CardContent className="h-full flex flex-col">
+            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 items-start">
+              <div>
+                <Label>标签（逗号分隔）</Label>
+                <Input value={assignTagsInput} onChange={(e) => setAssignTagsInput(e.target.value)} placeholder="例如: shuike, haoke" />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {tagChoices.map((item: { name: string }) => (
+                    <Button
+                      key={item.name}
+                      size="sm"
+                      variant="outline"
+                      style={getTagStyle(item.name)}
+                      onClick={() => setAssignTagsInput((prev) => (prev ? prev + ", " + item.name : item.name))}
+                    >
+                      {item.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label>目标课程</Label>
+                <select className="h-10 rounded-md border border-input bg-background px-3 w-full" value={assignTargetCourse} onChange={(e) => setAssignTargetCourse(e.target.value)}>
+                  <option value="">请选择课程</option>
+                  {courses.map((c) => (
+                    <option key={c._id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <div className="flex justify-end mt-2">
+                  <Button onClick={async () => {
+                    const tags = assignTagsInput.split(",").map(s => s.trim()).filter(Boolean)
+                    if (tags.length === 0) { showAdminToast("error", "请填写至少一个标签"); return }
+                    if (!assignTargetCourse) { showAdminToast("error", "请选择目标课程"); return }
+                    try {
+                      const count = await assignByTags({ tags, targetCourseName: assignTargetCourse })
+                      showAdminToast("success", `已分配 ${count} 条评测到 ${assignTargetCourse}`)
+                    } catch (err) {
+                      showAdminToast("error", `分配失败：${err instanceof Error ? err.message : String(err)}`)
+                    }
+                  }}>
+                    批量归类
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="text-lg">标签编辑</CardTitle>
+          </CardHeader>
+          <CardContent className="h-full flex flex-col gap-4">
+            <div className="space-y-3">
+              <div>
+                <Label>要编辑的标签</Label>
+                <Input
+                  value={tagEditFrom}
+                  onChange={(e) => setTagEditFrom(e.target.value)}
+                  placeholder="例如: shuike（输入并保存即可创建新标签）"
+                />
+                <p className="text-xs text-muted-foreground mt-1">填写新标签名并保存，即可创建新的标签。</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {tagChoices.map((item: { name: string }) => (
+                    <Button
+                      key={item.name}
+                      size="sm"
+                      variant="outline"
+                      style={getTagStyle(item.name)}
+                      onClick={() => setTagEditFrom(item.name)}
+                    >
+                      {item.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label>操作</Label>
+                <select
+                  className="h-10 rounded-md border border-input bg-background px-3 w-full"
+                  value={tagEditAction}
+                  onChange={(e) => setTagEditAction(e.target.value as "rename" | "delete" | "setColor")}
+                >
+                  <option value="setColor">设置颜色 / 创建</option>
+                  <option value="rename">重命名</option>
+                  <option value="delete">删除</option>
+                </select>
+              </div>
+
+              {(tagEditAction === "rename" || tagEditAction === "setColor") && (
+                <div>
+                  <Label>标签颜色</Label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={tagEditColor}
+                      onChange={(e) => setTagEditColor(e.target.value)}
+                      className="h-10 w-12 rounded border border-input bg-background"
+                    />
+                    <Input value={tagEditColor} onChange={(e) => setTagEditColor(e.target.value)} />
+                  </div>
+                </div>
+              )}
+
+              {tagEditAction === "rename" && (
+                <div>
+                  <Label>新的标签名</Label>
+                  <Input value={tagEditTo} onChange={(e) => setTagEditTo(e.target.value)} placeholder="例如: haoke" />
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <Button
+                onClick={async () => {
+                  const oldTag = tagEditFrom.trim()
+                  const newTag = tagEditTo.trim()
+                  if (!oldTag) {
+                    showAdminToast("error", "请填写要编辑的标签")
+                    return
+                  }
+                  if (tagEditAction === "rename" && !newTag) {
+                    showAdminToast("error", "请填写新的标签名")
+                    return
+                  }
+                  try {
+                    if (tagEditAction === "setColor") {
+                      await setTagColor({ tag: oldTag, color: tagEditColor })
+                      showAdminToast("success", "标签颜色已更新")
+                      return
+                    }
+
+                    const count = await editTag({
+                      oldTag,
+                      action: tagEditAction === "rename" ? "rename" : "delete",
+                      newTag: tagEditAction === "rename" ? newTag : undefined,
+                    })
+
+                    if (tagEditAction === "rename") {
+                      await setTagColor({ tag: newTag, color: tagEditColor })
+                    }
+
+                    showAdminToast("success", `已更新 ${count} 条评测标签`)
+                  } catch (err) {
+                    showAdminToast("error", `更新失败：${err instanceof Error ? err.message : String(err)}`)
+                  }
+                }}
+              >
+                保存更改
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardContent className="pt-6">
@@ -892,6 +1190,65 @@ export default function ReviewsPage() {
                 )}
               </div>
 
+              <div className="mt-3">
+                <p className="text-sm text-gray-500">标签</p>
+                {!tagEditMode ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex flex-wrap gap-2">
+                      {(selectedReview.tags || []).map((t: string) => (
+                        <span
+                          key={t}
+                          className="rounded-full border px-2 py-0.5 text-xs font-medium"
+                          style={getTagStyle(t)}
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setTagEditMode(true)}>
+                      <Pencil className="mr-2 h-4 w-4" /> 编辑
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    <Input value={tagEditValue} onChange={(e) => setTagEditValue(e.target.value)} placeholder="用逗号分隔标签" />
+                    <div className="flex gap-2 flex-wrap">
+                      {tagChoices.map((item: { name: string }) => (
+                        <Button
+                          key={item.name}
+                          size="sm"
+                          variant="outline"
+                          style={getTagStyle(item.name)}
+                          onClick={() => setTagEditValue((prev) => (prev ? prev + ", " + item.name : item.name))}
+                        >
+                          {item.name}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={async () => {
+                          const tags = tagEditValue.split(",").map((s) => s.trim()).filter(Boolean)
+                          try {
+                            await updateReview({ id: selectedReview._id as any, tags })
+                            showAdminToast("success", "标签已保存")
+                            setTagEditMode(false)
+                          } catch (error) {
+                            console.error(error)
+                            showAdminToast("error", "保存标签失败")
+                          }
+                        }}
+                      >
+                        保存
+                      </Button>
+                      <Button variant="outline" onClick={() => { setTagEditMode(false); setTagEditValue((selectedReview?.tags || []).join(", ")) }}>
+                        取消
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <p className="text-sm text-gray-500">评价内容</p>
                 <p className="mt-1 whitespace-pre-wrap">{selectedReview.content}</p>
@@ -937,6 +1294,11 @@ export default function ReviewsPage() {
       </div>
 
       <ConfirmDialog />
+      {showToast && (
+        <div className={`fixed right-6 bottom-6 z-50 rounded-md px-4 py-3 text-white ${toastType === "success" ? "bg-green-600" : toastType === "error" ? "bg-red-600" : "bg-black/80"}`} style={{ transition: "opacity 200ms" }}>
+          {toastMsg}
+        </div>
+      )}
     </div>
   )
 }

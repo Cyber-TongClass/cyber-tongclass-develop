@@ -38,6 +38,8 @@ export default defineSchema({
     realPhoto: v.optional(v.string()),
     isEmailVerified: v.boolean(),
     lastVerificationRequestedAt: v.optional(v.number()),
+    // Track approvals for moderation reputation
+    approvedContributions: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -83,6 +85,9 @@ export default defineSchema({
     content: v.string(),
     isAnonymous: v.boolean(),
     authorId: v.optional(v.id("users")),
+    // New fields: tags and active flag (optional for migration)
+    tags: v.optional(v.array(v.string())),
+    active: v.optional(v.boolean()),
     status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -91,6 +96,15 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_instructor", ["instructor"])
     .index("by_semester", ["semesterYear", "semesterTerm"]),
+
+  // Review tag metadata (color, etc.)
+  reviewTags: defineTable({
+    name: v.string(),
+    color: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_name", ["name"]),
 
   // News table
   news: defineTable({
@@ -129,6 +143,9 @@ export default defineSchema({
   courses: defineTable({
     name: v.string(),
     isTongClassCourse: v.optional(v.boolean()),
+    // Soft-delete support
+    isActive: v.optional(v.boolean()),
+    removedAt: v.optional(v.number()),
     reviewCount: v.number(),
     averageRating: v.number(),
     createdAt: v.number(),

@@ -327,6 +327,10 @@ export function useUpdateCourseReview() {
   return useMutation(api.courseReviews.update)
 }
 
+export function useEditReviewTag() {
+  return useMutation(api.courseReviews.editTag)
+}
+
 export function useApproveCourseReview() {
   return useMutation(api.courseReviews.approve)
 }
@@ -338,6 +342,22 @@ export function useRejectCourseReview() {
 export function useDeleteCourseReview() {
   const remove = useMutation(api.courseReviews.remove)
   return useCallback((input: IdLike) => remove(toIdArg(input) as any), [remove])
+}
+
+export function useAssignReviewsByTags() {
+  return useMutation(api.courseReviews.assignByTags)
+}
+
+export function useReviewTags() {
+  return useQuery(api.courseReviews.listTags)
+}
+
+export function useSetReviewTagColor() {
+  return useMutation(api.courseReviews.setTagColor)
+}
+
+export function useCommonReviewTags() {
+  return useQuery(api.courseReviews.commonTags)
 }
 
 // ==================== 认证操作 ====================
