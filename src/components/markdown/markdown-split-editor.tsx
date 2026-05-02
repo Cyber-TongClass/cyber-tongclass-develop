@@ -213,12 +213,12 @@ export function MarkdownSplitEditor({
         {showSource && (
           <div className="space-y-2">
             <p className="text-sm font-medium text-foreground">{sourceLabel}</p>
-            <div className={cn("relative overflow-hidden rounded-md border bg-slate-950/95", minHeightClassName)}>
+            <div className={cn("relative rounded-md border bg-slate-950/95", minHeightClassName)}>
               <pre
                 ref={sourcePreviewRef}
                 aria-hidden
                 className={cn(
-                  "pointer-events-none overflow-auto p-3 font-mono text-sm leading-6 text-slate-100",
+                  "pointer-events-none overflow-auto p-3 font-mono text-sm leading-6 text-slate-100 whitespace-pre-wrap break-words",
                   "[&_.md-token-heading]:text-sky-300 [&_.md-token-link]:text-cyan-300 [&_.md-token-image]:text-teal-300",
                   "[&_.md-token-inline-code]:rounded [&_.md-token-inline-code]:bg-slate-800 [&_.md-token-inline-code]:px-1",
                   "[&_.md-token-strong]:font-semibold [&_.md-token-strong]:text-amber-300",
@@ -236,7 +236,7 @@ export function MarkdownSplitEditor({
                 onScroll={syncSourceScroll}
                 placeholder={placeholder}
                 className={cn(
-                  "absolute inset-0 z-10 resize-y border-0 bg-transparent font-mono text-sm leading-6 text-transparent caret-slate-100",
+                  "absolute inset-0 z-10 resize-y border-0 bg-transparent font-mono text-sm leading-6 text-transparent caret-slate-100 whitespace-pre-wrap break-words p-3",
                   "selection:bg-primary/30 selection:text-slate-100",
                   minHeightClassName,
                   textareaClassName

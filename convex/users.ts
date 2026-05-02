@@ -8,6 +8,81 @@ const PROFILE_MARKDOWN_MAX_LENGTH = 20_000
 const PASSWORD_MIN_LENGTH = 8
 
 const normalizeProfileMarkdown = (value: string) => value.replace(/\r\n/g, "\n").trim()
+const normalizeOptionalString = (value?: string) => {
+    if (value === undefined) return undefined
+    const trimmed = value.trim()
+    return trimmed ? trimmed : ""
+}
+
+const normalizeStringList = (values?: string[]) => {
+    if (!values) return undefined
+
+    const seen = new Set<string>()
+    const normalized = values
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .filter((value) => {
+            const key = value.toLowerCase()
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+        })
+
+    return normalized
+}
+
+const linkTypeValidator = v.union(
+    v.literal("homepage"),
+    v.literal("scholar"),
+    v.literal("orcid"),
+    v.literal("github"),
+    v.literal("x"),
+    v.literal("xiaohongshu"),
+    v.literal("linkedin"),
+    v.literal("custom")
+)
+
+const getDefaultLinkLabel = (type: "homepage" | "scholar" | "orcid" | "github" | "x" | "xiaohongshu" | "linkedin" | "custom") => {
+    const labels = {
+        homepage: "Personal Homepage",
+        scholar: "Google Scholar",
+        orcid: "ORCID",
+        github: "GitHub",
+        x: "X",
+        xiaohongshu: "Xiaohongshu",
+        linkedin: "LinkedIn",
+        custom: "Custom Link",
+    } as const
+
+    return labels[type]
+}
+
+const normalizeLinks = (links?: Array<{ type: "homepage" | "scholar" | "orcid" | "github" | "x" | "xiaohongshu" | "linkedin" | "custom"; label: string; url: string }>) => {
+    if (!links) return undefined
+
+    const seen = new Set<string>()
+    const normalized = links
+        .map((link) => {
+            const url = link.url.trim()
+            if (!url) return null
+
+            const label = link.label.trim() || getDefaultLinkLabel(link.type)
+            return {
+                type: link.type,
+                label,
+                url,
+            }
+        })
+        .filter((link): link is { type: "homepage" | "scholar" | "orcid" | "github" | "x" | "xiaohongshu" | "linkedin" | "custom"; label: string; url: string } => Boolean(link))
+        .filter((link) => {
+            const key = `${link.type}::${link.label.toLowerCase()}::${link.url.toLowerCase()}`
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+        })
+
+    return normalized
+}
 
 const pickDefined = <T extends Record<string, any>>(input: T) => {
     return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined)) as Partial<T>
@@ -97,15 +172,18 @@ export const create = mutation({
         email: v.string(),
         username: v.string(),
         englishName: v.string(),
+        chineseName: v.optional(v.string()),
         organization: v.union(v.literal("pku"), v.literal("thu")),
         cohort: v.number(),
         studentId: v.string(),
         role: v.optional(v.union(v.literal("member"), v.literal("admin"), v.literal("super_admin"))),
         password: v.optional(v.string()),
+        personalEmails: v.optional(v.array(v.string())),
         personalEmail: v.optional(v.string()),
         bio: v.optional(v.string()),
         profileMarkdown: v.optional(v.string()),
         researchInterests: v.optional(v.array(v.string())),
+        links: v.optional(v.array(v.object({ type: linkTypeValidator, label: v.string(), url: v.string() }))),
         titles: v.optional(v.array(v.object({ title: v.string(), link: v.string() }))),
         scholarUrl: v.optional(v.string()),
         orcidUrl: v.optional(v.string()),
@@ -150,14 +228,17 @@ export const create = mutation({
             email,
             username,
             englishName: args.englishName.trim(),
+            chineseName: normalizeOptionalString(args.chineseName),
             role: args.role || "member",
             organization: args.organization,
             cohort: args.cohort,
             studentId,
+            personalEmails: normalizeStringList(args.personalEmails),
             personalEmail: args.personalEmail,
-            bio: args.bio,
+            bio: normalizeOptionalString(args.bio),
             profileMarkdown: args.profileMarkdown ? normalizeProfileMarkdown(args.profileMarkdown) : undefined,
-            researchInterests: args.researchInterests,
+            researchInterests: normalizeStringList(args.researchInterests),
+            links: normalizeLinks(args.links),
             titles: args.titles,
             scholarUrl: args.scholarUrl,
             orcidUrl: args.orcidUrl,
@@ -202,15 +283,18 @@ export const update = mutation({
         email: v.optional(v.string()),
         username: v.optional(v.string()),
         englishName: v.optional(v.string()),
+        chineseName: v.optional(v.string()),
         organization: v.optional(v.union(v.literal("pku"), v.literal("thu"))),
         cohort: v.optional(v.number()),
         studentId: v.optional(v.string()),
         role: v.optional(v.union(v.literal("member"), v.literal("admin"), v.literal("super_admin"))),
         password: v.optional(v.string()),
+        personalEmails: v.optional(v.array(v.string())),
         personalEmail: v.optional(v.string()),
         bio: v.optional(v.string()),
         profileMarkdown: v.optional(v.string()),
         researchInterests: v.optional(v.array(v.string())),
+        links: v.optional(v.array(v.object({ type: linkTypeValidator, label: v.string(), url: v.string() }))),
         titles: v.optional(v.array(v.object({ title: v.string(), link: v.string() }))),
         scholarUrl: v.optional(v.string()),
         orcidUrl: v.optional(v.string()),
@@ -269,6 +353,12 @@ export const update = mutation({
 
         const patchData = pickDefined({
             ...updates,
+            englishName: updates.englishName?.trim(),
+            chineseName: normalizeOptionalString(updates.chineseName),
+            personalEmails: normalizeStringList(updates.personalEmails),
+            bio: normalizeOptionalString(updates.bio),
+            researchInterests: normalizeStringList(updates.researchInterests),
+            links: normalizeLinks(updates.links),
             profileMarkdown: updates.profileMarkdown ? normalizeProfileMarkdown(updates.profileMarkdown) : updates.profileMarkdown,
             email: nextEmail,
             username: nextUsername,

@@ -38,7 +38,11 @@ export default function AdminLayout({
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { isAuthenticated, isAdmin, isLoading } = useAuth()
+  const { isAuthenticated, isAdmin, isSuperAdmin, isLoading } = useAuth()
+
+  const adminAllowedPrefixes = ["/admin/news", "/admin/events", "/admin/reviews"]
+  const isAdminAllowed =
+    isSuperAdmin || adminAllowedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 
   // Permission check - redirect if not admin
   useEffect(() => {
@@ -99,6 +103,28 @@ export default function AdminLayout({
     )
   }
 
+  if (!isAdminAllowed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle>你没有权限访问此功能</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">如需访问该功能，请联系超级管理员。</p>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/admin/reviews">前往评测审核</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const visibleNavItems = isSuperAdmin
+    ? navItems
+    : navItems.filter((item) => adminAllowedPrefixes.includes(item.href))
+
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
       {/* Logo */}
@@ -109,7 +135,7 @@ export default function AdminLayout({
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive =
             item.href === "/admin"
               ? pathname === item.href

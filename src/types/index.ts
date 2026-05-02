@@ -1,19 +1,38 @@
 // User types
 export type UserRole = 'member' | 'admin' | 'super_admin'
 
+export type UserLinkType =
+  | 'homepage'
+  | 'scholar'
+  | 'orcid'
+  | 'github'
+  | 'x'
+  | 'xiaohongshu'
+  | 'linkedin'
+  | 'custom'
+
+export interface UserLink {
+  type: UserLinkType
+  label: string
+  url: string
+}
+
 export interface User {
   _id: string
   email: string
   username: string
   englishName: string
+  chineseName?: string
   role: UserRole
   organization: 'pku' | 'thu'
   cohort: number // 2020, 2021, etc.
   studentId: string
+  personalEmails?: string[]
   personalEmail?: string
   bio?: string // Markdown
   profileMarkdown?: string
   researchInterests?: string[]
+  links?: UserLink[]
   titles?: { title: string; link: string }[]
   scholarUrl?: string
   orcidUrl?: string
@@ -21,6 +40,7 @@ export interface User {
   realPhoto?: string
   isEmailVerified?: boolean
   lastVerificationRequestedAt?: number
+  approvedContributions?: number
   createdAt: number
   updatedAt: number
 }
@@ -45,12 +65,24 @@ export interface Publication {
 export interface CourseReview {
   _id: string
   courseName: string
-  semester: string // e.g., "2024 Spring"
-  rating: number // 0-10
+  instructor: string
+  semesterYear: number
+  semesterTerm: "spring" | "fall"
+  overallRating: number // 1-10
+  department?: string
+  attendanceRequired?: boolean
+  workload?: number // 1-5
+  pace?: number // 1-5
+  gradingFairness?: number // 1-5
+  courseAverageScore?: number
+  personalScore?: number
+  recommendedStudyMethod?: "attend" | "recording" | "self_study"
   content: string
   isAnonymous: boolean
   authorId?: string // Optional, for admin
   status: 'pending' | 'approved' | 'rejected'
+  tags?: string[]
+  active?: boolean
   createdAt: number
   updatedAt: number
 }
@@ -58,9 +90,9 @@ export interface CourseReview {
 export interface Course {
   _id: string
   name: string
-  instructor: string
-  department: string
-  aliases?: string[] // Alternative names for merge detection
+  isTongClassCourse?: boolean
+  isActive?: boolean
+  removedAt?: number
   reviewCount: number
   averageRating: number
   createdAt: number
@@ -153,7 +185,9 @@ export interface NewsFilters {
 
 export interface CourseFilters {
   search?: string
-  semester?: string
+  instructor?: string
+  semesterYear?: number
+  semesterTerm?: "spring" | "fall"
   sortBy?: 'rating' | 'createdAt'
   sortOrder?: 'asc' | 'desc'
 }

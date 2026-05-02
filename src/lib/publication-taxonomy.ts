@@ -4,6 +4,9 @@ export interface PublicationCategoryOption {
   subCategories: string[]
 }
 
+export const CUSTOM_PUBLICATION_CATEGORY_VALUE = "__custom_category__"
+export const CUSTOM_PUBLICATION_SUBCATEGORY_VALUE = "__custom_subcategory__"
+
 const baseCategoryOptions: PublicationCategoryOption[] = [
   {
     value: "Machine Learning",
@@ -111,23 +114,33 @@ export const PUBLICATION_CATEGORIES = baseCategoryOptions
 
 export const DEFAULT_PUBLICATION_CATEGORY = baseCategoryOptions[0]?.value || ""
 
-export function getPublicationCategoryOptions(currentCategory?: string): PublicationCategoryOption[] {
-  if (!currentCategory) {
-    return baseCategoryOptions
-  }
+export function isKnownPublicationCategory(category?: string) {
+  if (!category) return false
+  return baseCategoryOptions.some((option) => option.value === category)
+}
 
-  const exists = baseCategoryOptions.some((option) => option.value === currentCategory)
-  if (exists) {
-    return baseCategoryOptions
+export function getPublicationCategoryOptions(currentCategory?: string): PublicationCategoryOption[] {
+  const baseOptions = [...baseCategoryOptions]
+
+  if (
+    currentCategory &&
+    currentCategory !== CUSTOM_PUBLICATION_CATEGORY_VALUE &&
+    !isKnownPublicationCategory(currentCategory)
+  ) {
+    baseOptions.unshift({
+      value: currentCategory,
+      label: `${currentCategory}（当前自定义）`,
+      subCategories: [],
+    })
   }
 
   return [
+    ...baseOptions,
     {
-      value: currentCategory,
-      label: currentCategory,
+      value: CUSTOM_PUBLICATION_CATEGORY_VALUE,
+      label: "其他 / 自定义",
       subCategories: [],
     },
-    ...baseCategoryOptions,
   ]
 }
 
@@ -136,10 +149,20 @@ export function getPublicationSubCategoryOptions(category: string, currentSubCat
   const baseOptions = matched?.subCategories ?? []
 
   if (!currentSubCategory || baseOptions.includes(currentSubCategory)) {
-    return baseOptions
+    return [...baseOptions, CUSTOM_PUBLICATION_SUBCATEGORY_VALUE]
   }
 
-  return [currentSubCategory, ...baseOptions]
+  if (currentSubCategory === CUSTOM_PUBLICATION_SUBCATEGORY_VALUE) {
+    return [...baseOptions, CUSTOM_PUBLICATION_SUBCATEGORY_VALUE]
+  }
+
+  return [currentSubCategory, ...baseOptions, CUSTOM_PUBLICATION_SUBCATEGORY_VALUE]
+}
+
+export function isKnownPublicationSubCategory(category: string, subCategory?: string) {
+  if (!subCategory) return false
+  const matched = baseCategoryOptions.find((option) => option.value === category)
+  return matched?.subCategories.includes(subCategory) ?? false
 }
 
 export function parsePublicationAuthors(input: string): string[] {

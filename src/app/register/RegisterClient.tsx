@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { normalizeUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useSignUp, useSignIn, useCurrentUser } from "@/lib/api"
+import { PersonalEmailsInput } from "@/components/profile/personal-emails-input"
+import { UserLinksInput } from "@/components/profile/user-links-input"
+import { useSignUp, useSignIn } from "@/lib/api"
 import { TurnstileWidget } from "@/components/auth/turnstile-widget"
+import { sanitizePersonalEmails, sanitizeUserLinks } from "@/lib/user-profile"
+import type { UserLink } from "@/types"
 
 type Organization = "pku" | "thu"
 type PkuDomain = "@stu.pku.edu.cn" | "@pku.edu.cn" | "@alumni.pku.edu.cn"
@@ -21,11 +24,11 @@ const cohortOptions = Array.from({ length: CURRENT_YEAR - 2019 }, (_, idx) => CU
 
 const ORGANIZATIONS: Record<Organization, { label: string; cohorts: number[] }> = {
     pku: {
-        label: "北大通班",
+        label: "PKU Tong Class",
         cohorts: cohortOptions,
     },
     thu: {
-        label: "清华通班",
+        label: "THU Tong Class",
         cohorts: cohortOptions,
     },
 }
@@ -35,7 +38,6 @@ export default function RegisterClient() {
     const searchParams = useSearchParams()
     const signUp = useSignUp()
     const signIn = useSignIn()
-    const currentUser = useCurrentUser()
     const [step, setStep] = useState(1)
     const [error, setError] = useState("")
     const [info, setInfo] = useState("")
@@ -60,14 +62,13 @@ export default function RegisterClient() {
 
     // Profile data
     const [englishName, setEnglishName] = useState("")
+    const [chineseName, setChineseName] = useState("")
     const [username, setUsername] = useState("")
-    const [personalEmail, setPersonalEmail] = useState("")
+    const [personalEmails, setPersonalEmails] = useState<string[]>([])
     const [bio, setBio] = useState("")
     const [researchInterests, setResearchInterests] = useState<string[]>([])
     const [newInterest, setNewInterest] = useState("")
-    const [titles, setTitles] = useState<{ title: string; link: string }[]>([])
-    const [newTitle, setNewTitle] = useState("")
-    const [newLink, setNewLink] = useState("")
+    const [links, setLinks] = useState<UserLink[]>([])
 
     const getExpectedEmailValue = () => {
         const normalizedStudentId = studentId.trim().toLowerCase()
@@ -328,7 +329,7 @@ export default function RegisterClient() {
     }
 
     const handleSubmit = async () => {
-        if (!englishName || !username) {
+        if (!englishName.trim() || !chineseName.trim() || !username.trim()) {
             setError("Please fill in required fields")
             return
         }
@@ -339,16 +340,26 @@ export default function RegisterClient() {
 
         try {
             const normalizedEmail = effectiveEmail.trim().toLowerCase()
+            const normalizedPersonalEmails = sanitizePersonalEmails(personalEmails)
+            const normalizedResearchInterests = researchInterests
+                .map((interest) => interest.trim())
+                .filter(Boolean)
+            const normalizedLinks = sanitizeUserLinks(links)
 
             // First sign up with our custom auth
             const signUpResult = await signUp({
                 email: normalizedEmail,
                 password,
-                englishName,
-                username,
+                englishName: englishName.trim(),
+                chineseName: chineseName.trim(),
+                username: username.trim(),
                 organization: organization as Organization,
                 cohort: Number(cohort),
-                studentId,
+                studentId: studentId.trim(),
+                personalEmails: normalizedPersonalEmails,
+                bio: bio.trim() || undefined,
+                researchInterests: normalizedResearchInterests,
+                links: normalizedLinks,
             })
 
             if (signUpResult === null || signUpResult === undefined) {
@@ -405,20 +416,9 @@ export default function RegisterClient() {
         setResearchInterests(researchInterests.filter(i => i !== interest))
     }
 
-    const addTitle = () => {
-        if (!newTitle.trim() || !newLink.trim()) return
-        setTitles((prev) => [...prev, { title: newTitle.trim(), link: newLink.trim() }])
-        setNewTitle("")
-        setNewLink("")
-    }
-
-    const removeTitle = (idx: number) => {
-        setTitles((prev) => prev.filter((_, index) => index !== idx))
-    }
-
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-            <Card className="w-full max-w-lg">
+            <Card className="w-full max-w-2xl">
                 <CardHeader className="space-y-1 text-center">
                     <CardTitle className="text-2xl font-bold">
                         Create Account
@@ -468,7 +468,7 @@ export default function RegisterClient() {
                                     required
                                     disabled
                                 >
-                                    <option value="pku">北大通班</option>
+                                    <option value="pku">PKU Tong Class</option>
                                 </select>
                                 <p className="text-xs text-muted-foreground">THU registration is temporarily unavailable.</p>
                             </div>
@@ -483,10 +483,10 @@ export default function RegisterClient() {
                                     required
                                     disabled={!organization}
                                 >
-                                    <option value="">Select your cohort</option>
+                                    <option value="">Select your year of admission</option>
                                     {organization && ORGANIZATIONS[organization]?.cohorts.map((year) => (
                                         <option key={year} value={year}>
-                                            {year}级
+                                            {year}
                                         </option>
                                     ))}
                                 </select>
@@ -623,19 +623,36 @@ export default function RegisterClient() {
                     {/* Step 4: Profile Completion */}
                     {step === 4 && (
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="englishName">English Name *</Label>
-                                <Input
-                                    id="englishName"
-                                    type="text"
-                                    placeholder="e.g., John Zhang"
-                                    value={englishName}
-                                    onChange={(e) => setEnglishName(e.target.value)}
-                                    required
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    This will be displayed on your public profile
-                                </p>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="englishName">English Name *</Label>
+                                    <Input
+                                        id="englishName"
+                                        type="text"
+                                        placeholder="e.g., Tong Tong"
+                                        value={englishName}
+                                        onChange={(e) => setEnglishName(e.target.value)}
+                                        required
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        This will be displayed on your public profile.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="chineseName">Chinese Name *</Label>
+                                    <Input
+                                        id="chineseName"
+                                        type="text"
+                                        placeholder="例如：通通"
+                                        value={chineseName}
+                                        onChange={(e) => setChineseName(e.target.value)}
+                                        required
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        This will be shown together with your English name.
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -649,19 +666,16 @@ export default function RegisterClient() {
                                     required
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Used for login, not displayed publicly
+                                    Used for login, not displayed publicly.
                                 </p>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="personalEmail">Personal Email (Optional)</Label>
-                                <Input
-                                    id="personalEmail"
-                                    type="email"
-                                    placeholder="your.personal@email.com"
-                                    value={personalEmail}
-                                    onChange={(e) => setPersonalEmail(e.target.value)}
-                                />
+                                <Label>Personal Emails (Optional)</Label>
+                                <PersonalEmailsInput emails={personalEmails} onChange={setPersonalEmails} />
+                                <p className="text-xs text-muted-foreground">
+                                    Your school email, which includes your student ID, is kept on the account to protect your identity and is not displayed on your public profile. By default, only the personal email addresses you provide are shown publicly. However, if you wish to display your school email, you may add it here.
+                                </p>
                             </div>
 
                             <div className="space-y-2">
@@ -711,44 +725,11 @@ export default function RegisterClient() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Title + Link (Optional)</Label>
-                                <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2">
-                                    <Input
-                                        type="text"
-                                        placeholder="Title (e.g., Google Scholar)"
-                                        value={newTitle}
-                                        onChange={(e) => setNewTitle(e.target.value)}
-                                    />
-                                    <Input
-                                        type="url"
-                                        placeholder="https://..."
-                                        value={newLink}
-                                        onChange={(e) => setNewLink(e.target.value)}
-                                    />
-                                    <Button type="button" variant="outline" onClick={addTitle}>
-                                        Add
-                                    </Button>
-                                </div>
-                                {titles.length > 0 && (
-                                    <div className="space-y-2 mt-2">
-                                        {titles.map((item, idx) => (
-                                            <div key={`${item.title}-${idx}`} className="flex items-center gap-2 p-2 rounded border border-border">
-                                                <span className="text-sm font-medium">{item.title}</span>
-                                                <a
-                                                    href={normalizeUrl(item.link)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs text-primary hover:underline truncate"
-                                                >
-                                                    {item.link}
-                                                </a>
-                                                <Button type="button" variant="ghost" size="sm" className="ml-auto" onClick={() => removeTitle(idx)}>
-                                                    Remove
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                <Label>Profile Links (Optional)</Label>
+                                <UserLinksInput links={links} onChange={setLinks} />
+                                <p className="text-xs text-muted-foreground">
+                                    Choose from preset link types like Homepage, Google Scholar, GitHub, X, Xiaohongshu, LinkedIn, or use Custom for anything else.
+                                </p>
                             </div>
                         </div>
                     )}

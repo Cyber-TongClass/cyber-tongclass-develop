@@ -146,16 +146,12 @@ function SearchContent() {
 
     // Search courses
     courses.forEach((course) => {
-      if (
-        course.name.toLowerCase().includes(q) ||
-        course.instructor.toLowerCase().includes(q) ||
-        course.department.toLowerCase().includes(q)
-      ) {
+      if (course.name.toLowerCase().includes(q)) {
         newResults.push({
           type: "course",
           id: course._id,
           title: course.name,
-          description: `${course.instructor} - ${course.department}`,
+          description: `${course.reviewCount} 条评测 · 均分 ${course.averageRating.toFixed(1)}`,
           url: `/resources/courses/${encodeURIComponent(course.name)}`,
           icon: <BookOpen className="h-5 w-5" />,
         })

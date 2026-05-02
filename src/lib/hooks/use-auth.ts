@@ -29,6 +29,9 @@ export function useAuth() {
     storedEmail ? { email: storedEmail } : "skip"
   )
 
+  // Also query Convex session-backed current user (server-side identity)
+  const sessionUser = useQuery(api.auth.currentUser)
+
   useEffect(() => {
     if (!isInitialized || storedEmail === null || userData !== undefined) {
       setQueryTimedOut(false)
@@ -50,8 +53,9 @@ export function useAuth() {
     }
   }, [refreshKey, storedEmail])
   
+  // Prefer session-backed user if present; otherwise fall back to localStorage lookup.
   const isUserQueryPending = storedEmail !== null && userData === undefined && !queryTimedOut
-  const currentUser = storedEmail && !isUserQueryPending ? userData || null : null
+  const currentUser = sessionUser ?? (storedEmail && !isUserQueryPending ? userData || null : null)
   
   // Get user role
   const currentRole = currentUser?.role ?? null

@@ -37,15 +37,11 @@ export default function ResourcesPage() {
   const [createOpen, setCreateOpen] = React.useState(false)
   const [createError, setCreateError] = React.useState("")
   const [courseName, setCourseName] = React.useState("")
-  const [instructor, setInstructor] = React.useState("")
-  const [department, setDepartment] = React.useState("")
 
   const createCourse = useCreateCourse()
 
   const resetForm = () => {
     setCourseName("")
-    setInstructor("")
-    setDepartment("")
     setCreateError("")
   }
 
@@ -56,8 +52,6 @@ export default function ResourcesPage() {
     try {
       await createCourse({
         name: courseName,
-        instructor,
-        department,
       })
       setCreateOpen(false)
       resetForm()
@@ -74,24 +68,6 @@ export default function ResourcesPage() {
     )
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <Card className="max-w-lg w-full">
-          <CardHeader>
-            <CardTitle>成员资源需登录后访问</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">课程评测和学习资源仅对通班成员开放。请先登录，再进入资源页面。</p>
-            <Button asChild className="w-full">
-              <Link href="/login?next=%2Fresources">前往登录</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   const filteredCourses = courses
     .filter((course) => course.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
@@ -99,6 +75,9 @@ export default function ResourcesPage() {
       if (sortBy === "reviews") return b.reviewCount - a.reviewCount
       return a.name.localeCompare(b.name, "zh-CN")
     })
+
+  const tongClassCourses = filteredCourses.filter((course) => course.isTongClassCourse)
+  const otherCourses = filteredCourses.filter((course) => !course.isTongClassCourse)
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,14 +134,7 @@ export default function ResourcesPage() {
                     <Label htmlFor="course-name">课程名称</Label>
                     <Input id="course-name" value={courseName} onChange={(e) => setCourseName(e.target.value)} required />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="course-teacher">教师</Label>
-                    <Input id="course-teacher" value={instructor} onChange={(e) => setInstructor(e.target.value)} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="course-department">开课院系</Label>
-                    <Input id="course-department" value={department} onChange={(e) => setDepartment(e.target.value)} required />
-                  </div>
+                  <p className="text-sm text-muted-foreground">课程创建后，任意成员可在课程详情页补充不同教师、不同学期的具体评测。</p>
                   {createError && <p className="text-sm text-red-600">{createError}</p>}
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => { setCreateOpen(false); resetForm() }}>
@@ -185,38 +157,85 @@ export default function ResourcesPage() {
             <p className="text-muted-foreground">可点击“添加课程”创建后再发布评测</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {filteredCourses.map((course) => (
-              <Link key={course._id} href={`/resources/courses/${encodeURIComponent(course.name)}`}>
-                <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30 cursor-pointer">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{course.name}</h3>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          <p>{course.instructor} · {course.department}</p>
-                        </div>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                            <span className="font-medium">{course.averageRating.toFixed(1)}</span>
-                            <span>({course.reviewCount}条评测)</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>{course.reviewCount} 条评测</span>
-                          </div>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
+          <div className="space-y-10">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground">通班培养方案课程</h2>
+                  <p className="text-sm text-muted-foreground mt-1">通班核心课程仅由管理员维护，包含专业基础课、专业核心课、专业选修课、公共必修课等。</p>
+                </div>
+                <span className="text-sm text-muted-foreground">{tongClassCourses.length} 门</span>
+              </div>
+
+              {tongClassCourses.length === 0 ? (
+                <Card className="border-dashed border-border/70 bg-muted/20">
+                  <CardContent className="py-8 text-sm text-muted-foreground">
+                    当前没有匹配的通班培养方案课程。
                   </CardContent>
                 </Card>
-              </Link>
-            ))}
+              ) : (
+                <div className="space-y-6">
+                  {tongClassCourses.map((course) => (
+                    <CourseListCard key={course._id} course={course} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground">其他课程</h2>
+                  <p className="text-sm text-muted-foreground mt-1">用户可自行补充和讨论的其他课程。</p>
+                </div>
+                <span className="text-sm text-muted-foreground">{otherCourses.length} 门</span>
+              </div>
+
+              {otherCourses.length === 0 ? (
+                <Card className="border-dashed border-border/70 bg-muted/20">
+                  <CardContent className="py-8 text-sm text-muted-foreground">
+                    当前没有匹配的其他课程。
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  {otherCourses.map((course) => (
+                    <CourseListCard key={course._id} course={course} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>
     </div>
+  )
+}
+
+function CourseListCard({ course }: { course: Course }) {
+  return (
+    <Link href={`/resources/courses/${encodeURIComponent(course.name)}`}>
+      <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30 cursor-pointer">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{course.name}</h3>
+              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                  <span className="font-medium">{course.averageRating.toFixed(1)}</span>
+                  <span>({course.reviewCount}条评测)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{course.reviewCount} 条评测</span>
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }

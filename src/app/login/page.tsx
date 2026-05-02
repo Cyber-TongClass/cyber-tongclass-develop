@@ -44,8 +44,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-primary">通班</h1>
-            <p className="text-muted-foreground mt-1">Tong Class 官方网站</p>
+            <h1 className="text-3xl font-bold text-primary">通用人工智能实验班</h1>
+            <p className="text-muted-foreground mt-1">Tong Class Official Website</p>
           </Link>
         </div>
 

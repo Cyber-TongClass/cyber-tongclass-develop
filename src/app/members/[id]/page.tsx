@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUserById, usePublicationsByUser } from "@/lib/api"
 import { normalizeUrl } from "@/lib/utils"
 import { MarkdownRenderer } from "@/components/markdown/markdown-renderer"
+import { getUserLinks, getUserPersonalEmails } from "@/lib/user-profile"
 import type { Publication } from "@/types"
 
 export default function MemberDetailPage() {
@@ -21,6 +22,8 @@ export default function MemberDetailPage() {
 
   const member = userData ? { ...userData, id: userData._id } : null
   const publications: Publication[] = publicationsData || []
+  const personalEmails = member ? getUserPersonalEmails(member) : []
+  const profileLinks = member ? getUserLinks(member) : []
 
   const loading = userData === undefined || publicationsData === undefined
 
@@ -63,30 +66,29 @@ export default function MemberDetailPage() {
                 )}
               </div>
               <CardTitle className="text-2xl">{member.englishName}</CardTitle>
+              {member.chineseName && (
+                <p className="text-sm font-medium text-muted-foreground">{member.chineseName}</p>
+              )}
               <p className="text-muted-foreground flex items-center justify-center gap-2">
                 {member.organization === "pku" ? <School className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}
                 {member.organization === "pku" ? "北大通班" : "清华通班"} · {member.cohort}级
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <a
-                  href={`mailto:${member.email}`}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Mail className="h-4 w-4" />
-                  {member.email}
-                </a>
-                {member.personalEmail && (
-                  <a
-                    href={`mailto:${member.personalEmail}`}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    <Mail className="h-4 w-4" />
-                    {member.personalEmail}
-                  </a>
-                )}
-              </div>
+              {personalEmails.length > 0 && (
+                <div className="space-y-3">
+                  {personalEmails.map((email) => (
+                    <a
+                      key={email}
+                      href={`mailto:${email}`}
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Mail className="h-4 w-4" />
+                      {email}
+                    </a>
+                  ))}
+                </div>
+              )}
 
               {member.bio && (
                 <div className="space-y-2">
@@ -114,22 +116,22 @@ export default function MemberDetailPage() {
                 </div>
               )}
 
-              {member.titles && member.titles.length > 0 && (
+              {profileLinks.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold flex items-center gap-2">
                     <ExternalLink className="h-4 w-4" />
                     链接
                   </h4>
                   <div className="space-y-2">
-                    {member.titles.map((item: { title: string; link: string }) => (
+                    {profileLinks.map((item) => (
                       <a
-                        key={item.title}
-                        href={normalizeUrl(item.link)}
+                        key={`${item.type}-${item.label}-${item.url}`}
+                        href={normalizeUrl(item.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-sm"
                       >
-                        <span>{item.title}</span>
+                        <span>{item.label}</span>
                         <ExternalLink className="h-3 w-3 text-muted-foreground" />
                       </a>
                     ))}

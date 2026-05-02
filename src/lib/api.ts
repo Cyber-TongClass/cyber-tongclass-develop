@@ -3,6 +3,7 @@
 import { useCallback } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
+import type { UserLink } from "@/types"
 
 type IdLike =
   | string
@@ -53,13 +54,16 @@ type SignUpInput = {
   email: string
   username: string
   englishName: string
+  chineseName?: string
   organization: "pku" | "thu"
   cohort: number
   studentId: string
   password: string
+  personalEmails?: string[]
   personalEmail?: string
   bio?: string
   researchInterests?: string[]
+  links?: UserLink[]
   titles?: { title: string; link: string }[]
   scholarUrl?: string
   orcidUrl?: string
@@ -75,13 +79,16 @@ export function useSignUp() {
         email: input.email,
         username: input.username,
         englishName: input.englishName,
+        chineseName: input.chineseName,
         organization: input.organization,
         cohort: input.cohort,
         studentId: input.studentId,
         password: input.password,
+        personalEmails: input.personalEmails,
         personalEmail: input.personalEmail,
         bio: input.bio,
         researchInterests: input.researchInterests,
+        links: input.links,
         titles: input.titles,
         scholarUrl: input.scholarUrl,
         orcidUrl: input.orcidUrl,
@@ -281,7 +288,12 @@ export function useDeleteCourse() {
 
 // ==================== 课程评价相关 ====================
 
-export function useCourseReviews(args?: string | { courseName?: string; semester?: string }) {
+export function useCourseReviews(args?: string | {
+  courseName?: string
+  instructor?: string
+  semesterYear?: number
+  semesterTerm?: "spring" | "fall"
+}) {
   const normalized =
     typeof args === "string"
       ? {
@@ -315,6 +327,10 @@ export function useUpdateCourseReview() {
   return useMutation(api.courseReviews.update)
 }
 
+export function useEditReviewTag() {
+  return useMutation(api.courseReviews.editTag)
+}
+
 export function useApproveCourseReview() {
   return useMutation(api.courseReviews.approve)
 }
@@ -326,6 +342,22 @@ export function useRejectCourseReview() {
 export function useDeleteCourseReview() {
   const remove = useMutation(api.courseReviews.remove)
   return useCallback((input: IdLike) => remove(toIdArg(input) as any), [remove])
+}
+
+export function useAssignReviewsByTags() {
+  return useMutation(api.courseReviews.assignByTags)
+}
+
+export function useReviewTags() {
+  return useQuery(api.courseReviews.listTags)
+}
+
+export function useSetReviewTagColor() {
+  return useMutation(api.courseReviews.setTagColor)
+}
+
+export function useCommonReviewTags() {
+  return useQuery(api.courseReviews.commonTags)
 }
 
 // ==================== 认证操作 ====================

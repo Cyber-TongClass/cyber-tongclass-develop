@@ -11,10 +11,14 @@ import { ArrowLeft, Save } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { usePublicationById, useCreatePublication, useUpdatePublication } from "@/lib/api"
 import {
+  CUSTOM_PUBLICATION_CATEGORY_VALUE,
+  CUSTOM_PUBLICATION_SUBCATEGORY_VALUE,
   DEFAULT_PUBLICATION_CATEGORY,
   formatPublicationAuthors,
   getPublicationCategoryOptions,
   getPublicationSubCategoryOptions,
+  isKnownPublicationCategory,
+  isKnownPublicationSubCategory,
   parsePublicationAuthors,
 } from "@/lib/publication-taxonomy"
 import type { Publication } from "@/types"
@@ -49,6 +53,8 @@ export default function MyPublicationEditorPage() {
   const [publication, setPublication] = useState<Publication | null>(null)
   const [forbidden, setForbidden] = useState(false)
   const [formError, setFormError] = useState("")
+  const [customCategory, setCustomCategory] = useState("")
+  const [customSubCategory, setCustomSubCategory] = useState("")
   const [formData, setFormData] = useState<PublicationFormData>({
     title: "",
     authors: "",
@@ -95,6 +101,13 @@ export default function MyPublicationEditorPage() {
 
     setForbidden(false)
     setPublication(publicationData)
+    const publicationCategory = publicationData.category
+    const publicationSubCategory = publicationData.subCategory || ""
+    const categoryIsKnown = isKnownPublicationCategory(publicationCategory)
+    const subCategoryIsKnown = categoryIsKnown && isKnownPublicationSubCategory(publicationCategory, publicationSubCategory)
+
+    setCustomCategory(categoryIsKnown ? "" : publicationCategory)
+    setCustomSubCategory(publicationSubCategory && !subCategoryIsKnown ? publicationSubCategory : "")
     setFormData({
       title: publicationData.title,
       authors: formatPublicationAuthors(publicationData.authors),
@@ -102,8 +115,10 @@ export default function MyPublicationEditorPage() {
       year: String(publicationData.year),
       abstract: publicationData.abstract,
       url: publicationData.url || "",
-      category: publicationData.category,
-      subCategory: publicationData.subCategory || "",
+      category: categoryIsKnown ? publicationCategory : CUSTOM_PUBLICATION_CATEGORY_VALUE,
+      subCategory: publicationSubCategory
+        ? (subCategoryIsKnown ? publicationSubCategory : CUSTOM_PUBLICATION_SUBCATEGORY_VALUE)
+        : "",
     })
     setLoading(false)
   }, [currentUser, isCreateMode, publicationData])
@@ -119,12 +134,19 @@ export default function MyPublicationEditorPage() {
   )
 
   const handleCategoryChange = (category: string) => {
-    const nextSubCategoryOptions = getPublicationSubCategoryOptions(category)
+    const nextSubCategoryOptions =
+      category === CUSTOM_PUBLICATION_CATEGORY_VALUE ? [] : getPublicationSubCategoryOptions(category)
     setFormData((previous) => ({
       ...previous,
       category,
       subCategory: nextSubCategoryOptions.includes(previous.subCategory) ? previous.subCategory : "",
     }))
+    if (category !== CUSTOM_PUBLICATION_CATEGORY_VALUE) {
+      setCustomCategory("")
+      if (formData.subCategory === CUSTOM_PUBLICATION_SUBCATEGORY_VALUE) {
+        setCustomSubCategory("")
+      }
+    }
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -146,6 +168,20 @@ export default function MyPublicationEditorPage() {
       return
     }
 
+    const finalCategory =
+      formData.category === CUSTOM_PUBLICATION_CATEGORY_VALUE
+        ? customCategory.trim()
+        : formData.category
+    if (!finalCategory) {
+      setFormError("请填写领域。")
+      return
+    }
+
+    const finalSubCategory =
+      formData.subCategory === CUSTOM_PUBLICATION_SUBCATEGORY_VALUE
+        ? customSubCategory.trim()
+        : formData.subCategory.trim()
+
     setFormError("")
 
     const payload = {
@@ -155,8 +191,8 @@ export default function MyPublicationEditorPage() {
       year: parsedYear,
       abstract: formData.abstract.trim(),
       url: formData.url.trim() || undefined,
-      category: formData.category,
-      subCategory: formData.subCategory.trim() || undefined,
+      category: finalCategory,
+      subCategory: finalSubCategory || undefined,
     }
 
     if (isCreateMode) {
@@ -271,6 +307,15 @@ export default function MyPublicationEditorPage() {
                       </option>
                     ))}
                   </select>
+                  {formData.category === CUSTOM_PUBLICATION_CATEGORY_VALUE && (
+                    <Input
+                      className="mt-2"
+                      placeholder="请输入自定义领域"
+                      value={customCategory}
+                      onChange={(event) => setCustomCategory(event.target.value)}
+                      required
+                    />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="subCategory">子领域</Label>
@@ -283,18 +328,28 @@ export default function MyPublicationEditorPage() {
                     <option value="">未指定</option>
                     {subCategoryOptions.map((subCategory) => (
                       <option key={subCategory} value={subCategory}>
-                        {subCategory}
+                        {subCategory === CUSTOM_PUBLICATION_SUBCATEGORY_VALUE ? "其他 / 自定义" : subCategory}
                       </option>
                     ))}
                   </select>
+                  {formData.subCategory === CUSTOM_PUBLICATION_SUBCATEGORY_VALUE && (
+                    <Input
+                      className="mt-2"
+                      placeholder="请输入自定义子领域"
+                      value={customSubCategory}
+                      onChange={(event) => setCustomSubCategory(event.target.value)}
+                      required
+                    />
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="venue">会议/期刊</Label>
                   <Input
                     id="venue"
+                    placeholder="会议/期刊简称 (全称) , 例如: ICML (International Conference on Machine Learning)"
                     value={formData.venue}
                     onChange={(event) => setFormData((previous) => ({ ...previous, venue: event.target.value }))}
                     required
@@ -315,11 +370,10 @@ export default function MyPublicationEditorPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="url">链接（可选）</Label>
+                <Label htmlFor="url">论文主页链接（或arxiv链接）</Label>
                 <Input
                   id="url"
                   type="url"
-                  placeholder="https://arxiv.org/..."
                   value={formData.url}
                   onChange={(event) => setFormData((previous) => ({ ...previous, url: event.target.value }))}
                 />

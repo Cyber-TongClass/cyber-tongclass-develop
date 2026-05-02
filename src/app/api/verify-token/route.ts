@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
         } as any)
 
         if (!consume.ok) {
-            return NextResponse.json({ ok: false, message: "Invalid, expired, or already-used code/token." }, { status: 400 })
+            const reason = (consume as any).reason || "invalid"
+            return NextResponse.json({ ok: false, reason, message: `Token consume failed: ${reason}` }, { status: 400 })
         }
 
         if (purpose === "email_verification") {
