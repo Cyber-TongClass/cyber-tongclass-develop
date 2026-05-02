@@ -198,8 +198,6 @@ export default mutation({
     // 创建种子课程
     await ctx.db.insert("courses", {
       name: "人工智能导论",
-      instructor: "张教授",
-      department: "智能科学与技术系",
       isTongClassCourse: true,
       reviewCount: 2,
       averageRating: 8.5,
@@ -209,8 +207,6 @@ export default mutation({
 
     await ctx.db.insert("courses", {
       name: "机器学习",
-      instructor: "李教授",
-      department: "计算机科学与技术系",
       isTongClassCourse: true,
       reviewCount: 1,
       averageRating: 10,
@@ -220,11 +216,9 @@ export default mutation({
 
     await ctx.db.insert("courses", {
       name: "深度学习",
-      instructor: "王教授",
-      department: "人工智能研究院",
       isTongClassCourse: false,
-      reviewCount: 2,
-      averageRating: 8.5,
+      reviewCount: 0,
+      averageRating: 0,
       createdAt: now,
       updatedAt: now,
     })
@@ -232,8 +226,16 @@ export default mutation({
     // 创建种子课程评价
     await ctx.db.insert("courseReviews", {
       courseName: "人工智能导论",
-      semester: "2024春",
-      rating: 9,
+      instructor: "张教授",
+      semesterYear: 2024,
+      semesterTerm: "spring",
+      overallRating: 9,
+      department: "智能科学与技术系",
+      attendanceRequired: true,
+      workload: 4,
+      pace: 4,
+      gradingFairness: 5,
+      recommendedStudyMethod: "attend",
       content: "老师讲得很好，收获很大！",
       isAnonymous: true,
       status: "approved",
@@ -243,8 +245,16 @@ export default mutation({
 
     await ctx.db.insert("courseReviews", {
       courseName: "人工智能导论",
-      semester: "2023秋",
-      rating: 8,
+      instructor: "张教授",
+      semesterYear: 2023,
+      semesterTerm: "fall",
+      overallRating: 8,
+      department: "智能科学与技术系",
+      attendanceRequired: false,
+      workload: 3,
+      pace: 3,
+      gradingFairness: 4,
+      recommendedStudyMethod: "self_study",
       content: "课程内容充实，推荐选课。",
       isAnonymous: true,
       status: "approved",
@@ -254,8 +264,16 @@ export default mutation({
 
     await ctx.db.insert("courseReviews", {
       courseName: "机器学习",
-      semester: "2024春",
-      rating: 10,
+      instructor: "李教授",
+      semesterYear: 2024,
+      semesterTerm: "spring",
+      overallRating: 10,
+      department: "计算机科学与技术系",
+      attendanceRequired: true,
+      workload: 5,
+      pace: 4,
+      gradingFairness: 5,
+      recommendedStudyMethod: "attend",
       content: "非常经典的ML课程，老师水平很高。",
       isAnonymous: true,
       status: "approved",

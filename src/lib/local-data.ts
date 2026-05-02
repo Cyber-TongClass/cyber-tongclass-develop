@@ -262,8 +262,7 @@ const seedCourses: Course[] = [
   {
     _id: "course-1",
     name: "人工智能导论",
-    instructor: "张教授",
-    department: "智能科学与技术系",
+    isTongClassCourse: true,
     reviewCount: 2,
     averageRating: 8.5,
     createdAt: now(),
@@ -272,8 +271,7 @@ const seedCourses: Course[] = [
   {
     _id: "course-2",
     name: "机器学习",
-    instructor: "李教授",
-    department: "计算机科学与技术系",
+    isTongClassCourse: true,
     reviewCount: 1,
     averageRating: 10,
     createdAt: now(),
@@ -282,8 +280,7 @@ const seedCourses: Course[] = [
   {
     _id: "course-3",
     name: "深度学习",
-    instructor: "王教授",
-    department: "人工智能研究院",
+    isTongClassCourse: false,
     reviewCount: 2,
     averageRating: 8.5,
     createdAt: now(),
@@ -292,8 +289,7 @@ const seedCourses: Course[] = [
   {
     _id: "course-4",
     name: "计算机视觉",
-    instructor: "周教授",
-    department: "电子工程系",
+    isTongClassCourse: false,
     reviewCount: 1,
     averageRating: 9,
     createdAt: now(),
@@ -302,8 +298,7 @@ const seedCourses: Course[] = [
   {
     _id: "course-5",
     name: "自然语言处理",
-    instructor: "陈教授",
-    department: "信息工程系",
+    isTongClassCourse: false,
     reviewCount: 1,
     averageRating: 8,
     createdAt: now(),
@@ -313,21 +308,21 @@ const seedCourses: Course[] = [
 
 const seedCourseReviews: Record<string, CourseReview[]> = {
   "人工智能导论": [
-    { _id: "review-1", courseName: "人工智能导论", semester: "2024春", rating: 9, content: "老师讲得很好，收获很大！", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
-    { _id: "review-2", courseName: "人工智能导论", semester: "2023秋", rating: 8, content: "课程内容充实，推荐选课。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
+    { _id: "review-1", courseName: "人工智能导论", instructor: "张教授", semesterYear: 2024, semesterTerm: "spring", overallRating: 9, department: "智能科学与技术系", content: "老师讲得很好，收获很大！", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
+    { _id: "review-2", courseName: "人工智能导论", instructor: "张教授", semesterYear: 2023, semesterTerm: "fall", overallRating: 8, department: "智能科学与技术系", content: "课程内容充实，推荐选课。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
   ],
   "机器学习": [
-    { _id: "review-3", courseName: "机器学习", semester: "2024春", rating: 10, content: "非常经典的ML课程，老师水平很高。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
+    { _id: "review-3", courseName: "机器学习", instructor: "李教授", semesterYear: 2024, semesterTerm: "spring", overallRating: 10, department: "计算机科学与技术系", content: "非常经典的ML课程，老师水平很高。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
   ],
   "深度学习": [
-    { _id: "review-4", courseName: "深度学习", semester: "2024春", rating: 9, content: "理论与实践结合紧密。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
-    { _id: "review-5", courseName: "深度学习", semester: "2023秋", rating: 8, content: "作业有难度但很有收获。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
+    { _id: "review-4", courseName: "深度学习", instructor: "王教授", semesterYear: 2024, semesterTerm: "spring", overallRating: 9, department: "人工智能研究院", content: "理论与实践结合紧密。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
+    { _id: "review-5", courseName: "深度学习", instructor: "王教授", semesterYear: 2023, semesterTerm: "fall", overallRating: 8, department: "人工智能研究院", content: "作业有难度但很有收获。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
   ],
   "计算机视觉": [
-    { _id: "review-6", courseName: "计算机视觉", semester: "2023秋", rating: 9, content: "CV领域入门好课。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
+    { _id: "review-6", courseName: "计算机视觉", instructor: "周教授", semesterYear: 2023, semesterTerm: "fall", overallRating: 9, department: "电子工程系", content: "CV领域入门好课。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
   ],
   "自然语言处理": [
-    { _id: "review-7", courseName: "自然语言处理", semester: "2024春", rating: 8, content: "内容丰富，需要较多时间投入。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
+    { _id: "review-7", courseName: "自然语言处理", instructor: "陈教授", semesterYear: 2024, semesterTerm: "spring", overallRating: 8, department: "信息工程系", content: "内容丰富，需要较多时间投入。", isAnonymous: true, status: "approved", createdAt: now(), updatedAt: now() },
   ],
 }
 
@@ -336,14 +331,6 @@ const COURSE_REVIEWS_KEY = "tongclass.course-reviews.v1"
 // Helper functions
 function hasWindow() {
   return typeof window !== "undefined"
-}
-
-function normalizeCourse(course: Course): Course {
-  return {
-    ...course,
-    instructor: course.instructor || "待补充",
-    department: course.department || "待补充",
-  }
 }
 
 function readFromStorage<T>(key: string, seedData: T[]): T[] {
@@ -537,26 +524,7 @@ export function deletePublication(id: string): boolean {
 
 // Courses functions
 export function getCourses(): Course[] {
-  const courses = readFromStorage(COURSES_KEY, seedCourses).map(normalizeCourse)
-
-  if (hasWindow()) {
-    const raw = localStorage.getItem(COURSES_KEY)
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as Course[]
-        const needsMigration = parsed.some(
-          (course) => !course.instructor || !course.department
-        )
-        if (needsMigration) {
-          writeToStorage(COURSES_KEY, courses)
-        }
-      } catch {
-        writeToStorage(COURSES_KEY, courses)
-      }
-    }
-  }
-
-  return courses
+  return readFromStorage(COURSES_KEY, seedCourses)
 }
 
 export function getCourseById(id: string): Course | undefined {
@@ -597,7 +565,7 @@ function updateCourseAggregates(courseName: string, allReviews: Record<string, C
   const approvedReviews = (allReviews[courseName] || []).filter((review) => review.status === "approved")
   const avgRating =
     approvedReviews.length > 0
-      ? approvedReviews.reduce((sum, review) => sum + review.rating, 0) / approvedReviews.length
+      ? approvedReviews.reduce((sum, review) => sum + review.overallRating, 0) / approvedReviews.length
       : 0
 
   courses[courseIndex] = {
@@ -636,7 +604,7 @@ export function addCourseReview(
 
 export function updateCourseReviewById(
   reviewId: string,
-  updates: Partial<Pick<CourseReview, "semester" | "rating" | "content" | "isAnonymous" | "status">>
+  updates: Partial<Pick<CourseReview, "semesterYear" | "semesterTerm" | "overallRating" | "content" | "isAnonymous" | "status">>
 ): CourseReview | undefined {
   const allReviews = readCourseReviews()
 
@@ -676,20 +644,13 @@ export function deleteCourseReviewById(reviewId: string): boolean {
 }
 
 export function addCourse(courseName: string): Course {
-  const name = courseName.trim()
-  return addCourseWithDetails({
-    name,
-    instructor: "待补充",
-    department: "待补充",
-  })
+  return addCourseWithDetails({ name: courseName.trim() })
 }
 
-export function addCourseWithDetails(input: Pick<Course, "name" | "instructor" | "department">): Course {
+export function addCourseWithDetails(input: Pick<Course, "name"> & { isTongClassCourse?: boolean }): Course {
   const name = input.name.trim()
-  const instructor = input.instructor.trim()
-  const department = input.department.trim()
 
-  if (!name || !instructor || !department) {
+  if (!name) {
     throw new Error("Missing required course fields")
   }
 
@@ -701,8 +662,7 @@ export function addCourseWithDetails(input: Pick<Course, "name" | "instructor" |
   const newCourse: Course = {
     _id: `course-${now()}`,
     name,
-    instructor,
-    department,
+    isTongClassCourse: input.isTongClassCourse ?? false,
     reviewCount: 0,
     averageRating: 0,
     createdAt: now(),
@@ -721,7 +681,7 @@ export function addCourseWithDetails(input: Pick<Course, "name" | "instructor" |
 
 export function updateCourseById(
   courseId: string,
-  updates: Partial<Pick<Course, "name" | "instructor" | "department">>
+  updates: Partial<Pick<Course, "name" | "isTongClassCourse">>
 ): Course | undefined {
   const courses = getCourses()
   const index = courses.findIndex((course) => course._id === courseId)
@@ -738,8 +698,6 @@ export function updateCourseById(
     ...currentCourse,
     ...updates,
     name: nextName,
-    instructor: updates.instructor?.trim() || currentCourse.instructor,
-    department: updates.department?.trim() || currentCourse.department,
     updatedAt: now(),
   }
 

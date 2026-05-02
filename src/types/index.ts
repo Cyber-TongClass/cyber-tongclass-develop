@@ -64,8 +64,18 @@ export interface Publication {
 export interface CourseReview {
   _id: string
   courseName: string
-  semester: string // e.g., "2024 Spring"
-  rating: number // 0-10
+  instructor: string
+  semesterYear: number
+  semesterTerm: "spring" | "fall"
+  overallRating: number // 1-10
+  department?: string
+  attendanceRequired?: boolean
+  workload?: number // 1-5
+  pace?: number // 1-5
+  gradingFairness?: number // 1-5
+  courseAverageScore?: number
+  personalScore?: number
+  recommendedStudyMethod?: "attend" | "recording" | "self_study"
   content: string
   isAnonymous: boolean
   authorId?: string // Optional, for admin
@@ -77,10 +87,7 @@ export interface CourseReview {
 export interface Course {
   _id: string
   name: string
-  instructor: string
-  department: string
   isTongClassCourse?: boolean
-  aliases?: string[] // Alternative names for merge detection
   reviewCount: number
   averageRating: number
   createdAt: number
@@ -173,7 +180,9 @@ export interface NewsFilters {
 
 export interface CourseFilters {
   search?: string
-  semester?: string
+  instructor?: string
+  semesterYear?: number
+  semesterTerm?: "spring" | "fall"
   sortBy?: 'rating' | 'createdAt'
   sortOrder?: 'asc' | 'desc'
 }

@@ -37,15 +37,11 @@ export default function ResourcesPage() {
   const [createOpen, setCreateOpen] = React.useState(false)
   const [createError, setCreateError] = React.useState("")
   const [courseName, setCourseName] = React.useState("")
-  const [instructor, setInstructor] = React.useState("")
-  const [department, setDepartment] = React.useState("")
 
   const createCourse = useCreateCourse()
 
   const resetForm = () => {
     setCourseName("")
-    setInstructor("")
-    setDepartment("")
     setCreateError("")
   }
 
@@ -56,8 +52,6 @@ export default function ResourcesPage() {
     try {
       await createCourse({
         name: courseName,
-        instructor,
-        department,
       })
       setCreateOpen(false)
       resetForm()
@@ -158,14 +152,7 @@ export default function ResourcesPage() {
                     <Label htmlFor="course-name">课程名称</Label>
                     <Input id="course-name" value={courseName} onChange={(e) => setCourseName(e.target.value)} required />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="course-teacher">教师</Label>
-                    <Input id="course-teacher" value={instructor} onChange={(e) => setInstructor(e.target.value)} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="course-department">开课院系</Label>
-                    <Input id="course-department" value={department} onChange={(e) => setDepartment(e.target.value)} required />
-                  </div>
+                  <p className="text-sm text-muted-foreground">课程创建后，任意成员可在课程详情页补充不同教师、不同学期的具体评测。</p>
                   {createError && <p className="text-sm text-red-600">{createError}</p>}
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => { setCreateOpen(false); resetForm() }}>
@@ -251,9 +238,6 @@ function CourseListCard({ course }: { course: Course }) {
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{course.name}</h3>
-              <div className="mt-1 text-sm text-muted-foreground">
-                <p>{course.instructor} · {course.department}</p>
-              </div>
               <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 text-amber-500 fill-amber-500" />

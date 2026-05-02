@@ -37,8 +37,11 @@ export function useDeleteCourse() {
 }
 
 // Course Reviews hooks
-export function useCourseReviews(courseName: string, semester?: string) {
-  return useQuery(api.courseReviews.listByCourse, { courseName, semester })
+export function useCourseReviews(
+  courseName: string,
+  filters?: { instructor?: string; semesterYear?: number; semesterTerm?: "spring" | "fall" }
+) {
+  return useQuery(api.courseReviews.listByCourse, { courseName, ...filters })
 }
 
 export function useAllCourseReviews(courseName: string, status?: "pending" | "approved" | "rejected") {

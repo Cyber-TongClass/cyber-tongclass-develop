@@ -40,15 +40,18 @@ export const getByName = query({
 export const create = mutation({
   args: {
     name: v.string(),
-    instructor: v.string(),
-    department: v.string(),
     isTongClassCourse: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const normalizedName = args.name.trim()
+    if (!normalizedName) {
+      throw new Error("Course name is required")
+    }
+
     // Check if course already exists
     const existing = await ctx.db
       .query("courses")
-      .filter((q) => q.eq(q.field("name"), args.name))
+      .filter((q) => q.eq(q.field("name"), normalizedName))
       .first()
 
     if (existing) {
@@ -56,9 +59,7 @@ export const create = mutation({
     }
 
     const courseId = await ctx.db.insert("courses", {
-      name: args.name,
-      instructor: args.instructor,
-      department: args.department,
+      name: normalizedName,
       isTongClassCourse: args.isTongClassCourse ?? false,
       reviewCount: 0,
       averageRating: 0,
@@ -74,8 +75,6 @@ export const update = mutation({
   args: {
     id: v.id("courses"),
     name: v.optional(v.string()),
-    instructor: v.optional(v.string()),
-    department: v.optional(v.string()),
     isTongClassCourse: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -87,10 +86,11 @@ export const update = mutation({
     }
 
     // Check if new name already exists (if name is being changed)
-    if (updates.name && updates.name !== course.name) {
+    const normalizedName = updates.name?.trim()
+    if (normalizedName && normalizedName !== course.name) {
       const existing = await ctx.db
         .query("courses")
-        .filter((q) => q.eq(q.field("name"), updates.name!))
+        .filter((q) => q.eq(q.field("name"), normalizedName))
         .first()
 
       if (existing) {
@@ -100,6 +100,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...updates,
+      ...(normalizedName ? { name: normalizedName } : {}),
       updatedAt: Date.now(),
     })
     return id

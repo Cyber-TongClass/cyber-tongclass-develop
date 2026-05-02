@@ -4,20 +4,31 @@ import * as React from "react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { ArrowLeft, Star, MessageSquare, Plus, Pencil, X } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { ArrowLeft, MessageSquare, Pencil, Plus, Star, Trash2 } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import {
-  useCourses,
+  FIVE_POINT_HINTS,
+  getCourseReviewYearOptions,
+  getRatingBadgeClass,
+  getSemesterLabel,
+  getSemesterShortLabel,
+  SEMESTER_TERM_OPTIONS,
+  STUDY_METHOD_OPTIONS,
+} from "@/lib/course-review"
+import {
   useCourseByName,
   useCourseReviews,
+  useCourses,
   useCreateCourseReview,
-  useUpdateCourseReview,
   useDeleteCourseReview,
+  useUpdateCourseReview,
 } from "@/lib/api"
 import type { Course, CourseReview } from "@/types"
 
@@ -37,8 +48,30 @@ const MarkdownSplitEditor = dynamic(
   }
 )
 
+type ReviewFormState = {
+  instructor: string
+  semesterYear: string
+  semesterTerm: CourseReview["semesterTerm"]
+  overallRating: number
+  department: string
+  attendanceRequired: "unknown" | "yes" | "no"
+  workload: string
+  pace: string
+  gradingFairness: string
+  courseAverageScore: string
+  personalScore: string
+  recommendedStudyMethod: "" | NonNullable<CourseReview["recommendedStudyMethod"]>
+  content: string
+  isAnonymous: boolean
+}
+
+const REVIEW_SORT_OPTIONS = [
+  { value: "newest", label: "最新" },
+  { value: "rating", label: "评分" },
+] as const
+
 function getStars(rating: number) {
-  return Array.from({ length: 5 }, (_, i) => i < Math.round(rating / 2))
+  return Array.from({ length: 5 }, (_, index) => index < Math.round(rating / 2))
 }
 
 function decodeRouteName(raw: string) {
@@ -53,18 +86,99 @@ function normalizeCourseName(name: string) {
   return name.replace(/\s+/g, "").toLowerCase()
 }
 
+function createEmptyForm(currentYear: number): ReviewFormState {
+  return {
+    instructor: "",
+    semesterYear: String(currentYear),
+    semesterTerm: "spring",
+    overallRating: 8,
+    department: "",
+    attendanceRequired: "unknown",
+    workload: "",
+    pace: "",
+    gradingFairness: "",
+    courseAverageScore: "",
+    personalScore: "",
+    recommendedStudyMethod: "",
+    content: "",
+    isAnonymous: true,
+  }
+}
+
+function reviewToForm(review: CourseReview): ReviewFormState {
+  return {
+    instructor: review.instructor,
+    semesterYear: String(review.semesterYear),
+    semesterTerm: review.semesterTerm,
+    overallRating: review.overallRating,
+    department: review.department ?? "",
+    attendanceRequired:
+      review.attendanceRequired === undefined ? "unknown" : review.attendanceRequired ? "yes" : "no",
+    workload: review.workload ? String(review.workload) : "",
+    pace: review.pace ? String(review.pace) : "",
+    gradingFairness: review.gradingFairness ? String(review.gradingFairness) : "",
+    courseAverageScore: review.courseAverageScore !== undefined ? String(review.courseAverageScore) : "",
+    personalScore: review.personalScore !== undefined ? String(review.personalScore) : "",
+    recommendedStudyMethod: review.recommendedStudyMethod ?? "",
+    content: review.content,
+    isAnonymous: review.isAnonymous,
+  }
+}
+
+function buildReviewPayload(form: ReviewFormState) {
+  const toOptionalNumber = (value: string, { min, max }: { min?: number; max?: number } = {}) => {
+    const trimmed = value.trim()
+    if (!trimmed) return undefined
+    const parsed = Number(trimmed)
+    if (Number.isNaN(parsed)) throw new Error("请填写有效数字")
+    if (min !== undefined && parsed < min) throw new Error(`数值不能小于 ${min}`)
+    if (max !== undefined && parsed > max) throw new Error(`数值不能大于 ${max}`)
+    return parsed
+  }
+
+  const semesterYear = Number(form.semesterYear)
+  if (Number.isNaN(semesterYear)) {
+    throw new Error("请选择有效的年份")
+  }
+
+  return {
+    instructor: form.instructor.trim(),
+    semesterYear,
+    semesterTerm: form.semesterTerm,
+    overallRating: form.overallRating,
+    department: form.department.trim() || undefined,
+    attendanceRequired:
+      form.attendanceRequired === "unknown" ? undefined : form.attendanceRequired === "yes",
+    workload: toOptionalNumber(form.workload, { min: 1, max: 5 }),
+    pace: toOptionalNumber(form.pace, { min: 1, max: 5 }),
+    gradingFairness: toOptionalNumber(form.gradingFairness, { min: 1, max: 5 }),
+    courseAverageScore: toOptionalNumber(form.courseAverageScore),
+    personalScore: toOptionalNumber(form.personalScore),
+    recommendedStudyMethod: form.recommendedStudyMethod || undefined,
+    content: form.content.trim(),
+    isAnonymous: form.isAnonymous,
+  }
+}
+
 export default function CourseDetailPage() {
   const { isAuthenticated, isLoading: authLoading, currentUser } = useAuth()
   const params = useParams<{ name: string | string[] }>()
   const rawRouteName = Array.isArray(params.name) ? (params.name[0] ?? "") : (params.name ?? "")
   const courseName = React.useMemo(() => decodeRouteName(rawRouteName), [rawRouteName])
 
-  const [sortBy, setSortBy] = React.useState("newest")
-  const [showSubmitForm, setShowSubmitForm] = React.useState(false)
-  const [semesterYear, setSemesterYear] = React.useState("2026")
-  const [semesterTerm, setSemesterTerm] = React.useState("第一学期")
+  const currentYear = new Date().getFullYear()
+  const yearOptions = React.useMemo(() => getCourseReviewYearOptions(2020, currentYear), [currentYear])
 
-  // Fetch courses and details from Convex
+  const [sortBy, setSortBy] = React.useState<(typeof REVIEW_SORT_OPTIONS)[number]["value"]>("newest")
+  const [teacherFilter, setTeacherFilter] = React.useState("all")
+  const [yearFilter, setYearFilter] = React.useState("all")
+  const [termFilter, setTermFilter] = React.useState<"all" | CourseReview["semesterTerm"]>("all")
+  const [formError, setFormError] = React.useState("")
+  const [submissionMessage, setSubmissionMessage] = React.useState("")
+  const [showForm, setShowForm] = React.useState(false)
+  const [editingReviewId, setEditingReviewId] = React.useState<string | null>(null)
+  const [formState, setFormState] = React.useState<ReviewFormState>(() => createEmptyForm(currentYear))
+
   const coursesData = useCourses()
   const courses: Course[] = coursesData || []
   const courseData = useCourseByName(courseName)
@@ -83,77 +197,95 @@ export default function CourseDetailPage() {
   const reviewsData = useCourseReviews(course?.name || courseName)
   const reviews: CourseReview[] = reviewsData || []
 
-  // Mutations
   const createReview = useCreateCourseReview()
   const updateReview = useUpdateCourseReview()
   const deleteReview = useDeleteCourseReview()
-
-  // Generate years (2020 to current year)
-  const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: currentYear - 2020 + 1 }, (_, i) => String(2020 + i)).reverse()
-  const terms = ["第一学期", "第二学期", "第三学期"]
-
-  // Combine year and term
-  const semesterInput = `${semesterYear}${semesterTerm}`
-  const [ratingInput, setRatingInput] = React.useState(5)
-  const [contentInput, setContentInput] = React.useState("")
-  const [isAnonymousInput, setIsAnonymousInput] = React.useState(true)
-
-  const [editingReviewId, setEditingReviewId] = React.useState<string | null>(null)
-  const [editContent, setEditContent] = React.useState("")
-  const [editRating, setEditRating] = React.useState(5)
-
-  React.useEffect(() => {
-    if (course && reviews.length > 0) {
-      // 从已有的评测中获取最新的学期作为默认值
-      const latestReview = [...reviews].sort((a, b) => b.createdAt - a.createdAt)[0]
-      const match = latestReview.semester.match(/^(\d+)(.+)$/)
-      if (match) {
-        setSemesterYear(match[1])
-        setSemesterTerm(match[2])
-      }
-    }
-  }, [course, reviews])
 
   const userReview = React.useMemo(() => {
     if (!currentUser) return null
     return reviews.find((review) => review.authorId === currentUser._id) || null
   }, [reviews, currentUser])
 
+  const teacherOptions = React.useMemo(
+    () => Array.from(new Set(reviews.map((review) => review.instructor))).sort((a, b) => a.localeCompare(b, "zh-CN")),
+    [reviews]
+  )
+
+  const yearFilterOptions = React.useMemo(
+    () => Array.from(new Set(reviews.map((review) => review.semesterYear))).sort((a, b) => b - a),
+    [reviews]
+  )
+
+  const filteredReviews = React.useMemo(() => {
+    return reviews.filter((review) => {
+      if (teacherFilter !== "all" && review.instructor !== teacherFilter) return false
+      if (yearFilter !== "all" && review.semesterYear !== Number(yearFilter)) return false
+      if (termFilter !== "all" && review.semesterTerm !== termFilter) return false
+      return true
+    })
+  }, [reviews, teacherFilter, yearFilter, termFilter])
+
   const sortedReviews = React.useMemo(() => {
-    return [...reviews].sort((a, b) => {
-      if (sortBy === "rating") return b.rating - a.rating
+    return [...filteredReviews].sort((a, b) => {
+      if (sortBy === "rating") return b.overallRating - a.overallRating
       return b.createdAt - a.createdAt
     })
-  }, [reviews, sortBy])
+  }, [filteredReviews, sortBy])
 
-  const avgRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0
+  const startCreate = () => {
+    setEditingReviewId(null)
+    setFormState(createEmptyForm(currentYear))
+    setFormError("")
+    setSubmissionMessage("")
+    setShowForm(true)
+  }
 
-  const reviewAuthor = (review: CourseReview) => {
-    if (review.isAnonymous) return "匿名"
-    if (review.authorId && review.authorId === currentUser?._id) return "我"
-    return "用户"
+  const startEdit = (review: CourseReview) => {
+    setEditingReviewId(review._id)
+    setFormState(reviewToForm(review))
+    setFormError("")
+    setSubmissionMessage("")
+    setShowForm(true)
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingReviewId(null)
+    setFormState(createEmptyForm(currentYear))
+    setFormError("")
   }
 
   const handleSubmitReview = async () => {
     if (!course || !currentUser) return
-    if (!semesterInput || !contentInput.trim() || ratingInput < 0 || ratingInput > 10) return
+    setFormError("")
+    setSubmissionMessage("")
 
     try {
+      const payload = buildReviewPayload(formState)
+      if (!payload.instructor || !payload.content) {
+        setFormError("请填写教师、学期、总体评价和评测正文。")
+        return
+      }
+
+      if (editingReviewId) {
+        await updateReview({
+          id: editingReviewId as any,
+          ...payload,
+        })
+        closeForm()
+        return
+      }
+
       await createReview({
         courseName: course.name,
-        semester: semesterInput,
-        rating: ratingInput,
-        content: contentInput.trim(),
-        isAnonymous: isAnonymousInput,
+        ...payload,
         authorId: currentUser._id as any,
       })
 
-      setRatingInput(5)
-      setContentInput("")
-      setShowSubmitForm(false)
+      closeForm()
+      setSubmissionMessage("评测已提交，待管理员审核通过后会显示在列表中。")
     } catch (error) {
-      console.error("Failed to submit review:", error)
+      setFormError(error instanceof Error ? error.message : "提交评测失败")
     }
   }
 
@@ -161,35 +293,17 @@ export default function CourseDetailPage() {
     try {
       await deleteReview({ id: reviewId as any })
       if (editingReviewId === reviewId) {
-        setEditingReviewId(null)
-        setEditContent("")
+        closeForm()
       }
     } catch (error) {
       console.error("Failed to delete review:", error)
     }
   }
 
-  const handleEditReview = (review: CourseReview) => {
-    setEditingReviewId(review._id)
-    setEditContent(review.content)
-    setEditRating(review.rating)
-  }
-
-  const handleSaveEdit = async () => {
-    if (!editingReviewId || !editContent.trim()) return
-
-    try {
-      await updateReview({
-        id: editingReviewId as any,
-        content: editContent.trim(),
-        rating: editRating,
-      })
-
-      setEditingReviewId(null)
-      setEditContent("")
-    } catch (error) {
-      console.error("Failed to update review:", error)
-    }
+  const reviewAuthor = (review: CourseReview) => {
+    if (review.isAnonymous) return "匿名"
+    if (review.authorId && review.authorId === currentUser?._id) return "我"
+    return "用户"
   }
 
   if (authLoading) {
@@ -234,8 +348,6 @@ export default function CourseDetailPage() {
     )
   }
 
-  const canSubmit = !userReview
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container-custom py-8">
@@ -246,150 +358,283 @@ export default function CourseDetailPage() {
           </Link>
         </Button>
 
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">{course.name}</h1>
-          <p className="text-sm text-muted-foreground mb-4">
-            {course.instructor} · {course.department}
-          </p>
-
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-4xl font-bold text-foreground">{avgRating.toFixed(1)}</span>
-              <div className="space-y-1">
-                <div className="flex gap-0.5">
-                  {getStars(avgRating).map((filled, i) => (
-                    <Star key={i} className={cn("h-5 w-5", filled ? "text-amber-500 fill-amber-500" : "text-muted")} />
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground">{reviews.length} 条评测</p>
-              </div>
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground">{course.name}</h1>
+              <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+                同一门课程不同教师、不同学期的体验可能差异很大。建议先按教师或学期筛选，再结合结构化指标和长评测综合判断。
+              </p>
             </div>
-
-            <div className="hidden md:flex gap-4 ml-8">
-              {[10, 9, 8, 7, 6].map((rating) => {
-                const count = reviews.filter((review) => review.rating === rating).length
-                const percentage = reviews.length ? (count / reviews.length) * 100 : 0
-                return (
-                  <div key={rating} className="text-center">
-                    <div className="w-8 h-16 bg-muted rounded-full overflow-hidden relative">
-                      <div className="absolute bottom-0 w-full bg-amber-500 transition-all" style={{ height: `${percentage}%` }} />
-                    </div>
-                    <span className="text-xs text-muted-foreground mt-1 block">{rating}</span>
-                  </div>
-                )
-              })}
-            </div>
-
-            {canSubmit ? (
-              <Button className="ml-auto" onClick={() => setShowSubmitForm((open) => !open)}>
-                <Plus className="h-4 w-4 mr-2" />
-                提交评测
-              </Button>
-            ) : (
-              <Button className="ml-auto" variant="outline" onClick={() => handleEditReview(userReview!)}>
+            {userReview ? (
+              <Button variant="outline" onClick={() => startEdit(userReview)}>
                 <Pencil className="h-4 w-4 mr-2" />
                 修改我的评测
               </Button>
+            ) : (
+              <Button onClick={startCreate}>
+                <Plus className="h-4 w-4 mr-2" />
+                提交评测
+              </Button>
             )}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-0.5">
+                    {getStars(course.averageRating).map((filled, index) => (
+                      <Star key={index} className={filled ? "h-5 w-5 fill-amber-500 text-amber-500" : "h-5 w-5 text-muted"} />
+                    ))}
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{course.averageRating.toFixed(1)}</p>
+                    <p className="text-sm text-muted-foreground">总体评价均分（1-10）</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-2xl font-bold">{course.reviewCount}</p>
+                <p className="text-sm text-muted-foreground">已通过审核的评测数量</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-2xl font-bold">{teacherOptions.length}</p>
+                <p className="text-sm text-muted-foreground">已收录教师数量</p>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {showSubmitForm && (
+        {submissionMessage && (
+          <Card className="mb-6 border-green-200 bg-green-50">
+            <CardContent className="pt-6 text-sm text-green-800">{submissionMessage}</CardContent>
+          </Card>
+        )}
+
+        {showForm && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>提交评测</CardTitle>
+              <CardTitle>{editingReviewId ? "修改评测" : "提交评测"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">开课学期</label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="review-instructor">开课教师</Label>
+                  <Input
+                    id="review-instructor"
+                    value={formState.instructor}
+                    onChange={(event) => setFormState((previous) => ({ ...previous, instructor: event.target.value }))}
+                    placeholder="请填写老师全名，例如：朱松纯"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="review-department">开课院系</Label>
+                  <Input
+                    id="review-department"
+                    value={formState.department}
+                    onChange={(event) => setFormState((previous) => ({ ...previous, department: event.target.value }))}
+                    placeholder="选填，例如：人工智能研究院"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>选课学期</Label>
                   <div className="flex gap-2">
-                    <Select value={semesterYear} onValueChange={setSemesterYear}>
-                      <SelectTrigger className="w-[120px]">
+                    <Select
+                      value={formState.semesterYear}
+                      onValueChange={(value) => setFormState((previous) => ({ ...previous, semesterYear: value }))}
+                    >
+                      <SelectTrigger className="w-[140px]">
                         <SelectValue placeholder="年份" />
                       </SelectTrigger>
                       <SelectContent>
-                        {years.map((year) => (
-                          <SelectItem key={year} value={year}>{year}</SelectItem>
+                        {yearOptions.map((year) => (
+                          <SelectItem key={year} value={String(year)}>
+                            {year}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={semesterTerm} onValueChange={setSemesterTerm}>
-                      <SelectTrigger className="w-[120px]">
+                    <Select
+                      value={formState.semesterTerm}
+                      onValueChange={(value: CourseReview["semesterTerm"]) =>
+                        setFormState((previous) => ({ ...previous, semesterTerm: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-[160px]">
                         <SelectValue placeholder="学期" />
                       </SelectTrigger>
                       <SelectContent>
-                        {terms.map((term) => (
-                          <SelectItem key={term} value={term}>{term}</SelectItem>
+                        {SEMESTER_TERM_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">评分 ({ratingInput}/10)</label>
-                  <div className="pt-4">
-                    <Slider value={ratingInput} onChange={setRatingInput} min={0} max={10} step={1} />
+                <div className="space-y-2">
+                  <Label>总体评价（1-10，10 为非常推荐，1 为非常不推荐）</Label>
+                  <div className="rounded-lg border border-border/70 px-4 py-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <Badge className={getRatingBadgeClass(formState.overallRating)}>{formState.overallRating}/10</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {formState.overallRating >= 8 ? "非常推荐" : formState.overallRating >= 6 ? "可以考虑" : "谨慎选择"}
+                      </span>
+                    </div>
+                    <Slider
+                      value={formState.overallRating}
+                      onChange={(value) => setFormState((previous) => ({ ...previous, overallRating: value }))}
+                      min={1}
+                      max={10}
+                      step={1}
+                    />
                   </div>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">评测内容</label>
-                <MarkdownSplitEditor
-                  id="new-review-content"
-                  value={contentInput}
-                  onChange={setContentInput}
-                  placeholder="分享你的课程体验，支持 Markdown..."
-                  minHeightClassName="min-h-[180px]"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="anonymous"
-                  checked={isAnonymousInput}
-                  onChange={(e) => setIsAnonymousInput(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="anonymous" className="text-sm text-muted-foreground">
-                  匿名发布
-                </label>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={handleSubmitReview}>提交</Button>
-                <Button variant="outline" onClick={() => setShowSubmitForm(false)}>
-                  取消
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
-        {editingReviewId && (
-          <Card className="mb-8 border-amber-200">
-            <CardHeader>
-              <CardTitle>修改评测</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <label className="text-sm font-medium mb-2 block">评分 ({editRating}/10)</label>
-                <div className="pt-4">
-                  <Slider value={editRating} onChange={setEditRating} min={0} max={10} step={1} />
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="space-y-2">
+                  <Label htmlFor="attendance-required">是否签到</Label>
+                  <select
+                    id="attendance-required"
+                    className="w-full h-10 rounded-md border border-input bg-background px-3"
+                    value={formState.attendanceRequired}
+                    onChange={(event) =>
+                      setFormState((previous) => ({
+                        ...previous,
+                        attendanceRequired: event.target.value as ReviewFormState["attendanceRequired"],
+                      }))
+                    }
+                  >
+                    <option value="unknown">暂不填写</option>
+                    <option value="yes">是</option>
+                    <option value="no">否</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="workload">任务量</Label>
+                  <Input
+                    id="workload"
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={formState.workload}
+                    onChange={(event) => setFormState((previous) => ({ ...previous, workload: event.target.value }))}
+                    placeholder="1-5"
+                  />
+                  <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.workload}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pace">授课进度</Label>
+                  <Input
+                    id="pace"
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={formState.pace}
+                    onChange={(event) => setFormState((previous) => ({ ...previous, pace: event.target.value }))}
+                    placeholder="1-5"
+                  />
+                  <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.pace}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="grading-fairness">给分情况</Label>
+                  <Input
+                    id="grading-fairness"
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={formState.gradingFairness}
+                    onChange={(event) => setFormState((previous) => ({ ...previous, gradingFairness: event.target.value }))}
+                    placeholder="1-5"
+                  />
+                  <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.gradingFairness}</p>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">评测内容</label>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="course-average-score">课程平均分</Label>
+                  <Input
+                    id="course-average-score"
+                    type="number"
+                    value={formState.courseAverageScore}
+                    onChange={(event) => setFormState((previous) => ({ ...previous, courseAverageScore: event.target.value }))}
+                    placeholder="选填"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="personal-score">本人得分</Label>
+                  <Input
+                    id="personal-score"
+                    type="number"
+                    value={formState.personalScore}
+                    onChange={(event) => setFormState((previous) => ({ ...previous, personalScore: event.target.value }))}
+                    placeholder="选填"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recommended-study-method">推荐学习方法</Label>
+                  <select
+                    id="recommended-study-method"
+                    className="w-full h-10 rounded-md border border-input bg-background px-3"
+                    value={formState.recommendedStudyMethod}
+                    onChange={(event) =>
+                      setFormState((previous) => ({
+                        ...previous,
+                        recommendedStudyMethod: event.target.value as ReviewFormState["recommendedStudyMethod"],
+                      }))
+                    }
+                  >
+                    <option value="">暂不填写</option>
+                    {STUDY_METHOD_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Markdown 长评测</Label>
+                <p className="text-sm text-muted-foreground">
+                  可自由写教学方式、学习方法、考试形式、选课建议、给学弟学妹的话等。
+                </p>
                 <MarkdownSplitEditor
-                  id="edit-review-content"
-                  value={editContent}
-                  onChange={setEditContent}
+                  id={editingReviewId ? "edit-review-content" : "new-review-content"}
+                  value={formState.content}
+                  onChange={(value) => setFormState((previous) => ({ ...previous, content: value }))}
                   placeholder="分享你的课程体验，支持 Markdown..."
-                  minHeightClassName="min-h-[180px]"
+                  minHeightClassName="min-h-[220px]"
                 />
               </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="review-anonymous"
+                  type="checkbox"
+                  checked={formState.isAnonymous}
+                  onChange={(event) => setFormState((previous) => ({ ...previous, isAnonymous: event.target.checked }))}
+                  className="rounded"
+                />
+                <Label htmlFor="review-anonymous">匿名发布</Label>
+              </div>
+
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
+
               <div className="flex gap-2">
-                <Button onClick={handleSaveEdit}>保存修改</Button>
-                <Button variant="outline" onClick={() => setEditingReviewId(null)}>
+                <Button onClick={handleSubmitReview}>{editingReviewId ? "保存修改" : "提交评测"}</Button>
+                <Button variant="outline" onClick={closeForm}>
                   取消
                 </Button>
               </div>
@@ -397,23 +642,80 @@ export default function CourseDetailPage() {
           </Card>
         )}
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">课程评测</h2>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="排序" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">最新</SelectItem>
-              <SelectItem value="rating">评分</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">课程评测</h2>
+            <p className="text-sm text-muted-foreground">支持按教师和学期筛选，方便查看不同开课版本的差异。</p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">教师</p>
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3"
+                value={teacherFilter}
+                onChange={(event) => setTeacherFilter(event.target.value)}
+              >
+                <option value="all">全部教师</option>
+                {teacherOptions.map((teacher) => (
+                  <option key={teacher} value={teacher}>
+                    {teacher}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">年份</p>
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3"
+                value={yearFilter}
+                onChange={(event) => setYearFilter(event.target.value)}
+              >
+                <option value="all">全部年份</option>
+                {yearFilterOptions.map((year) => (
+                  <option key={year} value={String(year)}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">学期</p>
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3"
+                value={termFilter}
+                onChange={(event) => setTermFilter(event.target.value as typeof termFilter)}
+              >
+                <option value="all">全部学期</option>
+                {SEMESTER_TERM_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">排序</p>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="排序" />
+                </SelectTrigger>
+                <SelectContent>
+                  {REVIEW_SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
         {sortedReviews.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>暂无评测，快来提交第一个评测吧！</p>
+          <div className="py-12 text-center text-muted-foreground">
+            <MessageSquare className="mx-auto mb-4 h-12 w-12 opacity-50" />
+            <p>当前筛选条件下还没有评测。</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -421,44 +723,56 @@ export default function CourseDetailPage() {
               const isOwnReview = currentUser && review.authorId === currentUser._id
               return (
                 <Card key={review._id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex gap-0.5">
-                          {getStars(review.rating).map((filled, i) => (
-                            <Star key={i} className={cn("h-4 w-4", filled ? "text-amber-500 fill-amber-500" : "text-muted")} />
-                          ))}
+                  <CardContent className="space-y-5 p-6">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-lg font-semibold text-foreground">{review.instructor}</span>
+                          <Badge variant="outline">{getSemesterLabel(review.semesterYear, review.semesterTerm)}</Badge>
+                          <Badge className={getRatingBadgeClass(review.overallRating)}>{review.overallRating}/10</Badge>
                         </div>
-                        <span className="font-medium">{review.rating}/10</span>
+                        <div className="flex flex-wrap gap-2 text-sm">
+                          {review.department && <Badge variant="secondary">{review.department}</Badge>}
+                          {review.attendanceRequired !== undefined && (
+                            <Badge variant="secondary">{review.attendanceRequired ? "需要签到" : "不签到"}</Badge>
+                          )}
+                          {review.workload !== undefined && <Badge variant="secondary">任务量 {review.workload}/5</Badge>}
+                          {review.pace !== undefined && <Badge variant="secondary">进度 {review.pace}/5</Badge>}
+                          {review.gradingFairness !== undefined && (
+                            <Badge variant="secondary">给分 {review.gradingFairness}/5</Badge>
+                          )}
+                          {review.courseAverageScore !== undefined && (
+                            <Badge variant="secondary">课程均分 {review.courseAverageScore}</Badge>
+                          )}
+                          {review.personalScore !== undefined && (
+                            <Badge variant="secondary">本人得分 {review.personalScore}</Badge>
+                          )}
+                          {review.recommendedStudyMethod && (
+                            <Badge variant="secondary">
+                              推荐学习方法{" "}
+                              {STUDY_METHOD_OPTIONS.find((option) => option.value === review.recommendedStudyMethod)?.label}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
+
                       <div className="flex items-center gap-3">
                         {isOwnReview && (
                           <>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 bg-white border-gray-200 hover:bg-gray-100"
-                              onClick={() => handleEditReview(review)}
-                            >
+                            <Button variant="outline" size="icon" onClick={() => startEdit(review)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 bg-white border-gray-200 hover:bg-red-500 hover:text-white hover:border-red-500"
-                              onClick={() => handleDeleteReview(review._id)}
-                            >
-                              <X className="h-4 w-4" />
+                            <Button variant="outline" size="icon" onClick={() => handleDeleteReview(review._id)}>
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </>
                         )}
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span>{review.semester}</span>
-                          <span>·</span>
-                          <span>{reviewAuthor(review)}</span>
+                        <div className="text-sm text-muted-foreground">
+                          {getSemesterShortLabel(review.semesterYear, review.semesterTerm)} · {reviewAuthor(review)}
                         </div>
                       </div>
                     </div>
+
                     <div className="rounded-md border border-border/60 bg-muted/10 p-4">
                       <MarkdownRenderer content={review.content} />
                     </div>

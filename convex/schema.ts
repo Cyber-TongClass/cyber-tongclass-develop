@@ -68,8 +68,18 @@ export default defineSchema({
   // Course reviews table
   courseReviews: defineTable({
     courseName: v.string(),
-    semester: v.string(),
-    rating: v.number(),
+    instructor: v.string(),
+    semesterYear: v.number(),
+    semesterTerm: v.union(v.literal("spring"), v.literal("fall")),
+    overallRating: v.number(),
+    department: v.optional(v.string()),
+    attendanceRequired: v.optional(v.boolean()),
+    workload: v.optional(v.number()),
+    pace: v.optional(v.number()),
+    gradingFairness: v.optional(v.number()),
+    courseAverageScore: v.optional(v.number()),
+    personalScore: v.optional(v.number()),
+    recommendedStudyMethod: v.optional(v.union(v.literal("attend"), v.literal("recording"), v.literal("self_study"))),
     content: v.string(),
     isAnonymous: v.boolean(),
     authorId: v.optional(v.id("users")),
@@ -79,7 +89,8 @@ export default defineSchema({
   })
     .index("by_course", ["courseName"])
     .index("by_status", ["status"])
-    .index("by_semester", ["semester"]),
+    .index("by_instructor", ["instructor"])
+    .index("by_semester", ["semesterYear", "semesterTerm"]),
 
   // News table
   news: defineTable({
@@ -117,8 +128,6 @@ export default defineSchema({
   // Courses table
   courses: defineTable({
     name: v.string(),
-    instructor: v.string(),
-    department: v.string(),
     isTongClassCourse: v.optional(v.boolean()),
     reviewCount: v.number(),
     averageRating: v.number(),

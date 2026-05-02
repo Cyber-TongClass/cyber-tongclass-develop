@@ -288,7 +288,12 @@ export function useDeleteCourse() {
 
 // ==================== 课程评价相关 ====================
 
-export function useCourseReviews(args?: string | { courseName?: string; semester?: string }) {
+export function useCourseReviews(args?: string | {
+  courseName?: string
+  instructor?: string
+  semesterYear?: number
+  semesterTerm?: "spring" | "fall"
+}) {
   const normalized =
     typeof args === "string"
       ? {
