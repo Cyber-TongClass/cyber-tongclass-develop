@@ -1,6 +1,35 @@
 import { query, mutation } from "./_generated/server"
 import { v } from "convex/values"
 
+async function syncCourseStatsByName(ctx: any, courseName: string) {
+  const normalizedCourseName = courseName.trim()
+  if (!normalizedCourseName) return
+
+  const course = await ctx.db
+    .query("courses")
+    .filter((q: any) => q.eq(q.field("name"), normalizedCourseName))
+    .first()
+
+  if (!course) return
+
+  const approvedReviews = await ctx.db
+    .query("courseReviews")
+    .filter((q: any) => q.eq(q.field("courseName"), normalizedCourseName))
+    .filter((q: any) => q.eq(q.field("status"), "approved"))
+    .collect()
+
+  const reviewCount = approvedReviews.length
+  const averageRating = reviewCount > 0
+    ? Math.round((approvedReviews.reduce((sum: number, review: any) => sum + review.rating, 0) / reviewCount) * 10) / 10
+    : 0
+
+  await ctx.db.patch(course._id, {
+    reviewCount,
+    averageRating,
+    updatedAt: Date.now(),
+  })
+}
+
 // Get approved course reviews by course name
 export const listByCourse = query({
   args: {
@@ -118,6 +147,11 @@ export const create = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
+
+    if ((args.status ?? "pending") === "approved") {
+      await syncCourseStatsByName(ctx, args.courseName)
+    }
+
     return reviewId
   },
 })
@@ -138,7 +172,15 @@ export const update = mutation({
     if (!review) {
       throw new Error("Review not found")
     }
+    const oldCourseName = review.courseName
     await ctx.db.patch(id, { ...updates, updatedAt: Date.now() })
+
+    const nextCourseName = updates.courseName ?? oldCourseName
+    const affectedCourseNames = new Set<string>([oldCourseName, nextCourseName])
+    for (const courseName of affectedCourseNames) {
+      await syncCourseStatsByName(ctx, courseName)
+    }
+
     return id
   },
 })
@@ -152,6 +194,7 @@ export const approve = mutation({
       throw new Error("Review not found")
     }
     await ctx.db.patch(args.id, { status: "approved", updatedAt: Date.now() })
+    await syncCourseStatsByName(ctx, review.courseName)
     return args.id
   },
 })
@@ -165,6 +208,7 @@ export const reject = mutation({
       throw new Error("Review not found")
     }
     await ctx.db.patch(args.id, { status: "rejected", updatedAt: Date.now() })
+    await syncCourseStatsByName(ctx, review.courseName)
     return args.id
   },
 })
@@ -178,6 +222,7 @@ export const remove = mutation({
       throw new Error("Review not found")
     }
     await ctx.db.delete(args.id)
+    await syncCourseStatsByName(ctx, review.courseName)
     return args.id
   },
 })
@@ -197,6 +242,9 @@ export const updateCourseName = mutation({
     for (const review of reviews) {
       await ctx.db.patch(review._id, { courseName: args.newName, updatedAt: Date.now() })
     }
+
+    await syncCourseStatsByName(ctx, args.oldName)
+    await syncCourseStatsByName(ctx, args.newName)
     
     return reviews.length
   },

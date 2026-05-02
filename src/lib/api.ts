@@ -3,6 +3,7 @@
 import { useCallback } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
+import type { UserLink } from "@/types"
 
 type IdLike =
   | string
@@ -53,13 +54,16 @@ type SignUpInput = {
   email: string
   username: string
   englishName: string
+  chineseName?: string
   organization: "pku" | "thu"
   cohort: number
   studentId: string
   password: string
+  personalEmails?: string[]
   personalEmail?: string
   bio?: string
   researchInterests?: string[]
+  links?: UserLink[]
   titles?: { title: string; link: string }[]
   scholarUrl?: string
   orcidUrl?: string
@@ -75,13 +79,16 @@ export function useSignUp() {
         email: input.email,
         username: input.username,
         englishName: input.englishName,
+        chineseName: input.chineseName,
         organization: input.organization,
         cohort: input.cohort,
         studentId: input.studentId,
         password: input.password,
+        personalEmails: input.personalEmails,
         personalEmail: input.personalEmail,
         bio: input.bio,
         researchInterests: input.researchInterests,
+        links: input.links,
         titles: input.titles,
         scholarUrl: input.scholarUrl,
         orcidUrl: input.orcidUrl,

@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PersonalEmailsInput } from "@/components/profile/personal-emails-input"
+import { UserLinksInput } from "@/components/profile/user-links-input"
+import { getUserLinks, getUserPersonalEmails, sanitizePersonalEmails, sanitizeUserLinks } from "@/lib/user-profile"
 import {
   Select,
   SelectContent,
@@ -15,7 +18,7 @@ import {
 } from "@/components/ui/select"
 import { ArrowLeft, Save, UserPlus } from "lucide-react"
 import { useUserById, useCreateUser, useUpdateUser } from "@/lib/api"
-import type { UserRole } from "@/types"
+import type { UserLink, UserRole } from "@/types"
 
 type Organization = "pku" | "thu"
 type Role = UserRole
@@ -36,6 +39,7 @@ const cohortOptions = Array.from({ length: CURRENT_YEAR - 2019 }, (_, idx) => CU
 
 type UserFormData = {
   englishName: string
+  chineseName: string
   username: string
   email: string
   organization: Organization
@@ -43,6 +47,10 @@ type UserFormData = {
   role: Role
   studentId: string
   password: string
+  personalEmails: string[]
+  bio: string
+  researchInterests: string[]
+  links: UserLink[]
 }
 
 export default function UserFormPage() {
@@ -53,8 +61,10 @@ export default function UserFormPage() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [newInterest, setNewInterest] = useState("")
   const [formData, setFormData] = useState<UserFormData>({
     englishName: "",
+    chineseName: "",
     username: "",
     email: "",
     organization: "pku",
@@ -62,6 +72,10 @@ export default function UserFormPage() {
     role: "member",
     studentId: "",
     password: "",
+    personalEmails: [],
+    bio: "",
+    researchInterests: [],
+    links: [],
   })
 
   // Use hooks at top level
@@ -71,9 +85,19 @@ export default function UserFormPage() {
 
   // Set user data when fetched
   useEffect(() => {
-    if (!isCreateMode && userData) {
+    if (isCreateMode) {
+      setLoading(false)
+      return
+    }
+
+    if (userData === undefined) {
+      return
+    }
+
+    if (userData) {
       setFormData({
         englishName: userData.englishName || "",
+        chineseName: userData.chineseName || "",
         username: userData.username || "",
         email: userData.email || "",
         organization: userData.organization || "pku",
@@ -81,10 +105,35 @@ export default function UserFormPage() {
         role: userData.role || "member",
         studentId: userData.studentId || "",
         password: "",
+        personalEmails: getUserPersonalEmails(userData),
+        bio: userData.bio || "",
+        researchInterests: userData.researchInterests || [],
+        links: getUserLinks(userData),
       })
     }
+
     setLoading(false)
   }, [isCreateMode, userData])
+
+  const handleAddInterest = () => {
+    const normalized = newInterest.trim()
+    if (!normalized || formData.researchInterests.includes(normalized)) {
+      return
+    }
+
+    setFormData({
+      ...formData,
+      researchInterests: [...formData.researchInterests, normalized],
+    })
+    setNewInterest("")
+  }
+
+  const handleRemoveInterest = (interest: string) => {
+    setFormData({
+      ...formData,
+      researchInterests: formData.researchInterests.filter((item) => item !== interest),
+    })
+  }
 
   const expectedEmailHint = useMemo(() => {
     const studentId = formData.studentId.trim().toLowerCase() || "your_student_id"
@@ -102,6 +151,7 @@ export default function UserFormPage() {
       try {
         await createUserMutation({
           englishName: formData.englishName.trim(),
+          chineseName: formData.chineseName.trim(),
           username: formData.username.trim(),
           email: formData.email.trim(),
           organization: formData.organization,
@@ -109,6 +159,10 @@ export default function UserFormPage() {
           role: formData.role,
           studentId: formData.studentId.trim(),
           password: formData.password,
+          personalEmails: sanitizePersonalEmails(formData.personalEmails),
+          bio: formData.bio.trim() || undefined,
+          researchInterests: formData.researchInterests.map((item) => item.trim()).filter(Boolean),
+          links: sanitizeUserLinks(formData.links),
         })
         router.push("/admin/users")
       } catch (err: any) {
@@ -121,12 +175,17 @@ export default function UserFormPage() {
       await updateUserMutation({
         id: userId as any,
         englishName: formData.englishName.trim(),
+        chineseName: formData.chineseName.trim(),
         username: formData.username.trim(),
         email: formData.email.trim(),
         organization: formData.organization,
         cohort: formData.cohort,
         role: formData.role,
         studentId: formData.studentId.trim(),
+        personalEmails: sanitizePersonalEmails(formData.personalEmails),
+        bio: formData.bio.trim(),
+        researchInterests: formData.researchInterests.map((item) => item.trim()).filter(Boolean),
+        links: sanitizeUserLinks(formData.links),
       })
       router.push("/admin/users")
     } catch (err: any) {
@@ -185,11 +244,20 @@ export default function UserFormPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <Label htmlFor="englishName">姓名</Label>
+                <Label htmlFor="englishName">英文名</Label>
                 <Input
                   id="englishName"
                   value={formData.englishName}
                   onChange={(e) => setFormData({ ...formData, englishName: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="chineseName">中文名</Label>
+                <Input
+                  id="chineseName"
+                  value={formData.chineseName}
+                  onChange={(e) => setFormData({ ...formData, chineseName: e.target.value })}
                   required
                 />
               </div>
@@ -291,6 +359,64 @@ export default function UserFormPage() {
                   />
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label>个人邮箱</Label>
+              <PersonalEmailsInput
+                emails={formData.personalEmails}
+                onChange={(personalEmails) => setFormData({ ...formData, personalEmails })}
+              />
+              <p className="text-xs text-muted-foreground">学校邮箱用于账号身份识别，不会在成员主页公开展示。</p>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="bio">Bio</Label>
+              <textarea
+                id="bio"
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                placeholder="Tell us about this user..."
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label>Research Interests</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={newInterest}
+                  onChange={(e) => setNewInterest(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddInterest())}
+                  placeholder="Add research interest"
+                />
+                <Button type="button" variant="outline" onClick={handleAddInterest}>
+                  Add
+                </Button>
+              </div>
+              {formData.researchInterests.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {formData.researchInterests.map((interest) => (
+                    <span
+                      key={interest}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs text-primary"
+                    >
+                      {interest}
+                      <button type="button" onClick={() => handleRemoveInterest(interest)}>
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label>Profile Links</Label>
+              <UserLinksInput
+                links={formData.links}
+                onChange={(links) => setFormData({ ...formData, links })}
+              />
             </div>
           </CardContent>
         </Card>

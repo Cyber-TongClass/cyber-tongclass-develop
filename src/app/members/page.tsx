@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { Search, Users as UsersIcon, GraduationCap, School } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { getInitials } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
@@ -82,7 +82,12 @@ export default function MembersPage() {
   // 筛选用户
   const filteredUsers = sortedUsers.filter(user => {
     // 搜索筛选
-    if (searchQuery && !user.englishName.toLowerCase().includes(searchQuery.toLowerCase())) {
+    const normalizedQuery = searchQuery.toLowerCase()
+    if (
+      searchQuery &&
+      !user.englishName.toLowerCase().includes(normalizedQuery) &&
+      !(user.chineseName || "").toLowerCase().includes(normalizedQuery)
+    ) {
       return false
     }
     // 学校筛选
@@ -237,7 +242,7 @@ export default function MembersPage() {
                           />
                         ) : (
                           <span className="text-2xl font-semibold text-primary">
-                            {(user.englishName || user.username || "U").charAt(0).toUpperCase()}
+                            {getInitials(user.englishName || user.username || "U")}
                           </span>
                         )}
                       </div>
@@ -247,6 +252,11 @@ export default function MembersPage() {
                     <h3 className="text-lg font-semibold text-center text-foreground group-hover:text-primary transition-colors">
                       {user.englishName}
                     </h3>
+                    {user.chineseName && (
+                      <p className="mt-1 text-center text-sm text-muted-foreground">
+                        {user.chineseName}
+                      </p>
+                    )}
 
                     {/* Organization & Cohort */}
                     <div className="flex items-center justify-center gap-2 mt-2 text-sm text-muted-foreground">

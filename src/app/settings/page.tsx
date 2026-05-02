@@ -4,12 +4,15 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { useUpdatePasswordWithCurrent, useUpdateUser } from "@/lib/api"
-import { normalizeUrl } from "@/lib/utils"
+import { PersonalEmailsInput } from "@/components/profile/personal-emails-input"
+import { UserLinksInput } from "@/components/profile/user-links-input"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { MarkdownSplitEditor } from "@/components/markdown/markdown-split-editor"
+import { getUserLinks, getUserPersonalEmails, sanitizePersonalEmails, sanitizeUserLinks } from "@/lib/user-profile"
+import type { UserLink } from "@/types"
 import { Upload, Camera, User } from "lucide-react"
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
@@ -27,23 +30,18 @@ export default function SettingsPage() {
 
   // Profile form
   const [englishName, setEnglishName] = useState("")
-  const [personalEmail, setPersonalEmail] = useState("")
+  const [chineseName, setChineseName] = useState("")
+  const [personalEmails, setPersonalEmails] = useState<string[]>([])
   const [bio, setBio] = useState("")
   const [profileMarkdown, setProfileMarkdown] = useState("")
   const [researchInterests, setResearchInterests] = useState<string[]>([])
   const [newInterest, setNewInterest] = useState("")
-  const [scholarUrl, setScholarUrl] = useState("")
-  const [orcidUrl, setOrcidUrl] = useState("")
+  const [links, setLinks] = useState<UserLink[]>([])
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-
-  // Title/Links
-  const [titles, setTitles] = useState<{ title: string; link: string }[]>([])
-  const [newTitle, setNewTitle] = useState("")
-  const [newLink, setNewLink] = useState("")
 
   // Avatar & Real Photo
   const [avatar, setAvatar] = useState<string | undefined>(undefined)
@@ -98,13 +96,12 @@ export default function SettingsPage() {
   useEffect(() => {
     if (currentUser) {
       setEnglishName(currentUser.englishName || "")
-      setPersonalEmail(currentUser.personalEmail || "")
+      setChineseName(currentUser.chineseName || "")
+      setPersonalEmails(getUserPersonalEmails(currentUser))
       setBio(currentUser.bio || "")
       setProfileMarkdown(currentUser.profileMarkdown || "")
       setResearchInterests(currentUser.researchInterests || [])
-      setScholarUrl(currentUser.scholarUrl || "")
-      setOrcidUrl(currentUser.orcidUrl || "")
-      setTitles(currentUser.titles || [])
+      setLinks(getUserLinks(currentUser))
       setAvatar(currentUser.avatar)
       setRealPhoto(currentUser.realPhoto)
       if (currentUser.avatar) setAvatarPreview(currentUser.avatar)
@@ -115,6 +112,12 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     if (!currentUser) return
 
+    if (!englishName.trim() || !chineseName.trim()) {
+      setError("English name and Chinese name are required")
+      setSuccessMessage("")
+      return
+    }
+
     setIsSubmitting(true)
     setError("")
     setSuccessMessage("")
@@ -122,14 +125,16 @@ export default function SettingsPage() {
     try {
       await updateUser({
         id: currentUser._id,
-        englishName,
-        personalEmail: personalEmail || undefined,
-        bio: bio || undefined,
-        researchInterests: researchInterests.length > 0 ? researchInterests : undefined,
-        scholarUrl: scholarUrl || undefined,
-        orcidUrl: orcidUrl || undefined,
-        titles: titles.length > 0 ? titles : undefined,
+        englishName: englishName.trim(),
+        chineseName: chineseName.trim(),
+        personalEmails: sanitizePersonalEmails(personalEmails),
+        bio: bio.trim(),
+        researchInterests: researchInterests
+          .map((interest) => interest.trim())
+          .filter(Boolean),
+        links: sanitizeUserLinks(links),
         avatar,
+        realPhoto,
       })
 
       setSuccessMessage("Profile updated successfully!")
@@ -172,18 +177,6 @@ export default function SettingsPage() {
 
   const handleRemoveInterest = (interest: string) => {
     setResearchInterests(researchInterests.filter(i => i !== interest))
-  }
-
-  const handleAddTitle = () => {
-    if (newTitle && newLink) {
-      setTitles([...titles, { title: newTitle, link: newLink }])
-      setNewTitle("")
-      setNewLink("")
-    }
-  }
-
-  const handleRemoveTitle = (index: number) => {
-    setTitles(titles.filter((_, i) => i !== index))
   }
 
   const handleChangePassword = async () => {
@@ -355,16 +348,20 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="personalEmail">Personal Email</Label>
+              <Label htmlFor="chineseName">Chinese Name *</Label>
               <Input
-                id="personalEmail"
-                type="email"
-                value={personalEmail}
-                onChange={(e) => setPersonalEmail(e.target.value)}
-                placeholder="your.personal@email.com"
+                id="chineseName"
+                value={chineseName}
+                onChange={(e) => setChineseName(e.target.value)}
+                placeholder="例如：张三"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Personal Emails</Label>
+              <PersonalEmailsInput emails={personalEmails} onChange={setPersonalEmails} />
               <p className="text-xs text-muted-foreground">
-                Changing email requires verification
+                Your school email, which includes your student ID, is kept on the account to protect your identity and is not displayed on your public profile. By default, only the personal email addresses you provide are shown publicly. However, if you wish to display your school email, you may add it here.
               </p>
             </div>
 
@@ -437,64 +434,12 @@ export default function SettingsPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="scholarUrl">Google Scholar URL</Label>
-                <Input
-                  id="scholarUrl"
-                  value={scholarUrl}
-                  onChange={(e) => setScholarUrl(e.target.value)}
-                  placeholder="https://scholar.google.com/..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="orcidUrl">ORCID</Label>
-                <Input
-                  id="orcidUrl"
-                  value={orcidUrl}
-                  onChange={(e) => setOrcidUrl(e.target.value)}
-                  placeholder="https://orcid.org/..."
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label>Title & Links</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Page Title"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                />
-                <Input
-                  placeholder="Link URL"
-                  value={newLink}
-                  onChange={(e) => setNewLink(e.target.value)}
-                />
-                <Button type="button" variant="outline" onClick={handleAddTitle}>
-                  Add
-                </Button>
-              </div>
-              {titles.length > 0 && (
-                <div className="space-y-2 mt-2">
-                  {titles.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span className="text-sm">{item.title}</span>
-                      <a href={normalizeUrl(item.link)} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
-                        {item.link}
-                      </a>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveTitle(index)}
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <Label>Profile Links</Label>
+              <UserLinksInput links={links} onChange={setLinks} />
+              <p className="text-xs text-muted-foreground">
+                Use preset link types like Homepage, Google Scholar, ORCID, GitHub, X, Xiaohongshu, LinkedIn, or add custom links.
+              </p>
             </div>
           </CardContent>
           <CardFooter>

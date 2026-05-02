@@ -100,6 +100,9 @@ export default function ResourcesPage() {
       return a.name.localeCompare(b.name, "zh-CN")
     })
 
+  const tongClassCourses = filteredCourses.filter((course) => course.isTongClassCourse)
+  const otherCourses = filteredCourses.filter((course) => !course.isTongClassCourse)
+
   return (
     <div className="min-h-screen bg-background">
       <section className="bg-primary/5 border-b border-border">
@@ -185,38 +188,88 @@ export default function ResourcesPage() {
             <p className="text-muted-foreground">可点击“添加课程”创建后再发布评测</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {filteredCourses.map((course) => (
-              <Link key={course._id} href={`/resources/courses/${encodeURIComponent(course.name)}`}>
-                <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30 cursor-pointer">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{course.name}</h3>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          <p>{course.instructor} · {course.department}</p>
-                        </div>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                            <span className="font-medium">{course.averageRating.toFixed(1)}</span>
-                            <span>({course.reviewCount}条评测)</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>{course.reviewCount} 条评测</span>
-                          </div>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
+          <div className="space-y-10">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground">通班培养方案课程</h2>
+                  <p className="text-sm text-muted-foreground mt-1">通班核心课程仅由管理员维护，包含专业基础课、专业核心课、专业选修课、公共必修课等。</p>
+                </div>
+                <span className="text-sm text-muted-foreground">{tongClassCourses.length} 门</span>
+              </div>
+
+              {tongClassCourses.length === 0 ? (
+                <Card className="border-dashed border-border/70 bg-muted/20">
+                  <CardContent className="py-8 text-sm text-muted-foreground">
+                    当前没有匹配的通班培养方案课程。
                   </CardContent>
                 </Card>
-              </Link>
-            ))}
+              ) : (
+                <div className="space-y-6">
+                  {tongClassCourses.map((course) => (
+                    <CourseListCard key={course._id} course={course} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-foreground">其他课程</h2>
+                  <p className="text-sm text-muted-foreground mt-1">用户可自行补充和讨论的其他课程。</p>
+                </div>
+                <span className="text-sm text-muted-foreground">{otherCourses.length} 门</span>
+              </div>
+
+              {otherCourses.length === 0 ? (
+                <Card className="border-dashed border-border/70 bg-muted/20">
+                  <CardContent className="py-8 text-sm text-muted-foreground">
+                    当前没有匹配的其他课程。
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  {otherCourses.map((course) => (
+                    <CourseListCard key={course._id} course={course} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>
     </div>
+  )
+}
+
+function CourseListCard({ course }: { course: Course }) {
+  return (
+    <Link href={`/resources/courses/${encodeURIComponent(course.name)}`}>
+      <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30 cursor-pointer">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{course.name}</h3>
+              <div className="mt-1 text-sm text-muted-foreground">
+                <p>{course.instructor} · {course.department}</p>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                  <span className="font-medium">{course.averageRating.toFixed(1)}</span>
+                  <span>({course.reviewCount}条评测)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{course.reviewCount} 条评测</span>
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }

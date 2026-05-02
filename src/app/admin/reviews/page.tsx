@@ -94,6 +94,7 @@ export default function ReviewsPage() {
   const [courseName, setCourseName] = useState("")
   const [courseInstructor, setCourseInstructor] = useState("")
   const [courseDepartment, setCourseDepartment] = useState("")
+  const [courseIsTongClass, setCourseIsTongClass] = useState(false)
 
   const { confirm, ConfirmDialog } = useConfirmDialog()
 
@@ -132,6 +133,7 @@ export default function ReviewsPage() {
     setCourseName("")
     setCourseInstructor("")
     setCourseDepartment("")
+    setCourseIsTongClass(false)
     setCourseError("")
   }
 
@@ -147,6 +149,7 @@ export default function ReviewsPage() {
     setCourseName(course.name)
     setCourseInstructor(course.instructor)
     setCourseDepartment(course.department)
+    setCourseIsTongClass(!!course.isTongClassCourse)
     setCourseError("")
     setCourseDialogOpen(true)
   }
@@ -223,6 +226,7 @@ export default function ReviewsPage() {
           name: courseName,
           instructor: courseInstructor,
           department: courseDepartment,
+          isTongClassCourse: courseIsTongClass,
         })
       } else if (editingCourseId) {
         await updateCourse({
@@ -230,6 +234,7 @@ export default function ReviewsPage() {
           name: courseName,
           instructor: courseInstructor,
           department: courseDepartment,
+          isTongClassCourse: courseIsTongClass,
         })
       }
 
@@ -428,6 +433,7 @@ export default function ReviewsPage() {
                 <TableHead>课程名称</TableHead>
                 <TableHead>教师</TableHead>
                 <TableHead>院系</TableHead>
+                <TableHead>课程分组</TableHead>
                 <TableHead>评测数</TableHead>
                 <TableHead>平均分</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -439,6 +445,11 @@ export default function ReviewsPage() {
                   <TableCell className="font-medium">{course.name}</TableCell>
                   <TableCell>{course.instructor}</TableCell>
                   <TableCell>{course.department}</TableCell>
+                  <TableCell>
+                    <Badge className={course.isTongClassCourse ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-700"}>
+                      {course.isTongClassCourse ? "通班培养方案课程" : "其他课程"}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{course.reviewCount}</TableCell>
                   <TableCell>{course.averageRating.toFixed(1)}</TableCell>
                   <TableCell className="text-right">
@@ -471,6 +482,15 @@ export default function ReviewsPage() {
             <div className="space-y-2">
               <Label htmlFor="course-department">开课院系</Label>
               <Input id="course-department" value={courseDepartment} onChange={(e) => setCourseDepartment(e.target.value)} required />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="course-is-tong-class"
+                type="checkbox"
+                checked={courseIsTongClass}
+                onChange={(e) => setCourseIsTongClass(e.target.checked)}
+              />
+              <Label htmlFor="course-is-tong-class">标记为通班培养方案课程</Label>
             </div>
             {courseError && <p className="text-sm text-red-600">{courseError}</p>}
             <div className="flex justify-end gap-2">

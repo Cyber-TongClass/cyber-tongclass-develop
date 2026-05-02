@@ -42,6 +42,7 @@ export const create = mutation({
     name: v.string(),
     instructor: v.string(),
     department: v.string(),
+    isTongClassCourse: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     // Check if course already exists
@@ -58,6 +59,7 @@ export const create = mutation({
       name: args.name,
       instructor: args.instructor,
       department: args.department,
+      isTongClassCourse: args.isTongClassCourse ?? false,
       reviewCount: 0,
       averageRating: 0,
       createdAt: Date.now(),
@@ -74,6 +76,7 @@ export const update = mutation({
     name: v.optional(v.string()),
     instructor: v.optional(v.string()),
     department: v.optional(v.string()),
+    isTongClassCourse: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args

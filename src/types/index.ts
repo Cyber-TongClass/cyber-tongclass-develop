@@ -1,19 +1,38 @@
 // User types
 export type UserRole = 'member' | 'admin' | 'super_admin'
 
+export type UserLinkType =
+  | 'homepage'
+  | 'scholar'
+  | 'orcid'
+  | 'github'
+  | 'x'
+  | 'xiaohongshu'
+  | 'linkedin'
+  | 'custom'
+
+export interface UserLink {
+  type: UserLinkType
+  label: string
+  url: string
+}
+
 export interface User {
   _id: string
   email: string
   username: string
   englishName: string
+  chineseName?: string
   role: UserRole
   organization: 'pku' | 'thu'
   cohort: number // 2020, 2021, etc.
   studentId: string
+  personalEmails?: string[]
   personalEmail?: string
   bio?: string // Markdown
   profileMarkdown?: string
   researchInterests?: string[]
+  links?: UserLink[]
   titles?: { title: string; link: string }[]
   scholarUrl?: string
   orcidUrl?: string
@@ -60,6 +79,7 @@ export interface Course {
   name: string
   instructor: string
   department: string
+  isTongClassCourse?: boolean
   aliases?: string[] // Alternative names for merge detection
   reviewCount: number
   averageRating: number
