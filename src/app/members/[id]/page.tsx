@@ -6,26 +6,27 @@ import { useParams } from "next/navigation"
 import { ArrowLeft, Mail, ExternalLink, BookOpen, FileText, School, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useUserById, usePublicationsByUser } from "@/lib/api"
+import { usePublicationsByUser, useUserByProfileSlug } from "@/lib/api"
 import { normalizeUrl } from "@/lib/utils"
 import { MarkdownRenderer } from "@/components/markdown/markdown-renderer"
 import { getUserLinks, getUserPersonalEmails } from "@/lib/user-profile"
+import { getResearchDirectionLabel } from "@/lib/research-directions"
 import type { Publication } from "@/types"
 
 export default function MemberDetailPage() {
   const params = useParams<{ id: string }>()
-  const memberId = params.id
+  const memberSlug = params.id
 
-  // Fetch user and publications from Convex
-  const userData = useUserById(memberId as string)
-  const publicationsData = usePublicationsByUser(memberId as string)
-
+  const userData = useUserByProfileSlug(memberSlug)
   const member = userData ? { ...userData, id: userData._id } : null
+  const publicationsData = usePublicationsByUser(member?._id || "")
   const publications: Publication[] = publicationsData || []
   const personalEmails = member ? getUserPersonalEmails(member) : []
   const profileLinks = member ? getUserLinks(member) : []
+  const researchDirections = member?.researchDirections || []
+  const profilePhoto = member?.realPhoto || member?.avatar
 
-  const loading = userData === undefined || publicationsData === undefined
+  const loading = userData === undefined || (!!member && publicationsData === undefined)
 
   if (loading) {
     return (
@@ -48,7 +49,7 @@ export default function MemberDetailPage() {
       <Button variant="ghost" asChild className="mb-6 -ml-3 gap-2">
         <Link href="/members">
           <ArrowLeft className="h-4 w-4" />
-          返回成员列表
+          Back to Members
         </Link>
       </Button>
 
@@ -57,8 +58,8 @@ export default function MemberDetailPage() {
           <Card className="border-0 shadow-sm sticky top-24">
             <CardHeader className="text-center pb-4">
               <div className="h-24 w-24 mx-auto rounded-full overflow-hidden bg-primary/10 mb-4">
-                {member.avatar ? (
-                  <img src={member.avatar} alt={member.englishName} className="h-full w-full object-cover" />
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt={member.englishName} className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-primary font-bold text-3xl">
                     {member.englishName.charAt(0)}
@@ -66,12 +67,9 @@ export default function MemberDetailPage() {
                 )}
               </div>
               <CardTitle className="text-2xl">{member.englishName}</CardTitle>
-              {member.chineseName && (
-                <p className="text-sm font-medium text-muted-foreground">{member.chineseName}</p>
-              )}
               <p className="text-muted-foreground flex items-center justify-center gap-2">
                 {member.organization === "pku" ? <School className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}
-                {member.organization === "pku" ? "北大通班" : "清华通班"} · {member.cohort}级
+                {member.organization === "pku" ? "PKU Tong Class" : "THU Tong Class"} · Class of {member.cohort}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -90,24 +88,33 @@ export default function MemberDetailPage() {
                 </div>
               )}
 
-              {member.bio && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Bio</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{member.bio}</p>
+              {researchDirections.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    Research Areas
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {researchDirections.map((direction: string) => (
+                      <span
+                        key={direction}
+                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/5 text-primary"
+                      >
+                        {getResearchDirectionLabel(direction)}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {member.researchInterests && member.researchInterests.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    研究兴趣
-                  </h4>
+                  <h4 className="text-sm font-semibold mb-2">Research Interests</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {member.researchInterests.map((interest: string) => (
                       <span
                         key={interest}
-                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/5 text-primary"
+                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground"
                       >
                         {interest}
                       </span>
@@ -120,7 +127,7 @@ export default function MemberDetailPage() {
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold flex items-center gap-2">
                     <ExternalLink className="h-4 w-4" />
-                    链接
+                    Links
                   </h4>
                   <div className="space-y-2">
                     {profileLinks.map((item) => (
@@ -144,13 +151,15 @@ export default function MemberDetailPage() {
 
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-0 shadow-sm">
-            <CardContent className="pt-6 pb-6">
-              <div className="my-2">
-                <MarkdownRenderer
-                  content={member.profileMarkdown || ""}
-                  emptyFallback="You've reached the inhabited"
-                />
-              </div>
+            <CardHeader>
+              <CardTitle className="text-xl">Bio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {member.bio ? (
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{member.bio}</p>
+              ) : (
+                <p className="text-muted-foreground">No bio yet.</p>
+              )}
             </CardContent>
           </Card>
 
@@ -158,7 +167,7 @@ export default function MemberDetailPage() {
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                学术成果
+                Publications
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -193,10 +202,21 @@ export default function MemberDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-8">暂无学术成果</p>
+                <p className="text-muted-foreground text-center py-8">No publications yet.</p>
               )}
             </CardContent>
           </Card>
+
+          {member.profileMarkdown?.trim() && (
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl">Profile Notes</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 pb-6">
+                <MarkdownRenderer content={member.profileMarkdown} />
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

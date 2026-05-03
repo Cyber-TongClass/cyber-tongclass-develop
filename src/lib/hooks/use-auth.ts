@@ -69,7 +69,7 @@ export function useAuth() {
   const login = useCallback(async (identifier: string, password: string) => {
     try {
       const result = await loginMutation({ 
-        email: identifier, 
+        studentId: identifier.trim(),
         password: password 
       })
       
@@ -92,11 +92,11 @@ export function useAuth() {
     }
   }, [loginMutation])
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (redirectTo?: unknown) => {
     localStorage.removeItem("tongclass_user_email")
     localStorage.removeItem("tongclass_user_id")
     setStoredEmail(null)
-    router.push("/")
+    router.push(typeof redirectTo === "string" ? redirectTo : "/")
     router.refresh()
   }, [router])
 

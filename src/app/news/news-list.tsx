@@ -102,7 +102,11 @@ export function NewsList() {
                 
                 {/* Content */}
                 <div className="ml-10 md:ml-0 md:w-[calc(50%-2rem)]">
-                  <Link href={`/news/${item._id}`}>
+                  <Link
+                    href={item.sourceUrl || `/news/${item._id}`}
+                    target={item.sourceUrl ? "_blank" : undefined}
+                    rel={item.sourceUrl ? "noopener noreferrer" : undefined}
+                  >
                     <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer card-hover">
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">

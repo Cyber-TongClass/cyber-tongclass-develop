@@ -23,6 +23,8 @@ const navigation = [
   { name: "成员", href: "/members" },
   { name: "成果", href: "/publications" },
   { name: "课程", href: "/courses", auth: true },
+  { name: "资源", href: "/resources" },
+  { name: "内网", href: "/intranet", auth: true },
   { name: "活动", href: "/events" },
   { name: "关于", href: "/about" },
 ]
@@ -50,6 +52,9 @@ export function Navbar() {
       setSearchQuery("")
     }
   }
+
+  const currentUserProfileHref = currentUser ? `/members/${currentUser.username || currentUser._id}` : "/members"
+  const currentUserPhoto = currentUser?.realPhoto || currentUser?.avatar
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
@@ -106,10 +111,10 @@ export function Navbar() {
                   type="button"
                   className="hidden md:flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted text-sm font-semibold text-foreground"
                 >
-                  {currentUser.avatar ? (
+                  {currentUserPhoto ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={currentUser.avatar}
+                      src={currentUserPhoto}
                       alt={currentUser.englishName}
                       className="h-full w-full rounded-full object-cover"
                     />
@@ -120,7 +125,7 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={`/members/${currentUser._id}`}>
+                  <Link href={currentUserProfileHref}>
                     <User className="h-4 w-4 mr-2" />
                     个人主页
                   </Link>
@@ -190,7 +195,7 @@ export function Navbar() {
                 {isAuthenticated && currentUser ? (
                   <>
                     <Link
-                      href={`/members/${currentUser._id}`}
+                      href={currentUserProfileHref}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="px-4 py-3 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     >

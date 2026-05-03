@@ -31,6 +31,7 @@ export interface User {
   personalEmail?: string
   bio?: string // Markdown
   profileMarkdown?: string
+  researchDirections?: string[]
   researchInterests?: string[]
   links?: UserLink[]
   titles?: { title: string; link: string }[]
@@ -104,6 +105,7 @@ export interface News {
   _id: string
   title: string
   content: string // Markdown
+  sourceUrl?: string
   authorId: string
   authorName?: string // Custom author name
   category: string

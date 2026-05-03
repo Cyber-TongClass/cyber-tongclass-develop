@@ -16,6 +16,7 @@ export default defineSchema({
     personalEmail: v.optional(v.string()),
     bio: v.optional(v.string()),
     profileMarkdown: v.optional(v.string()),
+    researchDirections: v.optional(v.array(v.string())),
     researchInterests: v.optional(v.array(v.string())),
     links: v.optional(v.array(v.object({
       type: v.union(
@@ -110,6 +111,7 @@ export default defineSchema({
   news: defineTable({
     title: v.string(),
     content: v.string(),
+    sourceUrl: v.optional(v.string()),
     authorId: v.id("users"),
     authorName: v.optional(v.string()),
     category: v.string(),

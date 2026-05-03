@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useUsers } from "@/lib/api"
+import { RESEARCH_DIRECTIONS, getResearchDirectionLabel } from "@/lib/research-directions"
 import type { User } from "@/types"
 
 // 排序函数：学校 → 年级（新→旧）→ 拼音
@@ -35,13 +36,12 @@ function sortUsers(users: User[]) {
   })
 }
 
-// 获取所有唯一的研究兴趣标签
-function getAllTags(users: User[]) {
-  const tags = new Set<string>()
-  users.forEach(user => {
-    user.researchInterests?.forEach(interest => tags.add(interest))
-  })
-  return Array.from(tags).sort()
+function getProfileSlug(user: User) {
+  return user.username || user._id
+}
+
+function getUserDirections(user: User) {
+  return user.researchDirections && user.researchDirections.length > 0 ? user.researchDirections : []
 }
 
 export default function MembersPage() {
@@ -76,7 +76,7 @@ export default function MembersPage() {
     )
   }
 
-  const allTags = getAllTags(users)
+  const allTags = RESEARCH_DIRECTIONS.map((direction) => direction.value)
   const sortedUsers = sortUsers(users)
 
   // 筛选用户
@@ -98,8 +98,8 @@ export default function MembersPage() {
     if (selectedCohort !== "all" && user.cohort !== parseInt(selectedCohort)) {
       return false
     }
-    // 标签筛选
-    if (selectedTag !== "all" && !user.researchInterests?.includes(selectedTag)) {
+    // Research area filter
+    if (selectedTag !== "all" && !getUserDirections(user).includes(selectedTag)) {
       return false
     }
     return true
@@ -182,7 +182,7 @@ export default function MembersPage() {
                   <SelectItem value="all">全部方向</SelectItem>
                   {allTags.map((tag) => (
                     <SelectItem key={tag} value={tag}>
-                      {tag}
+                      {getResearchDirectionLabel(tag)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -228,15 +228,15 @@ export default function MembersPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredUsers.map((user) => (
-              <Link key={user._id} href={`/members/${user._id}`}>
+              <Link key={user._id} href={`/members/${getProfileSlug(user)}`}>
                 <Card className="group h-full hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30">
                   <CardContent className="p-6">
                     {/* Avatar */}
                     <div className="flex justify-center mb-4">
                       <div className="h-20 w-20 rounded-full overflow-hidden bg-muted ring-4 ring-primary/10 group-hover:ring-primary/30 transition-all flex items-center justify-center">
-                        {user.avatar ? (
+                        {user.realPhoto || user.avatar ? (
                           <img
-                            src={user.avatar}
+                            src={(user.realPhoto || user.avatar) as string}
                             alt={user.englishName}
                             className="h-full w-full object-cover"
                           />
@@ -252,12 +252,6 @@ export default function MembersPage() {
                     <h3 className="text-lg font-semibold text-center text-foreground group-hover:text-primary transition-colors">
                       {user.englishName}
                     </h3>
-                    {user.chineseName && (
-                      <p className="mt-1 text-center text-sm text-muted-foreground">
-                        {user.chineseName}
-                      </p>
-                    )}
-
                     {/* Organization & Cohort */}
                     <div className="flex items-center justify-center gap-2 mt-2 text-sm text-muted-foreground">
                       {user.organization === "pku" ? (
@@ -266,26 +260,26 @@ export default function MembersPage() {
                         <GraduationCap className="h-4 w-4" />
                       )}
                       <span>
-                        {user.organization === "pku" ? "北大" : "清华"}通班 · {user.cohort}级
+                        {user.organization === "pku" ? "PKU" : "THU"} Tong Class · Class of {user.cohort}
                       </span>
                     </div>
                   </CardContent>
 
                   {/* Tags */}
-                  {user.researchInterests && user.researchInterests.length > 0 && (
+                  {(getUserDirections(user).length > 0 || (user.researchInterests && user.researchInterests.length > 0)) && (
                     <CardFooter className="pt-0 px-6 pb-6">
                       <div className="flex flex-wrap gap-1.5 justify-center">
-                        {user.researchInterests.slice(0, 3).map((interest) => (
+                        {(getUserDirections(user).length > 0 ? getUserDirections(user) : user.researchInterests || []).slice(0, 3).map((interest) => (
                           <span
                             key={interest}
                             className="px-2 py-0.5 text-xs rounded-full bg-primary/5 text-primary/80 border border-primary/10"
                           >
-                            {interest}
+                            {getUserDirections(user).includes(interest) ? getResearchDirectionLabel(interest) : interest}
                           </span>
                         ))}
-                        {user.researchInterests.length > 3 && (
+                        {(getUserDirections(user).length > 0 ? getUserDirections(user).length : user.researchInterests?.length || 0) > 3 && (
                           <span className="px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">
-                            +{user.researchInterests.length - 3}
+                            +{(getUserDirections(user).length > 0 ? getUserDirections(user).length : user.researchInterests?.length || 0) - 3}
                           </span>
                         )}
                       </div>

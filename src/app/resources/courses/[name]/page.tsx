@@ -256,9 +256,13 @@ export default function CourseDetailPage() {
   }
 
   const handleSubmitReview = async () => {
-    if (!course || !currentUser) return
     setFormError("")
     setSubmissionMessage("")
+
+    if (!course || !currentUser) {
+      setFormError("登录状态正在加载，请稍后再试。")
+      return
+    }
 
     try {
       const payload = buildReviewPayload(formState)
@@ -324,7 +328,7 @@ export default function CourseDetailPage() {
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">请先登录后再查看课程评测与发帖。</p>
             <Button asChild className="w-full">
-              <Link href={`/login?next=${encodeURIComponent(`/resources/courses/${encodeURIComponent(courseName)}`)}`}>
+              <Link href={`/login?next=${encodeURIComponent(`/courses/${encodeURIComponent(courseName)}`)}`}>
                 前往登录
               </Link>
             </Button>
@@ -340,7 +344,7 @@ export default function CourseDetailPage() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-foreground mb-2">课程不存在</h2>
           <p className="text-muted-foreground mb-4">该课程可能已被删除或不存在</p>
-          <Link href="/resources">
+          <Link href="/courses">
             <Button>返回课程列表</Button>
           </Link>
         </div>
@@ -352,7 +356,7 @@ export default function CourseDetailPage() {
     <div className="min-h-screen bg-background">
       <div className="container-custom py-8">
         <Button variant="ghost" asChild className="mb-6 -ml-3">
-          <Link href="/resources">
+          <Link href="/courses">
             <ArrowLeft className="h-4 w-4 mr-2" />
             返回课程列表
           </Link>
@@ -374,7 +378,7 @@ export default function CourseDetailPage() {
             ) : (
               <Button onClick={startCreate}>
                 <Plus className="h-4 w-4 mr-2" />
-                提交评测
+                撰写评测
               </Button>
             )}
           </div>
@@ -419,7 +423,7 @@ export default function CourseDetailPage() {
         {showForm && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>{editingReviewId ? "修改评测" : "提交评测"}</CardTitle>
+              <CardTitle>{editingReviewId ? "修改评测" : "撰写评测"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">

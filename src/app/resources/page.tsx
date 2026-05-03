@@ -1,241 +1,72 @@
-"use client"
-
-import * as React from "react"
 import Link from "next/link"
-import { BookOpen, Search, Star, MessageSquare, Plus, ChevronRight } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { BookOpen, ExternalLink, FileText, Link as LinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { useAuth } from "@/lib/hooks/use-auth"
-import { useCourses, useCreateCourse } from "@/lib/api"
-import type { Course } from "@/types"
+
+const publicResources = [
+  {
+    id: "survival-guide",
+    title: "Survival Guide",
+    description: "Public onboarding notes, study references, and administrative pointers for Tong Class students.",
+    icon: FileText,
+    href: "/resources#survival-guide",
+  },
+  {
+    id: "public-links",
+    title: "Public Links",
+    description: "Open websites, documentation, and community links that can be shared outside the member-only area.",
+    icon: LinkIcon,
+    href: "/resources#public-links",
+  },
+  {
+    id: "course-reviews",
+    title: "Course Reviews",
+    description: "Course review browsing and writing live in the member course area.",
+    icon: BookOpen,
+    href: "/courses",
+  },
+]
 
 export default function ResourcesPage() {
-  const { isAuthenticated, isLoading } = useAuth()
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [sortBy, setSortBy] = React.useState("rating")
-
-  // Fetch courses from Convex
-  const coursesData = useCourses()
-  const courses: Course[] = coursesData || []
-
-  const [createOpen, setCreateOpen] = React.useState(false)
-  const [createError, setCreateError] = React.useState("")
-  const [courseName, setCourseName] = React.useState("")
-
-  const createCourse = useCreateCourse()
-
-  const resetForm = () => {
-    setCourseName("")
-    setCreateError("")
-  }
-
-  const handleCreateCourse = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setCreateError("")
-
-    try {
-      await createCourse({
-        name: courseName,
-      })
-      setCreateOpen(false)
-      resetForm()
-    } catch (error) {
-      setCreateError(error instanceof Error ? error.message : "创建课程失败")
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
-  }
-
-  const filteredCourses = courses
-    .filter((course) => course.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortBy === "rating") return b.averageRating - a.averageRating
-      if (sortBy === "reviews") return b.reviewCount - a.reviewCount
-      return a.name.localeCompare(b.name, "zh-CN")
-    })
-
-  const tongClassCourses = filteredCourses.filter((course) => course.isTongClassCourse)
-  const otherCourses = filteredCourses.filter((course) => !course.isTongClassCourse)
-
   return (
     <div className="min-h-screen bg-background">
       <section className="bg-primary/5 border-b border-border">
         <div className="container-custom py-12 md:py-16">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="h-6 w-6 text-white" />
+              <ExternalLink className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">课程评测</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">Resources</h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl">先创建课程，再进入课程详情页发布评测。</p>
-        </div>
-      </section>
-
-      <section className="border-b border-border bg-white sticky top-16 z-40">
-        <div className="container-custom py-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="搜索课程名称..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="排序方式" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rating">按评分</SelectItem>
-                <SelectItem value="reviews">按评测数量</SelectItem>
-                <SelectItem value="name">按名称</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="md:ml-auto">
-                  <Plus className="h-4 w-4 mr-2" />
-                  添加课程
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>添加课程</DialogTitle>
-                </DialogHeader>
-                <form className="space-y-4" onSubmit={handleCreateCourse}>
-                  <div className="space-y-2">
-                    <Label htmlFor="course-name">课程名称</Label>
-                    <Input id="course-name" value={courseName} onChange={(e) => setCourseName(e.target.value)} required />
-                  </div>
-                  <p className="text-sm text-muted-foreground">课程创建后，任意成员可在课程详情页补充不同教师、不同学期的具体评测。</p>
-                  {createError && <p className="text-sm text-red-600">{createError}</p>}
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => { setCreateOpen(false); resetForm() }}>
-                      取消
-                    </Button>
-                    <Button type="submit">创建</Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <p className="text-lg text-muted-foreground max-w-2xl">
+            Public guides and links for Tong Class members, alumni, and collaborators.
+          </p>
         </div>
       </section>
 
       <section className="container-custom py-8">
-        {filteredCourses.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">未找到相关课程</h3>
-            <p className="text-muted-foreground">可点击“添加课程”创建后再发布评测</p>
-          </div>
-        ) : (
-          <div className="space-y-10">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold text-foreground">通班培养方案课程</h2>
-                  <p className="text-sm text-muted-foreground mt-1">通班核心课程仅由管理员维护，包含专业基础课、专业核心课、专业选修课、公共必修课等。</p>
-                </div>
-                <span className="text-sm text-muted-foreground">{tongClassCourses.length} 门</span>
-              </div>
-
-              {tongClassCourses.length === 0 ? (
-                <Card className="border-dashed border-border/70 bg-muted/20">
-                  <CardContent className="py-8 text-sm text-muted-foreground">
-                    当前没有匹配的通班培养方案课程。
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-6">
-                  {tongClassCourses.map((course) => (
-                    <CourseListCard key={course._id} course={course} />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold text-foreground">其他课程</h2>
-                  <p className="text-sm text-muted-foreground mt-1">用户可自行补充和讨论的其他课程。</p>
-                </div>
-                <span className="text-sm text-muted-foreground">{otherCourses.length} 门</span>
-              </div>
-
-              {otherCourses.length === 0 ? (
-                <Card className="border-dashed border-border/70 bg-muted/20">
-                  <CardContent className="py-8 text-sm text-muted-foreground">
-                    当前没有匹配的其他课程。
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-6">
-                  {otherCourses.map((course) => (
-                    <CourseListCard key={course._id} course={course} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <div className="grid gap-4 md:grid-cols-3">
+          {publicResources.map((resource) => {
+            const Icon = resource.icon
+            return (
+              <Card key={resource.id} id={resource.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Icon className="h-5 w-5 text-primary" />
+                    {resource.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">{resource.description}</p>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={resource.href}>Open</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
       </section>
     </div>
-  )
-}
-
-function CourseListCard({ course }: { course: Course }) {
-  return (
-    <Link href={`/resources/courses/${encodeURIComponent(course.name)}`}>
-      <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30 cursor-pointer">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{course.name}</h3>
-              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                  <span className="font-medium">{course.averageRating.toFixed(1)}</span>
-                  <span>({course.reviewCount}条评测)</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>{course.reviewCount} 条评测</span>
-                </div>
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
   )
 }

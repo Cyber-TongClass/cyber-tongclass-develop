@@ -62,6 +62,7 @@ type SignUpInput = {
   personalEmails?: string[]
   personalEmail?: string
   bio?: string
+  researchDirections?: string[]
   researchInterests?: string[]
   links?: UserLink[]
   titles?: { title: string; link: string }[]
@@ -87,6 +88,7 @@ export function useSignUp() {
         personalEmails: input.personalEmails,
         personalEmail: input.personalEmail,
         bio: input.bio,
+        researchDirections: input.researchDirections,
         researchInterests: input.researchInterests,
         links: input.links,
         titles: input.titles,
@@ -100,7 +102,7 @@ export function useSignUp() {
 }
 
 type SignInInput = {
-  email: string
+  studentId: string
   password: string
 }
 
@@ -110,7 +112,7 @@ export function useSignIn() {
   return useCallback(
     async (input: SignInInput) => {
       const result = await login({
-        email: input.email,
+        studentId: input.studentId,
         password: input.password,
       } as any)
 
@@ -135,6 +137,10 @@ export function useUsers(args?: { organization?: "pku" | "thu"; cohort?: number;
 
 export function useUserById(id?: string | null) {
   return useQuery(api.users.getById, id ? ({ id: id as any } as any) : "skip")
+}
+
+export function useUserByProfileSlug(slug?: string | null) {
+  return useQuery(api.users.getByProfileSlug, slug ? ({ slug } as any) : "skip")
 }
 
 export function useCreateUser() {
