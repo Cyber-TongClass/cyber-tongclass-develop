@@ -77,7 +77,7 @@ function SearchContent() {
           id: item._id,
           title: item.title,
           description: item.content.slice(0, 100) + (item.content.length > 100 ? "..." : ""),
-          url: `/news/${item._id}`,
+          url: item.sourceUrl || `/news/${item._id}`,
           icon: <Newspaper className="h-5 w-5" />,
         })
       }
@@ -97,7 +97,7 @@ function SearchContent() {
           id: user._id,
           title: user.englishName || user.username,
           description: user.bio?.slice(0, 100) || user.email,
-          url: `/members/${user._id}`,
+          url: `/members/${user.username || user._id}`,
           icon: <Users className="h-5 w-5" />,
         })
       }

@@ -53,6 +53,7 @@ export const create = mutation({
   args: {
     title: v.string(),
     content: v.string(),
+    sourceUrl: v.optional(v.string()),
     authorId: v.optional(v.id("users")),
     authorName: v.optional(v.string()),
     category: v.string(),
@@ -74,6 +75,7 @@ export const create = mutation({
     const newsId = await ctx.db.insert("news", {
       title,
       content,
+      sourceUrl: args.sourceUrl?.trim() || undefined,
       authorId,
       authorName: args.authorName,
       category,
@@ -92,6 +94,7 @@ export const update = mutation({
     id: v.id("news"),
     title: v.optional(v.string()),
     content: v.optional(v.string()),
+    sourceUrl: v.optional(v.string()),
     authorName: v.optional(v.string()),
     category: v.optional(v.string()),
     publishedAt: v.optional(v.number()),
@@ -105,6 +108,7 @@ export const update = mutation({
     }
     await ctx.db.patch(id, {
       ...updates,
+      ...(updates.sourceUrl !== undefined ? { sourceUrl: updates.sourceUrl.trim() || undefined } : {}),
       updatedAt: Date.now(),
     })
     return id

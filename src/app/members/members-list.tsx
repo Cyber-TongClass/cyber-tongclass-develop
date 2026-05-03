@@ -16,6 +16,7 @@ const cohortOptions = [2025, 2024, 2023, 2022, 2021, 2020]
 
 type Member = {
   id: string
+  username: string
   englishName: string
   organization: "pku" | "thu"
   cohort: number
@@ -38,6 +39,7 @@ export function MembersList() {
       .filter((u) => u.role === "member" || u.role === "admin" || u.role === "super_admin")
       .map((u) => ({
         id: u._id,
+        username: u.username || u._id,
         englishName: u.englishName || u.username,
         organization: u.organization,
         cohort: u.cohort,
@@ -127,7 +129,7 @@ export function MembersList() {
       {sortedMembers.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedMembers.map((member) => (
-            <Link key={member.id} href={`/members/${member.id}`}>
+            <Link key={member.id} href={`/members/${member.username}`}>
               <Card className="h-full border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer card-hover">
                 <CardHeader className="pb-3">
                   <div className="flex items-start gap-3">

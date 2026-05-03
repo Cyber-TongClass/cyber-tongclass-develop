@@ -182,6 +182,7 @@ export const create = mutation({
         personalEmail: v.optional(v.string()),
         bio: v.optional(v.string()),
         profileMarkdown: v.optional(v.string()),
+        researchDirections: v.optional(v.array(v.string())),
         researchInterests: v.optional(v.array(v.string())),
         links: v.optional(v.array(v.object({ type: linkTypeValidator, label: v.string(), url: v.string() }))),
         titles: v.optional(v.array(v.object({ title: v.string(), link: v.string() }))),
@@ -237,6 +238,7 @@ export const create = mutation({
             personalEmail: args.personalEmail,
             bio: normalizeOptionalString(args.bio),
             profileMarkdown: args.profileMarkdown ? normalizeProfileMarkdown(args.profileMarkdown) : undefined,
+            researchDirections: normalizeStringList(args.researchDirections),
             researchInterests: normalizeStringList(args.researchInterests),
             links: normalizeLinks(args.links),
             titles: args.titles,
@@ -293,6 +295,7 @@ export const update = mutation({
         personalEmail: v.optional(v.string()),
         bio: v.optional(v.string()),
         profileMarkdown: v.optional(v.string()),
+        researchDirections: v.optional(v.array(v.string())),
         researchInterests: v.optional(v.array(v.string())),
         links: v.optional(v.array(v.object({ type: linkTypeValidator, label: v.string(), url: v.string() }))),
         titles: v.optional(v.array(v.object({ title: v.string(), link: v.string() }))),
@@ -357,6 +360,7 @@ export const update = mutation({
             chineseName: normalizeOptionalString(updates.chineseName),
             personalEmails: normalizeStringList(updates.personalEmails),
             bio: normalizeOptionalString(updates.bio),
+            researchDirections: normalizeStringList(updates.researchDirections),
             researchInterests: normalizeStringList(updates.researchInterests),
             links: normalizeLinks(updates.links),
             profileMarkdown: updates.profileMarkdown ? normalizeProfileMarkdown(updates.profileMarkdown) : updates.profileMarkdown,
@@ -607,27 +611,38 @@ export const remove = mutation({
     },
 })
 
+export const getByProfileSlug = query({
+    args: { slug: v.string() },
+    handler: async (ctx, args) => {
+        const slug = args.slug.trim()
+        const normalizedSlug = slug.toLowerCase()
+        if (!slug) return null
+
+        const users = await ctx.db.query("users").collect()
+        return (
+            users.find((user) => user.username?.toLowerCase() === normalizedSlug) ||
+            users.find((user) => String(user._id) === slug) ||
+            null
+        )
+    },
+})
+
 // Simple login for local development
 export const simpleLogin = mutation({
     args: {
-        email: v.string(),
+        studentId: v.string(),
         password: v.string(),
     },
     handler: async (ctx, args) => {
-        const identifier = args.email.trim().toLowerCase()
+        const studentId = normalizeStudentId(args.studentId)
 
         const user = await ctx.db
             .query("users")
-            .filter((q) =>
-                q.or(
-                    q.eq(q.field("email"), identifier),
-                    q.eq(q.field("username"), identifier)
-                )
-            )
+            .filter((q) => q.eq(q.field("studentId"), studentId))
             .first()
 
         if (!user) {
-            throw new Error("用户不存在")
+            throw new Error("学号或密码错误")
         }
 
         const credential = await ctx.db
@@ -641,7 +656,7 @@ export const simpleLogin = mutation({
 
         const computed = await sha256Hex(args.password + credential.salt)
         if (credential.passwordHash !== computed) {
-            throw new Error("密码错误")
+            throw new Error("学号或密码错误")
         }
 
         return {

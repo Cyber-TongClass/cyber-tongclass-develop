@@ -354,9 +354,15 @@ export default function ReviewsPage() {
       confirmLabel: "删除",
       variant: "danger",
       onConfirm: async () => {
-        await deleteReview({ id: id as any })
-        if (selectedReviewId === id) {
-          setSelectedReviewId(null)
+        try {
+          await deleteReview({ id: id as any })
+          if (selectedReviewId === id) {
+            setSelectedReviewId(null)
+          }
+          showAdminToast("success", "评测已删除")
+        } catch (error) {
+          showAdminToast("error", `删除失败：${error instanceof Error ? error.message : String(error)}`)
+          throw error
         }
       },
     })
@@ -1116,17 +1122,17 @@ export default function ReviewsPage() {
                         </DropdownMenuItem>
                         {review.status === "pending" && (
                           <>
-                            <DropdownMenuItem className="text-green-600" onSelect={() => handleStatusChange(review._id, "approved")}>
+                            <DropdownMenuItem className="text-green-600" onSelect={(event) => { event.preventDefault(); void handleStatusChange(review._id, "approved") }}>
                               <Check className="mr-2 h-4 w-4" />
                               通过
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onSelect={() => handleStatusChange(review._id, "rejected")}>
+                            <DropdownMenuItem className="text-red-600" onSelect={(event) => { event.preventDefault(); void handleStatusChange(review._id, "rejected") }}>
                               <X className="mr-2 h-4 w-4" />
                               拒绝
                             </DropdownMenuItem>
                           </>
                         )}
-                        <DropdownMenuItem className="text-red-600" onSelect={() => handleDelete(review._id, review.courseName)}>
+                        <DropdownMenuItem className="text-red-600" onSelect={(event) => { event.preventDefault(); void handleDelete(review._id, review.courseName) }}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           删除
                         </DropdownMenuItem>

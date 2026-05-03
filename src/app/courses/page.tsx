@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import ResourcesPage from "../resources/page"
+import CourseDirectoryPage from "@/components/courses/course-directory-page"
 
 export default function CoursesPage() {
   return (
     <div className="min-h-screen bg-background">
-      <ResourcesPage />
+      <CourseDirectoryPage />
     </div>
   )
 }

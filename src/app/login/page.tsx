@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +10,23 @@ import { Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 
 export default function LoginPage() {
-  const router = useRouter()
+  return (
+    <Suspense fallback={<LoginPageShell />}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginPageShell() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    </div>
+  )
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams()
   const { login, isLoading: authLoading } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   
@@ -26,14 +42,14 @@ export default function LoginPage() {
     try {
       const result = await login(identifier, password)
       if (!result.ok) {
-        setError(result.error || "邮箱/用户名或密码错误，请重试")
+        setError(result.error || "学号或密码错误，请重试")
         return
       }
       
-      // 登录成功，强制页面刷新以更新状态
-      window.location.href = "/"
+      const nextPath = searchParams.get("next")
+      window.location.href = nextPath?.startsWith("/") ? nextPath : "/"
     } catch {
-      setError("邮箱或密码错误，请重试")
+      setError("学号或密码错误，请重试")
     } finally {
       setIsLoading(false)
     }
@@ -53,7 +69,7 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle>登录</CardTitle>
             <CardDescription>
-              使用您的学号邮箱和密码登录
+              使用您的学号和密码登录
             </CardDescription>
           </CardHeader>
           
@@ -67,12 +83,12 @@ export default function LoginPage() {
               
               <div className="space-y-2">
                 <label htmlFor="identifier" className="text-sm font-medium">
-                  邮箱或用户名
+                  学号
                 </label>
                 <Input
                   id="identifier"
                   type="text"
-                  placeholder="学号邮箱或用户名"
+                  placeholder="请输入学号"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   required

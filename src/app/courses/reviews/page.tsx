@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/lib/hooks/use-auth"
@@ -150,7 +150,7 @@ export default function CourseReviewsPage() {
 }
 
 function CreateReviewForm() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, currentUser } = useAuth()
   const create = useCreateCourseReview()
   const [courseName, setCourseName] = React.useState("")
   const [instructor, setInstructor] = React.useState("")
@@ -167,6 +167,10 @@ function CreateReviewForm() {
       setError("请先登录后再发布评测。")
       return
     }
+    if (!currentUser) {
+      setError("登录状态正在加载，请稍后再试。")
+      return
+    }
     if (!courseName || !instructor || !content) {
       setError("请填写课程、教师和评测内容。")
       return
@@ -181,6 +185,7 @@ function CreateReviewForm() {
         overallRating,
         content,
         isAnonymous: false,
+        authorId: currentUser._id as any,
       } as any)
       // simple success behavior: reload page
       window.location.reload()
@@ -222,7 +227,9 @@ function CreateReviewForm() {
         <Textarea value={content} onChange={(e) => setContent(e.target.value)} />
       </div>
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => window.history.back()}>取消</Button>
+        <DialogClose asChild>
+          <Button type="button" variant="outline">取消</Button>
+        </DialogClose>
         <Button type="submit">提交评测</Button>
       </div>
     </form>

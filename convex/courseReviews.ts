@@ -48,10 +48,11 @@ async function syncCourseStatsByName(ctx: any, courseName: string) {
     .filter((q: any) => q.eq(q.field("courseName"), normalizedCourseName))
     .filter((q: any) => q.eq(q.field("status"), "approved"))
     .collect()
+  const activeApprovedReviews = approvedReviews.filter((review: any) => review.active !== false)
 
-  const reviewCount = approvedReviews.length
+  const reviewCount = activeApprovedReviews.length
   const averageRating = reviewCount > 0
-    ? Math.round((approvedReviews.reduce((sum: number, review: any) => sum + review.overallRating, 0) / reviewCount) * 10) / 10
+    ? Math.round((activeApprovedReviews.reduce((sum: number, review: any) => sum + review.overallRating, 0) / reviewCount) * 10) / 10
     : 0
 
   await ctx.db.patch(course._id, {
@@ -190,30 +191,42 @@ export const create = mutation({
     if (args.pace !== undefined) assertRatingRange(args.pace, 1, 5, "Pace")
     if (args.gradingFairness !== undefined) assertRatingRange(args.gradingFairness, 1, 5, "Grading fairness")
 
-    // Enforce that the creator is an authenticated, verified student.
+    // Normal course submissions come from the local app auth state and pass authorId.
+    // Admin imports/manual entries pass an explicit status and may not have an author.
     const identity = await ctx.auth.getUserIdentity()
+    let user = null
     if (!identity || !identity.email) {
-      throw new Error("Authentication required to create course reviews")
+      user = args.authorId ? await ctx.db.get(args.authorId) : null
+    } else {
+      user = await ctx.db
+        .query("users")
+        .filter((q: any) => q.eq(q.field("email"), identity.email))
+        .first()
     }
 
-    const user = await ctx.db
-      .query("users")
-      .filter((q: any) => q.eq(q.field("email"), identity.email))
-      .first()
+    const isAdminManagedEntry = args.status !== undefined && !args.authorId
 
-    if (!user || !user.isEmailVerified) {
-      throw new Error("Email verification is required to submit course reviews")
+    if (!isAdminManagedEntry) {
+      if (!user) {
+        throw new Error("Authentication required to create course reviews")
+      }
+
+      if (!user.isEmailVerified) {
+        throw new Error("Email verification is required to submit course reviews")
+      }
     }
 
     // Post-First moderation: auto-approve if user already has >=1 approved reviews
-    const approvedByUser = await ctx.db
-      .query("courseReviews")
-      .filter((q: any) => q.eq(q.field("authorId"), user._id))
-      .filter((q: any) => q.eq(q.field("status"), "approved"))
-      .collect()
+    const approvedByUser = user
+      ? await ctx.db
+        .query("courseReviews")
+        .filter((q: any) => q.eq(q.field("authorId"), user._id))
+        .filter((q: any) => q.eq(q.field("status"), "approved"))
+        .collect()
+      : []
 
     const hasApprovedBefore = approvedByUser.length > 0
-    const status: ReviewStatus = hasApprovedBefore ? "approved" : "pending"
+    const status: ReviewStatus = args.status ?? (hasApprovedBefore ? "approved" : "pending")
 
     const reviewId = await ctx.db.insert("courseReviews", {
       courseName,
@@ -231,7 +244,7 @@ export const create = mutation({
       recommendedStudyMethod: args.recommendedStudyMethod,
       content,
       isAnonymous: args.isAnonymous ?? true,
-      authorId: user._id,
+      authorId: user?._id,
       status,
       tags: [],
       active: true,

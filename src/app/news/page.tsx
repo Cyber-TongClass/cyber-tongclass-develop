@@ -213,7 +213,12 @@ export default function NewsPage() {
                 {/* News List */}
                 <div className="space-y-6">
                   {groupedNews[month].map((item) => (
-                    <Link key={item._id} href={`/news/${item._id}`}>
+                    <Link
+                      key={item._id}
+                      href={item.sourceUrl || `/news/${item._id}`}
+                      target={item.sourceUrl ? "_blank" : undefined}
+                      rel={item.sourceUrl ? "noopener noreferrer" : undefined}
+                    >
                       <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30">
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between gap-4">

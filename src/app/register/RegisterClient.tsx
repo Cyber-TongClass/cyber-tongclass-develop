@@ -12,6 +12,7 @@ import { UserLinksInput } from "@/components/profile/user-links-input"
 import { useSignUp, useSignIn } from "@/lib/api"
 import { TurnstileWidget } from "@/components/auth/turnstile-widget"
 import { sanitizePersonalEmails, sanitizeUserLinks } from "@/lib/user-profile"
+import { RESEARCH_DIRECTIONS } from "@/lib/research-directions"
 import type { UserLink } from "@/types"
 
 type Organization = "pku" | "thu"
@@ -66,6 +67,7 @@ export default function RegisterClient() {
     const [username, setUsername] = useState("")
     const [personalEmails, setPersonalEmails] = useState<string[]>([])
     const [bio, setBio] = useState("")
+    const [researchDirections, setResearchDirections] = useState<string[]>([])
     const [researchInterests, setResearchInterests] = useState<string[]>([])
     const [newInterest, setNewInterest] = useState("")
     const [links, setLinks] = useState<UserLink[]>([])
@@ -344,6 +346,9 @@ export default function RegisterClient() {
             const normalizedResearchInterests = researchInterests
                 .map((interest) => interest.trim())
                 .filter(Boolean)
+            const normalizedResearchDirections = researchDirections
+                .map((direction) => direction.trim())
+                .filter(Boolean)
             const normalizedLinks = sanitizeUserLinks(links)
 
             // First sign up with our custom auth
@@ -358,6 +363,7 @@ export default function RegisterClient() {
                 studentId: studentId.trim(),
                 personalEmails: normalizedPersonalEmails,
                 bio: bio.trim() || undefined,
+                researchDirections: normalizedResearchDirections,
                 researchInterests: normalizedResearchInterests,
                 links: normalizedLinks,
             })
@@ -387,7 +393,7 @@ export default function RegisterClient() {
 
             // Then sign in to get the session
             const signInResult = await signIn({
-                email: normalizedEmail,
+                studentId: studentId.trim(),
                 password,
             })
 
@@ -414,6 +420,14 @@ export default function RegisterClient() {
 
     const removeResearchInterest = (interest: string) => {
         setResearchInterests(researchInterests.filter(i => i !== interest))
+    }
+
+    const toggleResearchDirection = (direction: string) => {
+        setResearchDirections((previous) =>
+            previous.includes(direction)
+                ? previous.filter((item) => item !== direction)
+                : [...previous, direction]
+        )
     }
 
     return (
@@ -691,6 +705,24 @@ export default function RegisterClient() {
 
                             <div className="space-y-2">
                                 <Label>Research Interests (Optional)</Label>
+                                <div className="rounded-md border border-border/70 p-3">
+                                    <p className="mb-3 text-xs text-muted-foreground">
+                                        Select broad research directions for member filtering. Free-form interests can be added below.
+                                    </p>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        {RESEARCH_DIRECTIONS.map((direction) => (
+                                            <label key={direction.value} className="flex items-start gap-2 text-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={researchDirections.includes(direction.value)}
+                                                    onChange={() => toggleResearchDirection(direction.value)}
+                                                    className="mt-1 rounded"
+                                                />
+                                                <span>{direction.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
                                 <div className="flex gap-2">
                                     <Input
                                         type="text"

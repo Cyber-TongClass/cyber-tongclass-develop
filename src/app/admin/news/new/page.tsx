@@ -27,6 +27,7 @@ export default function NewNewsPage() {
     category: "学术成果",
     author: "",
     status: "draft",
+    sourceUrl: "",
     content: "",
   })
 
@@ -38,6 +39,7 @@ export default function NewNewsPage() {
         title: formData.title,
         category: formData.category,
         content: formData.content,
+        sourceUrl: formData.sourceUrl || undefined,
         authorId: currentUser?._id as any,
         authorName: formData.author,
         isPublished: formData.status === "published",
@@ -116,6 +118,16 @@ export default function NewNewsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="sourceUrl">Original Source URL</Label>
+                <Input
+                  id="sourceUrl"
+                  type="url"
+                  placeholder="https://mp.weixin.qq.com/s/..."
+                  value={formData.sourceUrl}
+                  onChange={(e) => setFormData({ ...formData, sourceUrl: e.target.value })}
+                />
               </div>
             </div>
             <div className="space-y-2">

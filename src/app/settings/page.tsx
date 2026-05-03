@@ -12,14 +12,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { MarkdownSplitEditor } from "@/components/markdown/markdown-split-editor"
 import { getUserLinks, getUserPersonalEmails, sanitizePersonalEmails, sanitizeUserLinks } from "@/lib/user-profile"
+import { RESEARCH_DIRECTIONS } from "@/lib/research-directions"
 import type { UserLink } from "@/types"
-import { Upload, Camera, User, CheckCircle, XCircle } from "lucide-react"
-
-const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
+import { User, CheckCircle, XCircle } from "lucide-react"
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { currentUser, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { currentUser, isAuthenticated, isLoading: authLoading, logout } = useAuth()
   const updateUser = useUpdateUser()
   const updatePasswordWithCurrent = useUpdatePasswordWithCurrent()
 
@@ -53,11 +52,13 @@ export default function SettingsPage() {
   }
 
   // Profile form
+  const [username, setUsername] = useState("")
   const [englishName, setEnglishName] = useState("")
   const [chineseName, setChineseName] = useState("")
   const [personalEmails, setPersonalEmails] = useState<string[]>([])
   const [bio, setBio] = useState("")
   const [profileMarkdown, setProfileMarkdown] = useState("")
+  const [researchDirections, setResearchDirections] = useState<string[]>([])
   const [researchInterests, setResearchInterests] = useState<string[]>([])
   const [newInterest, setNewInterest] = useState("")
   const [links, setLinks] = useState<UserLink[]>([])
@@ -66,50 +67,6 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-
-  // Avatar & Real Photo
-  const [avatar, setAvatar] = useState<string | undefined>(undefined)
-  const [realPhoto, setRealPhoto] = useState<string | undefined>(undefined)
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
-  const [realPhotoPreview, setRealPhotoPreview] = useState<string | null>(null)
-  const avatarInputRef = useRef<HTMLInputElement>(null)
-  const realPhotoInputRef = useRef<HTMLInputElement>(null)
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (file.size > MAX_FILE_SIZE) {
-      setError("头像图片大小不能超过2MB")
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const result = event.target?.result as string
-      setAvatar(result)
-      setAvatarPreview(result)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const handleRealPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (file.size > MAX_FILE_SIZE) {
-      setError("真实照片大小不能超过2MB")
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const result = event.target?.result as string
-      setRealPhoto(result)
-      setRealPhotoPreview(result)
-    }
-    reader.readAsDataURL(file)
-  }
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -128,19 +85,25 @@ export default function SettingsPage() {
 
     setEnglishName(currentUser.englishName || "")
     setChineseName(currentUser.chineseName || "")
+    setUsername(currentUser.username || "")
     setPersonalEmails(getUserPersonalEmails(currentUser))
     setBio(currentUser.bio || "")
     setProfileMarkdown(currentUser.profileMarkdown || "")
+    setResearchDirections(currentUser.researchDirections || [])
     setResearchInterests(currentUser.researchInterests || [])
     setLinks(getUserLinks(currentUser))
-    setAvatar(currentUser.avatar)
-    setRealPhoto(currentUser.realPhoto)
-    if (currentUser.avatar) setAvatarPreview(currentUser.avatar)
-    if (currentUser.realPhoto) setRealPhotoPreview(currentUser.realPhoto)
   }, [currentUser])
 
   const handleSaveProfile = async () => {
     if (!currentUser) return
+
+    if (!username.trim()) {
+      const msg = "Username is required"
+      setError(msg)
+      setSuccessMessage("")
+      showToast("error", msg)
+      return
+    }
 
     if (!englishName.trim() || !chineseName.trim()) {
       const msg = "English name and Chinese name are required"
@@ -157,18 +120,18 @@ export default function SettingsPage() {
     try {
       await updateUser({
         id: currentUser._id,
-        englishName: englishName.trim(),
-        chineseName: chineseName.trim(),
+        username: username.trim(),
         personalEmails: sanitizePersonalEmails(personalEmails),
         bio: bio.trim(),
         // Also persist profile markdown when saving the profile form
         profileMarkdown,
+        researchDirections: researchDirections
+          .map((direction) => direction.trim())
+          .filter(Boolean),
         researchInterests: researchInterests
           .map((interest) => interest.trim())
           .filter(Boolean),
         links: sanitizeUserLinks(links),
-        avatar,
-        realPhoto,
       })
 
       setSuccessMessage("Profile updated successfully!")
@@ -219,6 +182,14 @@ export default function SettingsPage() {
     setResearchInterests(researchInterests.filter(i => i !== interest))
   }
 
+  const handleToggleDirection = (direction: string) => {
+    setResearchDirections((previous) =>
+      previous.includes(direction)
+        ? previous.filter((item) => item !== direction)
+        : [...previous, direction]
+    )
+  }
+
   const handleChangePassword = async () => {
     if (!currentUser) {
       setError("You must be logged in to change your password")
@@ -253,7 +224,12 @@ export default function SettingsPage() {
       setCurrentPassword("")
       setNewPassword("")
       setConfirmPassword("")
-      setSuccessMessage("Password updated successfully")
+      const message = "Password updated successfully. Signing you out..."
+      setSuccessMessage(message)
+      showToast("success", message, 1500)
+      window.setTimeout(() => {
+        logout("/login?passwordChanged=true")
+      }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update password")
     }
@@ -313,88 +289,48 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
             <CardDescription>
-              Update your public profile information
+              Update your public profile information. Please write public-facing fields in English except Chinese Name.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Avatar & Real Photo Upload */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Avatar */}
-              <div className="space-y-2">
-                <Label>头像 (用于个人主页等)</Label>
-                <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
-                    {avatarPreview ? (
-                      <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
-                    ) : (
-                      <User className="h-8 w-8 text-gray-400" />
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      ref={avatarInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarChange}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => avatarInputRef.current?.click()}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      上传头像
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">不超过2MB</p>
-                  </div>
+            <div className="space-y-2">
+              <Label>Official Photo</Label>
+              <div className="flex items-center gap-4 rounded-md border border-border/70 bg-muted/20 p-4">
+                <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                  {currentUser.realPhoto || currentUser.avatar ? (
+                    <img src={currentUser.realPhoto || currentUser.avatar} alt="Official profile photo" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-8 w-8 text-gray-400" />
+                  )}
                 </div>
-              </div>
-
-              {/* Real Photo */}
-              <div className="space-y-2">
-                <Label>真实照片 (用于成员页面展示)</Label>
-                <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
-                    {realPhotoPreview ? (
-                      <img src={realPhotoPreview} alt="Real Photo" className="h-full w-full object-cover" />
-                    ) : (
-                      <Camera className="h-8 w-8 text-gray-400" />
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      ref={realPhotoInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleRealPhotoChange}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => realPhotoInputRef.current?.click()}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      上传照片
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">不超过2MB</p>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Profile photos are managed from official records and cannot be changed here.
+                </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Organization</Label>
-                <Input value={currentUser.organization === "pku" ? "北大通班" : "清华通班"} disabled />
+                <Input value={currentUser.organization === "pku" ? "PKU Tong Class" : "THU Tong Class"} disabled />
               </div>
               <div className="space-y-2">
                 <Label>Cohort</Label>
-                <Input value={`${currentUser.cohort}级`} disabled />
+                <Input value={`Class of ${currentUser.cohort}`} disabled />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Username *</Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="e.g., chenyinghan"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your public profile URL will be /members/{username || "username"}.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -402,9 +338,10 @@ export default function SettingsPage() {
               <Input
                 id="englishName"
                 value={englishName}
-                onChange={(e) => setEnglishName(e.target.value)}
-                placeholder="Your public display name"
+                disabled
+                placeholder="English name on file"
               />
+              <p className="text-xs text-muted-foreground">Names are managed by administrators.</p>
             </div>
 
             <div className="space-y-2">
@@ -412,8 +349,8 @@ export default function SettingsPage() {
               <Input
                 id="chineseName"
                 value={chineseName}
-                onChange={(e) => setChineseName(e.target.value)}
-                placeholder="例如：张三"
+                disabled
+                placeholder="Chinese name on file"
               />
             </div>
 
@@ -462,6 +399,24 @@ export default function SettingsPage() {
 
             <div className="space-y-2">
               <Label>Research Interests</Label>
+              <div className="rounded-md border border-border/70 p-3">
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Select broad research directions for member filtering. Free-form interests can be added below.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {RESEARCH_DIRECTIONS.map((direction) => (
+                    <label key={direction.value} className="flex items-start gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={researchDirections.includes(direction.value)}
+                        onChange={() => handleToggleDirection(direction.value)}
+                        className="mt-1 rounded"
+                      />
+                      <span>{direction.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-2">
                 <Input
                   placeholder="Add research interest"
@@ -526,7 +481,7 @@ export default function SettingsPage() {
               <Label htmlFor="currentPassword">Current Password</Label>
               <Input
                 id="currentPassword"
-                type="password"
+                type="text"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
               />
@@ -535,7 +490,7 @@ export default function SettingsPage() {
               <Label htmlFor="newPassword">New Password</Label>
               <Input
                 id="newPassword"
-                type="password"
+                type="text"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
@@ -544,7 +499,7 @@ export default function SettingsPage() {
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
               <Input
                 id="confirmPassword"
-                type="password"
+                type="text"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -566,6 +521,14 @@ export default function SettingsPage() {
             <div className="flex justify-between py-2 border-b">
               <span className="text-muted-foreground">Email</span>
               <span className="font-medium">{currentUser.email}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-muted-foreground">Username</span>
+              <span className="font-medium">{currentUser.username}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-muted-foreground">Profile URL</span>
+              <span className="font-medium">/members/{currentUser.username || currentUser._id}</span>
             </div>
             <div className="flex justify-between py-2 border-b">
               <span className="text-muted-foreground">Student ID</span>
