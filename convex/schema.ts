@@ -71,10 +71,12 @@ export default defineSchema({
   // Course reviews table
   courseReviews: defineTable({
     courseName: v.string(),
-    instructor: v.string(),
-    semesterYear: v.number(),
-    semesterTerm: v.union(v.literal("spring"), v.literal("fall")),
-    overallRating: v.number(),
+    instructor: v.optional(v.string()),
+    semesterYear: v.optional(v.number()),
+    semesterTerm: v.optional(v.union(v.literal("spring"), v.literal("fall"))),
+    overallRating: v.optional(v.number()),
+    rating: v.optional(v.number()),
+    semester: v.optional(v.string()),
     department: v.optional(v.string()),
     attendanceRequired: v.optional(v.boolean()),
     workload: v.optional(v.number()),
@@ -144,6 +146,8 @@ export default defineSchema({
   // Courses table
   courses: defineTable({
     name: v.string(),
+    department: v.optional(v.string()),
+    instructor: v.optional(v.string()),
     isTongClassCourse: v.optional(v.boolean()),
     // Soft-delete support
     isActive: v.optional(v.boolean()),
@@ -165,7 +169,7 @@ export default defineSchema({
   authCredentials: defineTable({
     userId: v.id("users"),
     passwordHash: v.string(),
-    salt: v.string(),
+    salt: v.optional(v.string()),
   })
     .index("by_userId", ["userId"]),
 
