@@ -140,7 +140,17 @@ export function useUserById(id?: string | null) {
 }
 
 export function useUserByProfileSlug(slug?: string | null) {
-  return useQuery(api.users.getByProfileSlug, slug ? ({ slug } as any) : "skip")
+  const users = useUsers({ limit: 1000 })
+  const normalizedSlug = slug?.trim().toLowerCase()
+
+  if (!slug) return null
+  if (users === undefined) return undefined
+
+  return (
+    users.find((user: any) => user.username?.toLowerCase() === normalizedSlug) ||
+    users.find((user: any) => String(user._id) === slug) ||
+    null
+  )
 }
 
 export function useCreateUser() {
