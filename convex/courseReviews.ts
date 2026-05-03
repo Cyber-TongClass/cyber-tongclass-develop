@@ -32,6 +32,34 @@ function assertRatingRange(value: number, min: number, max: number, label: strin
   }
 }
 
+function getReviewRating(review: any) {
+  if (typeof review.overallRating === "number") return review.overallRating
+  if (typeof review.rating === "number") return review.rating
+  return 0
+}
+
+function parseLegacySemester(value?: string) {
+  if (!value) return {}
+
+  const yearMatch = value.match(/\d{4}/)
+  const year = yearMatch ? Number(yearMatch[0]) : undefined
+  const term = value.includes("秋") || value.toLowerCase().includes("fall") ? "fall" : "spring"
+
+  return { year, term: term as "spring" | "fall" }
+}
+
+function normalizeReviewForClient(review: any) {
+  const legacySemester = parseLegacySemester(review.semester)
+
+  return {
+    ...review,
+    instructor: review.instructor || "未知教师",
+    semesterYear: review.semesterYear ?? legacySemester.year ?? new Date(review.createdAt || Date.now()).getFullYear(),
+    semesterTerm: review.semesterTerm ?? legacySemester.term ?? "spring",
+    overallRating: getReviewRating(review),
+  }
+}
+
 async function syncCourseStatsByName(ctx: any, courseName: string) {
   const normalizedCourseName = courseName.trim()
   if (!normalizedCourseName) return
@@ -52,7 +80,7 @@ async function syncCourseStatsByName(ctx: any, courseName: string) {
 
   const reviewCount = activeApprovedReviews.length
   const averageRating = reviewCount > 0
-    ? Math.round((activeApprovedReviews.reduce((sum: number, review: any) => sum + review.overallRating, 0) / reviewCount) * 10) / 10
+    ? Math.round((activeApprovedReviews.reduce((sum: number, review: any) => sum + getReviewRating(review), 0) / reviewCount) * 10) / 10
     : 0
 
   await ctx.db.patch(course._id, {
@@ -73,6 +101,7 @@ export const listByCourse = query({
     let reviews = await ctx.db.query("courseReviews").order("desc").collect()
     // filter in JS so that missing `active` (older records) are treated as active
     reviews = reviews.filter((r) => r.status === "approved" && r.courseName === args.courseName && r.active !== false)
+    reviews = reviews.map(normalizeReviewForClient)
 
     if (args.instructor) {
       reviews = reviews.filter((review) => review.instructor === args.instructor)
@@ -106,7 +135,7 @@ export const listByCourseAll = query({
       reviews = reviews.filter((review) => review.status === args.status)
     }
 
-    return reviews
+    return reviews.map(normalizeReviewForClient)
   },
 })
 
@@ -124,7 +153,7 @@ export const listPending = query({
 
     const skip = args.skip || 0
     const limit = args.limit || 50
-    return reviews.slice(skip, skip + limit)
+    return reviews.slice(skip, skip + limit).map(normalizeReviewForClient)
   },
 })
 
@@ -138,11 +167,12 @@ export const listCourses = query({
       if (review.status !== "approved") continue
       if (review.active === false) continue
       const existing = courseMap.get(review.courseName)
+      const rating = getReviewRating(review)
       if (existing) {
         existing.count++
-        existing.totalRating += review.overallRating
+        existing.totalRating += rating
       } else {
-        courseMap.set(review.courseName, { count: 1, totalRating: review.overallRating })
+        courseMap.set(review.courseName, { count: 1, totalRating: rating })
       }
     }
 

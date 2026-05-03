@@ -101,6 +101,19 @@ const sha256Hex = async (input: string) => {
     return Array.from(new Uint8Array(hashBuffer)).map((b: number) => b.toString(16).padStart(2, "0")).join("")
 }
 
+const verifyPassword = async (password: string, credential: { passwordHash: string; salt?: string }) => {
+    if (credential.salt) {
+        return credential.passwordHash === await sha256Hex(password + credential.salt)
+    }
+
+    // Compatibility for legacy dev/prod data that stored plaintext or unsalted hashes.
+    if (credential.passwordHash === password) {
+        return true
+    }
+
+    return credential.passwordHash === await sha256Hex(password)
+}
+
 // Get all users with pagination
 export const list = query({
     args: {
@@ -505,8 +518,8 @@ export const updatePasswordWithCurrent = mutation({
             throw new Error("No password is set for this account")
         }
 
-        const currentHash = await sha256Hex(args.currentPassword + credential.salt)
-        if (currentHash !== credential.passwordHash) {
+        const currentPasswordMatches = await verifyPassword(args.currentPassword, credential)
+        if (!currentPasswordMatches) {
             throw new Error("Current password is incorrect")
         }
 
@@ -654,9 +667,18 @@ export const simpleLogin = mutation({
             throw new Error("密码未设置")
         }
 
-        const computed = await sha256Hex(args.password + credential.salt)
-        if (credential.passwordHash !== computed) {
+        const passwordMatches = await verifyPassword(args.password, credential)
+        if (!passwordMatches) {
             throw new Error("学号或密码错误")
+        }
+
+        if (!credential.salt) {
+            const salt = generateSalt()
+            const hash = await sha256Hex(args.password + salt)
+            await ctx.db.patch(credential._id, {
+                passwordHash: hash,
+                salt,
+            })
         }
 
         return {
