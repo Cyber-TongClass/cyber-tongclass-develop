@@ -32,16 +32,6 @@ const toIdArg = (input: IdLike) => {
   return { id: input as any }
 }
 
-function isUnsupportedResearchDirectionsError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error)
-  return message.includes("researchDirections") && message.includes("extra field")
-}
-
-function omitResearchDirections<T extends { researchDirections?: string[] }>(input: T) {
-  const { researchDirections: _researchDirections, ...rest } = input
-  return rest
-}
-
 // ==================== 认证相关 ====================
 
 export function useCurrentUser() {
@@ -86,7 +76,7 @@ export function useSignUp() {
 
   return useCallback(
     async (input: SignUpInput) => {
-      const payload = {
+      return createUser({
         email: input.email,
         username: input.username,
         englishName: input.englishName,
@@ -105,16 +95,7 @@ export function useSignUp() {
         scholarUrl: input.scholarUrl,
         orcidUrl: input.orcidUrl,
         avatar: input.avatar,
-      }
-
-      try {
-        return await createUser(payload as any)
-      } catch (error) {
-        if (isUnsupportedResearchDirectionsError(error)) {
-          return createUser(omitResearchDirections(payload) as any)
-        }
-        throw error
-      }
+      } as any)
     },
     [createUser]
   )
@@ -177,21 +158,7 @@ export function useCreateUser() {
 }
 
 export function useUpdateUser() {
-  const updateUser = useMutation(api.users.update)
-
-  return useCallback(
-    async (input: any) => {
-      try {
-        return await updateUser(input)
-      } catch (error) {
-        if (isUnsupportedResearchDirectionsError(error)) {
-          return updateUser(omitResearchDirections(input) as any)
-        }
-        throw error
-      }
-    },
-    [updateUser]
-  )
+  return useMutation(api.users.update)
 }
 
 export function useUpdateUserRole() {

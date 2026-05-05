@@ -145,23 +145,30 @@ export default function MemberDetailPage() {
                   </div>
                 </div>
               )}
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Bio</h4>
+                {member.bio ? (
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{member.bio}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No bio yet.</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl">Bio</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {member.bio ? (
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{member.bio}</p>
-              ) : (
-                <p className="text-muted-foreground">No bio yet.</p>
-              )}
-            </CardContent>
-          </Card>
+          {member.profileMarkdown?.trim() && (
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl">Profile Notes</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 pb-6">
+                <MarkdownRenderer content={member.profileMarkdown} />
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-0 shadow-sm">
             <CardHeader>
@@ -206,17 +213,6 @@ export default function MemberDetailPage() {
               )}
             </CardContent>
           </Card>
-
-          {member.profileMarkdown?.trim() && (
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-xl">Profile Notes</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 pb-6">
-                <MarkdownRenderer content={member.profileMarkdown} />
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
