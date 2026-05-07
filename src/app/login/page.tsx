@@ -137,10 +137,7 @@ function LoginForm() {
               </Button>
               
               <p className="text-sm text-center text-muted-foreground">
-                还没有账号?{" "}
-                <Link href="/register" className="text-primary hover:underline font-medium">
-                  立即注册
-                </Link>
+                如需开通账号，请联系管理员统一创建。
               </p>
             </CardFooter>
           </form>

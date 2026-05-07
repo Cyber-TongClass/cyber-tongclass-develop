@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCreateUser } from "@/lib/api"
+import { cohortToSelectValue, getCohortLabel, getCohortOptions, parseCohortValue, type CohortValue } from "@/lib/cohort"
 
 const roleOptions = [
   { value: "member", label: "成员" },
@@ -18,6 +19,16 @@ const organizationOptions = [
   { value: "pku", label: "北大通班" },
   { value: "thu", label: "清华通班" },
 ] as const
+
+const INITIAL_PASSWORD_LENGTH = 14
+const INITIAL_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*"
+
+function generateInitialPassword() {
+  const values = new Uint32Array(INITIAL_PASSWORD_LENGTH)
+  crypto.getRandomValues(values)
+
+  return Array.from(values, (value) => INITIAL_PASSWORD_CHARS[value % INITIAL_PASSWORD_CHARS.length]).join("")
+}
 
 export default function AdminUserCreatePage() {
   const router = useRouter()
@@ -31,12 +42,22 @@ export default function AdminUserCreatePage() {
   const [chineseName, setChineseName] = useState("")
   const [username, setUsername] = useState("")
   const [organization, setOrganization] = useState<"pku" | "thu">("pku")
-  const [cohort, setCohort] = useState(new Date().getFullYear())
+  const [cohort, setCohort] = useState<CohortValue>(new Date().getFullYear())
   const [studentId, setStudentId] = useState("")
   const [role, setRole] = useState<"member" | "admin" | "super_admin">("member")
   const [emailDomain, setEmailDomain] = useState("stu.pku.edu.cn")
+  const cohortOptions = getCohortOptions()
 
   const derivedEmail = studentId ? `${studentId}@${emailDomain}` : ""
+
+  useEffect(() => {
+    setPassword(generateInitialPassword())
+  }, [])
+
+  const regeneratePassword = () => {
+    setPassword(generateInitialPassword())
+    setSuccess("")
+  }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -60,10 +81,10 @@ export default function AdminUserCreatePage() {
         cohort,
         studentId,
         role,
+        isEmailVerified: true,
       } as any)
 
-      setSuccess("用户已创建")
-      setTimeout(() => router.push("/admin/users"), 600)
+      setSuccess(`用户已创建，初始密码为：${password}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -75,7 +96,7 @@ export default function AdminUserCreatePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">新建用户</h1>
-        <p className="text-gray-500 mt-1">填写基础信息和初始密码，选填资料无需在此填写。</p>
+        <p className="text-gray-500 mt-1">填写基础信息后，系统会自动生成随机初始密码。请在创建后及时告知用户，并提醒其首次登录后修改密码。</p>
       </div>
 
       <Card>
@@ -126,7 +147,13 @@ export default function AdminUserCreatePage() {
               </div>
               <div className="space-y-2">
                 <Label>初始密码</Label>
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="至少 8 位" required />
+                <div className="flex gap-2">
+                  <Input value={password} readOnly required />
+                  <Button type="button" variant="outline" onClick={regeneratePassword}>
+                    重新生成
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">系统将保存该初始密码的哈希值；请复制明文密码发送给用户本人。创建成功后页面不会自动跳转，便于你先记录密码。</p>
               </div>
             </div>
 
@@ -147,7 +174,17 @@ export default function AdminUserCreatePage() {
               </div>
               <div className="space-y-2">
                 <Label>年级</Label>
-                <Input type="number" value={String(cohort)} onChange={(e) => setCohort(Number(e.target.value))} required />
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3"
+                  value={cohortToSelectValue(cohort)}
+                  onChange={(e) => setCohort(parseCohortValue(e.target.value))}
+                >
+                  {cohortOptions.map((option) => (
+                    <option key={option} value={cohortToSelectValue(option)}>
+                      {getCohortLabel(option)}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

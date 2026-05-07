@@ -17,8 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ArrowLeft, Save, UserPlus } from "lucide-react"
-import { useUserById, useCreateUser, useUpdateUser } from "@/lib/api"
+import { useUserById, useCreateUser, useUpdateUser, useResetPasswordAsSuperAdmin } from "@/lib/api"
 import type { UserLink, UserRole } from "@/types"
+import { cohortToSelectValue, getCohortLabel, getCohortOptions, parseCohortValue, type CohortValue } from "@/lib/cohort"
+import { useAuth } from "@/lib/hooks/use-auth"
 
 type Organization = "pku" | "thu"
 type Role = UserRole
@@ -35,7 +37,7 @@ const organizationOptions: { value: Organization; label: string }[] = [
 ]
 
 const CURRENT_YEAR = new Date().getFullYear()
-const cohortOptions = Array.from({ length: CURRENT_YEAR - 2019 }, (_, idx) => CURRENT_YEAR - idx)
+const cohortOptions = getCohortOptions(CURRENT_YEAR)
 
 type UserFormData = {
   englishName: string
@@ -43,7 +45,7 @@ type UserFormData = {
   username: string
   email: string
   organization: Organization
-  cohort: number
+  cohort: CohortValue
   role: Role
   studentId: string
   password: string
@@ -59,6 +61,7 @@ export default function UserFormPage() {
   const params = useParams<{ id: string }>()
   const userId = params.id
   const isCreateMode = userId === "new"
+  const { currentUser, isSuperAdmin } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -69,7 +72,7 @@ export default function UserFormPage() {
     username: "",
     email: "",
     organization: "pku",
-    cohort: cohortOptions[0] || CURRENT_YEAR,
+    cohort: CURRENT_YEAR,
     role: "member",
     studentId: "",
     password: "",
@@ -84,6 +87,7 @@ export default function UserFormPage() {
   const userData = useUserById(isCreateMode ? undefined : userId)
   const createUserMutation = useCreateUser()
   const updateUserMutation = useUpdateUser()
+  const resetPasswordAsSuperAdmin = useResetPasswordAsSuperAdmin()
 
   // Set user data when fetched
   useEffect(() => {
@@ -103,7 +107,7 @@ export default function UserFormPage() {
         username: userData.username || "",
         email: userData.email || "",
         organization: userData.organization || "pku",
-        cohort: userData.cohort || cohortOptions[0] || CURRENT_YEAR,
+        cohort: userData.cohort || CURRENT_YEAR,
         role: userData.role || "member",
         studentId: userData.studentId || "",
         password: "",
@@ -194,6 +198,15 @@ export default function UserFormPage() {
         researchInterests: formData.researchInterests.map((item) => item.trim()).filter(Boolean),
         links: sanitizeUserLinks(formData.links),
       })
+
+      if (isSuperAdmin && formData.password.trim()) {
+        await resetPasswordAsSuperAdmin({
+          requesterId: currentUser?._id as any,
+          targetUserId: userId as any,
+          newPassword: formData.password,
+        })
+      }
+
       router.push("/admin/users")
     } catch (err: any) {
       setError(err.message || "更新用户失败")
@@ -298,16 +311,16 @@ export default function UserFormPage() {
               <div className="space-y-2">
                 <Label htmlFor="cohort">年级</Label>
                 <Select
-                  value={formData.cohort.toString()}
-                  onValueChange={(value) => setFormData({ ...formData, cohort: Number(value) })}
+                  value={cohortToSelectValue(formData.cohort)}
+                  onValueChange={(value) => setFormData({ ...formData, cohort: parseCohortValue(value) })}
                 >
                   <SelectTrigger id="cohort">
                     <SelectValue placeholder="选择年级" />
                   </SelectTrigger>
                   <SelectContent>
                     {cohortOptions.map((cohort) => (
-                      <SelectItem key={cohort} value={cohort.toString()}>
-                        {cohort}级
+                      <SelectItem key={cohort} value={cohortToSelectValue(cohort)}>
+                        {getCohortLabel(cohort)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -364,6 +377,20 @@ export default function UserFormPage() {
                     minLength={8}
                     required
                   />
+                </div>
+              )}
+              {!isCreateMode && isSuperAdmin && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="password">重置密码</Label>
+                  <Input
+                    id="password"
+                    type="text"
+                    placeholder="留空则不修改；填写后将直接重置该用户密码"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    minLength={8}
+                  />
+                  <p className="text-xs text-muted-foreground">仅超级管理员可直接重置他人密码，无需原密码。</p>
                 </div>
               )}
             </div>

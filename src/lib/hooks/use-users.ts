@@ -2,9 +2,10 @@
 
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/../convex/_generated/api"
+import type { CohortValue } from "@/lib/cohort"
 
 // Users hooks
-export function useUsers(args?: { skip?: number; limit?: number; organization?: "pku" | "thu"; cohort?: number }) {
+export function useUsers(args?: { skip?: number; limit?: number; organization?: "pku" | "thu"; cohort?: CohortValue }) {
   return useQuery(api.users.list, args || {})
 }
 

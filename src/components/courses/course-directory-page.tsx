@@ -100,7 +100,7 @@ export default function CourseDirectoryPage() {
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">课程测评</h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl">先创建课程，再进入课程详情页发布评测。</p>
+          <p className="text-lg text-muted-foreground max-w-2xl">通班内部的课程测评系统，汇集了历年来同学们的课程评价与反馈。欢迎同学们积极分享自己的课程体验，提交测评或按要求创建课程，但请不要将此网页内的内部资源分享到公开渠道哦～</p>
         </div>
       </section>
 

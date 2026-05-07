@@ -15,7 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider"
 import {
   FIVE_POINT_HINTS,
+  FIVE_POINT_OPTIONS,
   getCourseReviewYearOptions,
+  getFivePointLabel,
   getRatingBadgeClass,
   getSemesterLabel,
   getSemesterShortLabel,
@@ -29,6 +31,7 @@ import {
   useCreateCourseReview,
   useDeleteCourseReview,
   useUpdateCourseReview,
+  useUsers,
 } from "@/lib/api"
 import type { Course, CourseReview } from "@/types"
 
@@ -101,7 +104,7 @@ function createEmptyForm(currentYear: number): ReviewFormState {
     personalScore: "",
     recommendedStudyMethod: "",
     content: "",
-    isAnonymous: true,
+    isAnonymous: false,
   }
 }
 
@@ -181,6 +184,7 @@ export default function CourseDetailPage() {
 
   const coursesData = useCourses()
   const courses: Course[] = coursesData || []
+  const usersData = useUsers({ limit: 1000 })
   const courseData = useCourseByName(courseName)
   const fallbackCourse = React.useMemo(() => {
     const target = normalizeCourseName(courseName)
@@ -196,6 +200,10 @@ export default function CourseDetailPage() {
   const course: Course | null = courseData || fallbackCourse || null
   const reviewsData = useCourseReviews(course?.name || courseName)
   const reviews: CourseReview[] = reviewsData || []
+  const usersById = React.useMemo(() => {
+    const entries = (usersData || []).map((user) => [String(user._id), user] as const)
+    return new Map(entries)
+  }, [usersData])
 
   const createReview = useCreateCourseReview()
   const updateReview = useUpdateCourseReview()
@@ -307,7 +315,8 @@ export default function CourseDetailPage() {
   const reviewAuthor = (review: CourseReview) => {
     if (review.isAnonymous) return "匿名"
     if (review.authorId && review.authorId === currentUser?._id) return "我"
-    return "用户"
+    const author = review.authorId ? usersById.get(String(review.authorId)) : null
+    return author?.chineseName || author?.englishName || "用户"
   }
 
   if (authLoading) {
@@ -526,41 +535,53 @@ export default function CourseDetailPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="workload">任务量</Label>
-                  <Input
+                  <select
                     id="workload"
-                    type="number"
-                    min={1}
-                    max={5}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3"
                     value={formState.workload}
                     onChange={(event) => setFormState((previous) => ({ ...previous, workload: event.target.value }))}
-                    placeholder="1-5"
-                  />
+                  >
+                    <option value="">暂不填写</option>
+                    {FIVE_POINT_OPTIONS.workload.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                   <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.workload}</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pace">授课进度</Label>
-                  <Input
+                  <select
                     id="pace"
-                    type="number"
-                    min={1}
-                    max={5}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3"
                     value={formState.pace}
                     onChange={(event) => setFormState((previous) => ({ ...previous, pace: event.target.value }))}
-                    placeholder="1-5"
-                  />
+                  >
+                    <option value="">暂不填写</option>
+                    {FIVE_POINT_OPTIONS.pace.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                   <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.pace}</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="grading-fairness">给分情况</Label>
-                  <Input
+                  <select
                     id="grading-fairness"
-                    type="number"
-                    min={1}
-                    max={5}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3"
                     value={formState.gradingFairness}
                     onChange={(event) => setFormState((previous) => ({ ...previous, gradingFairness: event.target.value }))}
-                    placeholder="1-5"
-                  />
+                  >
+                    <option value="">暂不填写</option>
+                    {FIVE_POINT_OPTIONS.gradingFairness.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                   <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.gradingFairness}</p>
                 </div>
               </div>
@@ -740,10 +761,14 @@ export default function CourseDetailPage() {
                           {review.attendanceRequired !== undefined && (
                             <Badge variant="secondary">{review.attendanceRequired ? "需要签到" : "不签到"}</Badge>
                           )}
-                          {review.workload !== undefined && <Badge variant="secondary">任务量 {review.workload}/5</Badge>}
-                          {review.pace !== undefined && <Badge variant="secondary">进度 {review.pace}/5</Badge>}
+                          {review.workload !== undefined && (
+                            <Badge variant="secondary">任务量：{getFivePointLabel("workload", review.workload)}</Badge>
+                          )}
+                          {review.pace !== undefined && (
+                            <Badge variant="secondary">进度：{getFivePointLabel("pace", review.pace)}</Badge>
+                          )}
                           {review.gradingFairness !== undefined && (
-                            <Badge variant="secondary">给分 {review.gradingFairness}/5</Badge>
+                            <Badge variant="secondary">给分情况：{getFivePointLabel("gradingFairness", review.gradingFairness)}</Badge>
                           )}
                           {review.courseAverageScore !== undefined && (
                             <Badge variant="secondary">课程均分 {review.courseAverageScore}</Badge>

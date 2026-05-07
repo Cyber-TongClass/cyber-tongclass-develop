@@ -6,20 +6,21 @@ import { Search, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUsers } from "@/lib/api"
+import { compareCohorts, getCohortLabel, getCohortOptions, parseCohortValue, type CohortValue } from "@/lib/cohort"
 
 const organizationLabels = {
   pku: "北京大学",
   thu: "清华大学",
 }
 
-const cohortOptions = [2025, 2024, 2023, 2022, 2021, 2020]
+const cohortOptions = getCohortOptions()
 
 type Member = {
   id: string
   username: string
   englishName: string
   organization: "pku" | "thu"
-  cohort: number
+  cohort: CohortValue
   researchInterests: string[]
   avatar?: string
 }
@@ -59,7 +60,7 @@ export function MembersList() {
         return false
       }
       // Cohort filter
-      if (selectedCohort !== "all" && member.cohort !== parseInt(selectedCohort)) {
+      if (selectedCohort !== "all" && member.cohort !== parseCohortValue(selectedCohort)) {
         return false
       }
       return true
@@ -75,7 +76,7 @@ export function MembersList() {
       }
       // Cohort sort: newest first
       if (a.cohort !== b.cohort) {
-        return b.cohort - a.cohort
+        return compareCohorts(a.cohort, b.cohort)
       }
       // Name sort
       return a.englishName.localeCompare(b.englishName)
@@ -113,7 +114,7 @@ export function MembersList() {
             <option value="all">全部年级</option>
             {cohortOptions.map((cohort) => (
               <option key={cohort} value={cohort}>
-                {cohort}级
+                {getCohortLabel(cohort)}
               </option>
             ))}
           </select>
@@ -143,7 +144,7 @@ export function MembersList() {
                       <CardDescription className="flex items-center gap-2 mt-1">
                         <span>{organizationLabels[member.organization]}</span>
                         <span>·</span>
-                        <span>{member.cohort}级</span>
+                        <span>{getCohortLabel(member.cohort)}</span>
                       </CardDescription>
                     </div>
                   </div>

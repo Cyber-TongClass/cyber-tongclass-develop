@@ -93,7 +93,7 @@ export default function NewsPage() {
             </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            了解通班的最新动态、学术成果、活动通知等信息。
+            了解通班的最新动态、回顾通班精彩纷呈的活动。
           </p>
         </div>
       </section>

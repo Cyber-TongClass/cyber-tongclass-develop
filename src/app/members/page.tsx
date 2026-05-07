@@ -17,6 +17,7 @@ import {
 import { useUsers } from "@/lib/api"
 import { RESEARCH_DIRECTIONS, getResearchDirectionLabel } from "@/lib/research-directions"
 import type { User } from "@/types"
+import { compareCohorts, getCohortClassLabel, getCohortLabel, getYearCohortOptions, parseCohortValue } from "@/lib/cohort"
 
 // 排序函数：学校 → 年级（新→旧）→ 拼音
 function sortUsers(users: User[]) {
@@ -29,9 +30,12 @@ function sortUsers(users: User[]) {
     }
     // 然后按年级（新→旧，即从大到小）
     if (a.cohort !== b.cohort) {
-      return b.cohort - a.cohort
+      return compareCohorts(a.cohort, b.cohort)
     }
     // 最后按拼音排序
+    if (a.cohort === "mascot") {
+      return b.englishName.localeCompare(a.englishName, "en")
+    }
     return a.englishName.localeCompare(b.englishName, 'en')
   })
 }
@@ -95,7 +99,7 @@ export default function MembersPage() {
       return false
     }
     // 年级筛选
-    if (selectedCohort !== "all" && user.cohort !== parseInt(selectedCohort)) {
+    if (selectedCohort !== "all" && user.cohort !== parseCohortValue(selectedCohort)) {
       return false
     }
     // Research area filter
@@ -106,8 +110,7 @@ export default function MembersPage() {
   })
 
   // 年级选项
-  const currentYear = new Date().getFullYear()
-  const cohorts = Array.from({ length: currentYear - 2019 }, (_, idx) => currentYear - idx)
+  const cohorts = [...getYearCohortOptions(), "mascot" as const]
 
   return (
     <div className="min-h-screen bg-background">
@@ -119,11 +122,11 @@ export default function MembersPage() {
               <UsersIcon className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              团队成员
+              班级成员
             </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            北京大学与清华大学联合培养的人工智能创新人才，涵盖机器学习、计算机视觉、自然语言处理等多个前沿领域。
+            北京大学与清华大学通用人工智能实验班成员主页，涵盖学生和往届毕业生的研究方向、学术成果等。
           </p>
         </div>
       </section>
@@ -167,7 +170,7 @@ export default function MembersPage() {
                   <SelectItem value="all">全部年级</SelectItem>
                   {cohorts.map((cohort) => (
                     <SelectItem key={cohort} value={cohort.toString()}>
-                      {cohort}级
+                      {getCohortLabel(cohort)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -260,7 +263,7 @@ export default function MembersPage() {
                         <GraduationCap className="h-4 w-4" />
                       )}
                       <span>
-                        {user.organization === "pku" ? "PKU" : "THU"} Tong Class · Class of {user.cohort}
+                        {user.organization === "pku" ? "PKU" : "THU"} Tong Class · {getCohortClassLabel(user.cohort)}
                       </span>
                     </div>
                   </CardContent>

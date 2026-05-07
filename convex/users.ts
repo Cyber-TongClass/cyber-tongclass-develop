@@ -120,7 +120,7 @@ export const list = query({
         skip: v.optional(v.number()),
         limit: v.optional(v.number()),
         organization: v.optional(v.union(v.literal("pku"), v.literal("thu"))),
-        cohort: v.optional(v.number()),
+        cohort: v.optional(v.union(v.number(), v.literal("mascot"))),
     },
     handler: async (ctx, args) => {
         let usersQuery = ctx.db.query("users")
@@ -187,7 +187,7 @@ export const create = mutation({
         englishName: v.string(),
         chineseName: v.optional(v.string()),
         organization: v.union(v.literal("pku"), v.literal("thu")),
-        cohort: v.number(),
+        cohort: v.union(v.number(), v.literal("mascot")),
         studentId: v.string(),
         role: v.optional(v.union(v.literal("member"), v.literal("admin"), v.literal("super_admin"))),
         password: v.optional(v.string()),
@@ -203,6 +203,7 @@ export const create = mutation({
         orcidUrl: v.optional(v.string()),
         avatar: v.optional(v.string()),
         realPhoto: v.optional(v.string()),
+        isEmailVerified: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         const email = normalizeEmail(args.email)
@@ -259,7 +260,7 @@ export const create = mutation({
             orcidUrl: args.orcidUrl,
             avatar: args.avatar,
             realPhoto: args.realPhoto,
-            isEmailVerified: false,
+            isEmailVerified: args.isEmailVerified ?? false,
             createdAt: now,
             updatedAt: now,
         })
@@ -300,10 +301,9 @@ export const update = mutation({
         englishName: v.optional(v.string()),
         chineseName: v.optional(v.string()),
         organization: v.optional(v.union(v.literal("pku"), v.literal("thu"))),
-        cohort: v.optional(v.number()),
+        cohort: v.optional(v.union(v.number(), v.literal("mascot"))),
         studentId: v.optional(v.string()),
         role: v.optional(v.union(v.literal("member"), v.literal("admin"), v.literal("super_admin"))),
-        password: v.optional(v.string()),
         personalEmails: v.optional(v.array(v.string())),
         personalEmail: v.optional(v.string()),
         bio: v.optional(v.string()),
@@ -318,7 +318,7 @@ export const update = mutation({
         realPhoto: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const { id, password, ...updates } = args
+        const { id, ...updates } = args
 
         const user = await ctx.db.get(id)
 
@@ -384,28 +384,6 @@ export const update = mutation({
         })
 
         await ctx.db.patch(id, patchData)
-
-        if (password && password.trim()) {
-            const salt = generateSalt()
-            const hash = await sha256Hex(password + salt)
-            const existingCredential = await ctx.db
-                .query("authCredentials")
-                .filter((q) => q.eq(q.field("userId"), id))
-                .first()
-
-            if (existingCredential) {
-                await ctx.db.patch(existingCredential._id, {
-                    passwordHash: hash,
-                    salt,
-                })
-            } else {
-                await ctx.db.insert("authCredentials", {
-                    userId: id,
-                    passwordHash: hash,
-                    salt,
-                })
-            }
-        }
 
         return id
     },
@@ -490,6 +468,63 @@ export const updatePasswordByUserId = mutation({
         })
 
         return args.userId
+    },
+})
+
+export const resetPasswordAsSuperAdmin = mutation({
+    args: {
+        requesterId: v.id("users"),
+        targetUserId: v.id("users"),
+        newPassword: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (args.newPassword.length < PASSWORD_MIN_LENGTH) {
+            throw new Error(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
+        }
+
+        const [requester, targetUser] = await Promise.all([
+            ctx.db.get(args.requesterId),
+            ctx.db.get(args.targetUserId),
+        ])
+
+        if (!requester) {
+            throw new Error("Requester not found")
+        }
+
+        if (requester.role !== "super_admin") {
+            throw new Error("Only super admins can reset another user's password")
+        }
+
+        if (!targetUser) {
+            throw new Error("User not found")
+        }
+
+        const salt = generateSalt()
+        const hash = await sha256Hex(args.newPassword + salt)
+
+        const existingCredential = await ctx.db
+            .query("authCredentials")
+            .filter((q) => q.eq(q.field("userId"), args.targetUserId))
+            .first()
+
+        if (existingCredential) {
+            await ctx.db.patch(existingCredential._id, {
+                passwordHash: hash,
+                salt,
+            })
+        } else {
+            await ctx.db.insert("authCredentials", {
+                userId: args.targetUserId,
+                passwordHash: hash,
+                salt,
+            })
+        }
+
+        await ctx.db.patch(args.targetUserId, {
+            updatedAt: Date.now(),
+        })
+
+        return args.targetUserId
     },
 })
 

@@ -238,7 +238,7 @@
   - Introduction (项目介绍)
   - Official Accounts (公众号)
   - Campus Life (校园生活)
-  - Student Council (学生会)
+  - Student Council (学生组织)
   - Merchandise (周边产品)
   - Contact (联系方式)
 - **特性**: 返回旧版网站按钮

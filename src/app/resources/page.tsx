@@ -6,22 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 const publicResources = [
   {
     id: "survival-guide",
-    title: "Survival Guide",
-    description: "Public onboarding notes, study references, and administrative pointers for Tong Class students.",
+    title: "通班生存指南",
+    description: "写给北大通班学生的人工智能专业学习指南，涵盖入学指南、课程选择、编程入门、资源推荐、科研入门建议等内容，由历届通班学生参与编写维护。",
     icon: FileText,
     href: "/resources#survival-guide",
   },
   {
     id: "public-links",
-    title: "Public Links",
-    description: "Open websites, documentation, and community links that can be shared outside the member-only area.",
+    title: "自学资源链接",
+    description: "人工智能学习资源汇总，包括课程、书籍、文章、工具等链接，由通班学术部维护更新。",
     icon: LinkIcon,
     href: "/resources#public-links",
   },
   {
     id: "course-reviews",
-    title: "Course Reviews",
-    description: "Course review browsing and writing live in the member course area.",
+    title: "课程测评",
+    description: "通班课程测评系统，仅对通班内部成员开放，汇集了历年来同学们的课程评价与反馈。",
     icon: BookOpen,
     href: "/courses",
   },
@@ -36,10 +36,10 @@ export default function ResourcesPage() {
             <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
               <ExternalLink className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">Resources</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">学习资源</h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Public guides and links for Tong Class members, alumni, and collaborators.
+            面向全体公众的资源汇总，包括一代代通班学子参与编写的学习指南、自学资源链接等。
           </p>
         </div>
       </section>

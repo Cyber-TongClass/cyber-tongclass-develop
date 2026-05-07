@@ -64,10 +64,10 @@ export default function IntranetPage() {
             <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
               <Lock className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">Intranet</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">内部网站</h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Private member-only resources that should stay separate from public course reviews.
+            这是一个近面向通班成员的内部网站，包含讨论区、内部资源和私密链接等。请不要将此网页内的内部资源分享到公开渠道哦～
           </p>
         </div>
       </section>

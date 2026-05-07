@@ -4,6 +4,7 @@ import { useCallback } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import type { UserLink } from "@/types"
+import type { CohortValue } from "@/lib/cohort"
 
 type IdLike =
   | string
@@ -56,7 +57,7 @@ type SignUpInput = {
   englishName: string
   chineseName?: string
   organization: "pku" | "thu"
-  cohort: number
+  cohort: CohortValue
   studentId: string
   password: string
   personalEmails?: string[]
@@ -69,6 +70,7 @@ type SignUpInput = {
   scholarUrl?: string
   orcidUrl?: string
   avatar?: string
+  isEmailVerified?: boolean
 }
 
 export function useSignUp() {
@@ -95,6 +97,7 @@ export function useSignUp() {
         scholarUrl: input.scholarUrl,
         orcidUrl: input.orcidUrl,
         avatar: input.avatar,
+        isEmailVerified: input.isEmailVerified,
       } as any)
     },
     [createUser]
@@ -131,7 +134,7 @@ export function useSignIn() {
 
 // ==================== 用户相关 ====================
 
-export function useUsers(args?: { organization?: "pku" | "thu"; cohort?: number; skip?: number; limit?: number }) {
+export function useUsers(args?: { organization?: "pku" | "thu"; cohort?: CohortValue; skip?: number; limit?: number }) {
   return useQuery(api.users.list, args || {})
 }
 
@@ -167,6 +170,10 @@ export function useUpdateUserRole() {
 
 export function useUpdatePasswordWithCurrent() {
   return useMutation(api.users.updatePasswordWithCurrent)
+}
+
+export function useResetPasswordAsSuperAdmin() {
+  return useMutation(api.users.resetPasswordAsSuperAdmin)
 }
 
 export function useDeleteUser() {

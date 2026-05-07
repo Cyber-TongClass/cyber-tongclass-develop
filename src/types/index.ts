@@ -25,7 +25,7 @@ export interface User {
   chineseName?: string
   role: UserRole
   organization: 'pku' | 'thu'
-  cohort: number // 2020, 2021, etc.
+  cohort: number | 'mascot'
   studentId: string
   personalEmails?: string[]
   personalEmail?: string
@@ -143,13 +143,13 @@ export const ORGANIZATIONS = {
     id: 'pku',
     name: 'Peking University',
     shortName: 'PKU',
-    cohorts: [2020, 2021, 2022, 2023, 2024, 2025] as const,
+    cohorts: ['mascot', 2020, 2021, 2022, 2023, 2024, 2025] as const,
   },
   THU: {
     id: 'thu',
     name: 'Tsinghua University',
     shortName: 'THU',
-    cohorts: [2020, 2021, 2022, 2023, 2024, 2025] as const,
+    cohorts: ['mascot', 2020, 2021, 2022, 2023, 2024, 2025] as const,
   },
 } as const
 

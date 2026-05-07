@@ -84,7 +84,7 @@ export default function PublicationsPage() {
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">学术成果</h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl">展示通班师生的学术论文、研究成果与学术贡献。</p>
+          <p className="text-lg text-muted-foreground max-w-2xl">展示通班师生的学术论文、研究成果与创新贡献。</p>
         </div>
       </section>
 

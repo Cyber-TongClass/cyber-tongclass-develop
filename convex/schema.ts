@@ -10,7 +10,7 @@ export default defineSchema({
     chineseName: v.optional(v.string()),
     role: v.union(v.literal("member"), v.literal("admin"), v.literal("super_admin")),
     organization: v.union(v.literal("pku"), v.literal("thu")),
-    cohort: v.number(),
+    cohort: v.union(v.number(), v.literal("mascot")),
     studentId: v.string(),
     personalEmails: v.optional(v.array(v.string())),
     personalEmail: v.optional(v.string()),

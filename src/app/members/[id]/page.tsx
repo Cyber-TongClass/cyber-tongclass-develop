@@ -12,6 +12,7 @@ import { MarkdownRenderer } from "@/components/markdown/markdown-renderer"
 import { getUserLinks, getUserPersonalEmails } from "@/lib/user-profile"
 import { getResearchDirectionLabel } from "@/lib/research-directions"
 import type { Publication } from "@/types"
+import { getCohortClassLabel } from "@/lib/cohort"
 
 export default function MemberDetailPage() {
   const params = useParams<{ id: string }>()
@@ -72,7 +73,7 @@ export default function MemberDetailPage() {
               ) : null}
               <p className="text-muted-foreground flex items-center justify-center gap-2">
                 {member.organization === "pku" ? <School className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}
-                {member.organization === "pku" ? "PKU Tong Class" : "THU Tong Class"} · Class of {member.cohort}
+                {member.organization === "pku" ? "PKU Tong Class" : "THU Tong Class"} · {getCohortClassLabel(member.cohort)}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">

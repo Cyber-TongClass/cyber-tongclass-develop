@@ -14,16 +14,16 @@ import { TurnstileWidget } from "@/components/auth/turnstile-widget"
 import { sanitizePersonalEmails, sanitizeUserLinks } from "@/lib/user-profile"
 import { RESEARCH_DIRECTIONS } from "@/lib/research-directions"
 import type { UserLink } from "@/types"
+import { cohortToSelectValue, getCohortLabel, getCohortOptions, parseCohortValue, type CohortValue } from "@/lib/cohort"
 
 type Organization = "pku" | "thu"
 type PkuDomain = "@stu.pku.edu.cn" | "@pku.edu.cn" | "@alumni.pku.edu.cn"
 
 const REGISTER_DRAFT_KEY = "tongclass_register_draft"
 
-const CURRENT_YEAR = new Date().getFullYear()
-const cohortOptions = Array.from({ length: CURRENT_YEAR - 2019 }, (_, idx) => CURRENT_YEAR - idx)
+const cohortOptions = getCohortOptions()
 
-const ORGANIZATIONS: Record<Organization, { label: string; cohorts: number[] }> = {
+const ORGANIZATIONS: Record<Organization, { label: string; cohorts: CohortValue[] }> = {
     pku: {
         label: "PKU Tong Class",
         cohorts: cohortOptions,
@@ -46,7 +46,7 @@ export default function RegisterClient() {
 
     // Form data
     const [organization, setOrganization] = useState<Organization | "">("pku")
-    const [cohort, setCohort] = useState<number | "">("")
+    const [cohort, setCohort] = useState<CohortValue | "">("")
     const [studentId, setStudentId] = useState("")
     const [emailDomain, setEmailDomain] = useState<PkuDomain>("@stu.pku.edu.cn")
     const [verificationCode, setVerificationCode] = useState("")
@@ -109,7 +109,7 @@ export default function RegisterClient() {
             const draft = draftRaw
                 ? (JSON.parse(draftRaw) as {
                     organization?: Organization
-                    cohort?: number | ""
+                    cohort?: CohortValue | ""
                     studentId?: string
                     emailDomain?: PkuDomain
                 })
@@ -359,7 +359,7 @@ export default function RegisterClient() {
                 chineseName: chineseName.trim(),
                 username: username.trim(),
                 organization: organization as Organization,
-                cohort: Number(cohort),
+                cohort,
                 studentId: studentId.trim(),
                 personalEmails: normalizedPersonalEmails,
                 bio: bio.trim() || undefined,
@@ -493,14 +493,14 @@ export default function RegisterClient() {
                                     id="cohort"
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={cohort}
-                                    onChange={(e) => setCohort(Number(e.target.value))}
+                                    onChange={(e) => setCohort(parseCohortValue(e.target.value))}
                                     required
                                     disabled={!organization}
                                 >
                                     <option value="">Select your year of admission</option>
                                     {organization && ORGANIZATIONS[organization]?.cohorts.map((year) => (
-                                        <option key={year} value={year}>
-                                            {year}
+                                        <option key={year} value={cohortToSelectValue(year)}>
+                                            {getCohortLabel(year)}
                                         </option>
                                     ))}
                                 </select>

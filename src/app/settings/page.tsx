@@ -15,6 +15,7 @@ import { getUserLinks, getUserPersonalEmails, sanitizePersonalEmails, sanitizeUs
 import { RESEARCH_DIRECTIONS } from "@/lib/research-directions"
 import type { UserLink } from "@/types"
 import { User, CheckCircle, XCircle } from "lucide-react"
+import { getCohortClassLabel } from "@/lib/cohort"
 
 const MarkdownSplitEditor = dynamic(
   () => import("@/components/markdown/markdown-split-editor").then((mod) => mod.MarkdownSplitEditor),
@@ -215,7 +216,7 @@ export default function SettingsPage() {
     }
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match")
+      setError("Confirm password does not match new password")
       return
     }
 
@@ -239,7 +240,12 @@ export default function SettingsPage() {
         logout("/login?passwordChanged=true")
       }, 1500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update password")
+      const message = err instanceof Error ? err.message : "Failed to update password"
+      if (message === "Current password is incorrect") {
+        setError("Current password is incorrect")
+        return
+      }
+      setError(message)
     }
   }
 
@@ -324,7 +330,7 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Cohort</Label>
-                <Input value={`Class of ${currentUser.cohort}`} disabled />
+                <Input value={getCohortClassLabel(currentUser.cohort)} disabled />
               </div>
             </div>
 

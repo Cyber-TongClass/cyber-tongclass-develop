@@ -64,10 +64,11 @@ async function syncCourseStatsByName(ctx: any, courseName: string) {
   const normalizedCourseName = courseName.trim()
   if (!normalizedCourseName) return
 
-  const course = await ctx.db
+  const courses = await ctx.db
     .query("courses")
     .filter((q: any) => q.eq(q.field("name"), normalizedCourseName))
-    .first()
+    .collect()
+  const course = courses.find((item: any) => item.isActive !== false) || null
 
   if (!course) return
 
@@ -240,10 +241,6 @@ export const create = mutation({
       if (!user) {
         throw new Error("Authentication required to create course reviews")
       }
-
-      if (!user.isEmailVerified) {
-        throw new Error("Email verification is required to submit course reviews")
-      }
     }
 
     const status: ReviewStatus = args.status ?? "approved"
@@ -263,7 +260,7 @@ export const create = mutation({
       personalScore: args.personalScore,
       recommendedStudyMethod: args.recommendedStudyMethod,
       content,
-      isAnonymous: args.isAnonymous ?? true,
+      isAnonymous: args.isAnonymous ?? false,
       authorId: user?._id,
       status,
       tags: [],

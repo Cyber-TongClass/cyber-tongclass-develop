@@ -24,6 +24,7 @@ import { useConfirmDialog } from "@/components/ui/confirm-dialog"
 import { MoreHorizontal, Plus, Search, Filter, Trash2, Edit, Eye } from "lucide-react"
 import { useUsers, useDeleteUser } from "@/lib/api"
 import type { User } from "@/types"
+import { getCohortLabel } from "@/lib/cohort"
 
 const roleLabels: Record<string, string> = {
   member: "成员",
@@ -143,7 +144,7 @@ export default function UsersPage() {
                   <TableCell>{user.username}</TableCell>
                   <TableCell className="text-gray-500">{user.email}</TableCell>
                   <TableCell>{organizationLabels[user.organization] || user.organization}</TableCell>
-                  <TableCell>{user.cohort}</TableCell>
+                  <TableCell>{getCohortLabel(user.cohort)}</TableCell>
                   <TableCell>
                     <Badge className={roleColors[user.role]}>{roleLabels[user.role]}</Badge>
                   </TableCell>

@@ -108,12 +108,12 @@ export default function AdminLayout({
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle>你没有权限访问此功能</CardTitle>
+            <CardTitle>管理员后台</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600">如需访问该功能，请联系超级管理员。</p>
+            <p className="text-sm text-gray-600">作为管理员，你可以管理课程测评、新闻和活动。如需管理成员，请联系超级管理员。</p>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/admin/reviews">前往课程测评</Link>
+              <Link href="/admin/reviews">前往课程测评、新闻和活动管理</Link>
             </Button>
           </CardContent>
         </Card>

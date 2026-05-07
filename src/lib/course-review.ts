@@ -17,6 +17,52 @@ export const FIVE_POINT_HINTS = {
   gradingFairness: "1 = 很不符合预期，5 = 很符合预期",
 } as const
 
+export const FIVE_POINT_LABELS = {
+  workload: {
+    1: "很小",
+    2: "较小",
+    3: "中等",
+    4: "较大",
+    5: "很大",
+  },
+  pace: {
+    1: "很慢",
+    2: "较慢",
+    3: "中等",
+    4: "较快",
+    5: "很快",
+  },
+  gradingFairness: {
+    1: "很不符合预期",
+    2: "较不符合预期",
+    3: "中等",
+    4: "较符合预期",
+    5: "很符合预期",
+  },
+} as const
+
+export const FIVE_POINT_OPTIONS = {
+  workload: [1, 2, 3, 4, 5].map((value) => ({
+    value: String(value),
+    label: `${value}（${FIVE_POINT_LABELS.workload[value as 1 | 2 | 3 | 4 | 5]}）`,
+  })),
+  pace: [1, 2, 3, 4, 5].map((value) => ({
+    value: String(value),
+    label: `${value}（${FIVE_POINT_LABELS.pace[value as 1 | 2 | 3 | 4 | 5]}）`,
+  })),
+  gradingFairness: [1, 2, 3, 4, 5].map((value) => ({
+    value: String(value),
+    label: `${value}（${FIVE_POINT_LABELS.gradingFairness[value as 1 | 2 | 3 | 4 | 5]}）`,
+  })),
+} as const
+
+export function getFivePointLabel(
+  kind: keyof typeof FIVE_POINT_LABELS,
+  value: number
+) {
+  return FIVE_POINT_LABELS[kind][value as 1 | 2 | 3 | 4 | 5] ?? String(value)
+}
+
 export function getSemesterLabel(year: number, term: CourseReview["semesterTerm"]) {
   const match = SEMESTER_TERM_OPTIONS.find((option) => option.value === term)
   return `${year} ${match?.label ?? term}`

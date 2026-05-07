@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 const footerLinks = {
   project: [
     { name: "关于项目", href: "/about" },
-    { name: "团队成员", href: "/members" },
+    { name: "班级成员", href: "/members" },
     { name: "学术成果", href: "/publications" },
     { name: "活动日历", href: "/events" },
   ],

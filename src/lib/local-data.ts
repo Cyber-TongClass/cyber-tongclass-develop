@@ -51,7 +51,7 @@ const seedNews: News[] = [
     title: "通班学术沙龙圆满结束",
     content: "上周五举办的通班学术沙龙活动圆满结束，本次沙龙邀请了多位优秀学长学姐分享科研经验...",
     authorId: "seed-admin",
-    authorName: "学生会",
+    authorName: "学生组织",
     category: "活动回顾",
     publishedAt: new Date("2024-01-05").getTime(),
     isPublished: true,
