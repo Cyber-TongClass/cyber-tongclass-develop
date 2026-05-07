@@ -12,7 +12,7 @@ const footerLinks = {
     { name: "活动日历", href: "/events" },
   ],
   resources: [
-    { name: "课程评测", href: "/courses" },
+    { name: "课程测评", href: "/courses" },
     { name: "公开资源", href: "/resources" },
     { name: "新闻动态", href: "/news" },
   ],

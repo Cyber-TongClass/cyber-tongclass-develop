@@ -73,7 +73,7 @@ export default function CourseReviewsPage() {
       <section className="bg-white border-b">
         <div className="container-custom py-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">课程评测</h1>
+            <h1 className="text-2xl font-bold">课程测评</h1>
             <p className="text-sm text-muted-foreground">默认显示最新/热门评测。可搜索、按教师筛选或按标签过滤，也可发布新评测。</p>
           </div>
           <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export default function CourseReviewsPage() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>发布课程评测</DialogTitle>
+                  <DialogTitle>发布课程测评</DialogTitle>
                 </DialogHeader>
                 <CreateReviewForm />
               </DialogContent>

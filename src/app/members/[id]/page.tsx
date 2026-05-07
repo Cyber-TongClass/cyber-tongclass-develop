@@ -67,6 +67,9 @@ export default function MemberDetailPage() {
                 )}
               </div>
               <CardTitle className="text-2xl">{member.englishName}</CardTitle>
+              {member.chineseName ? (
+                <p className="text-sm text-muted-foreground mt-1">{member.chineseName}</p>
+              ) : null}
               <p className="text-muted-foreground flex items-center justify-center gap-2">
                 {member.organization === "pku" ? <School className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}
                 {member.organization === "pku" ? "PKU Tong Class" : "THU Tong Class"} · Class of {member.cohort}

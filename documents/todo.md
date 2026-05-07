@@ -123,10 +123,10 @@
 ### 4.3 内容管理
 - [x] 新闻管理 (/admin/news)
 - [x] 活动管理 (/admin/events)
-- [x] 评测审核 (/admin/reviews)
+- [x] 课程测评 (/admin/reviews)
 
 ### 4.4 数据导入
-- [x] 批量导入课程评测
+- [x] 批量导入课程测评
 
 ---
 

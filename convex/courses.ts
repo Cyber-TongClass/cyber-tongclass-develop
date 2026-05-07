@@ -8,7 +8,9 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const allCourses = await ctx.db.query("courses").order("desc").collect()
+    const allCourses = (await ctx.db.query("courses").order("desc").collect()).filter(
+      (course) => course.isActive !== false
+    )
     const skip = args.skip || 0
     const limit = args.limit || 50
     return allCourses.slice(skip, skip + limit)
@@ -20,7 +22,7 @@ export const getById = query({
   args: { id: v.id("courses") },
   handler: async (ctx, args) => {
     const course = await ctx.db.get(args.id)
-    return course
+    return course?.isActive === false ? null : course
   },
 })
 
@@ -32,7 +34,7 @@ export const getByName = query({
       .query("courses")
       .filter((q) => q.eq(q.field("name"), args.name))
       .collect()
-    return courses[0]
+    return courses.find((course) => course.isActive !== false) || null
   },
 })
 
@@ -52,7 +54,8 @@ export const create = mutation({
     const existing = await ctx.db
       .query("courses")
       .filter((q) => q.eq(q.field("name"), normalizedName))
-      .first()
+      .collect()
+      .then((courses) => courses.find((course) => course.isActive !== false))
 
     if (existing) {
       throw new Error("Course already exists")
@@ -91,7 +94,10 @@ export const update = mutation({
       const existing = await ctx.db
         .query("courses")
         .filter((q) => q.eq(q.field("name"), normalizedName))
-        .first()
+        .collect()
+        .then((courses) =>
+          courses.find((item) => item.isActive !== false && item._id !== id)
+        )
 
       if (existing) {
         throw new Error("Course name already exists")
@@ -140,21 +146,18 @@ export const remove = mutation({
       throw new Error("Course not found")
     }
 
-    // Soft-delete the course so we keep a record
-    await ctx.db.patch(args.id, { isActive: false, removedAt: Date.now(), updatedAt: Date.now() })
-
-    // Mark related reviews inactive and add a removed-course tag
-    const tag = `[removed course] ${course.name}`
+    // Hard-delete related reviews first so the course disappears everywhere,
+    // including direct course detail pages and admin review lists.
     const reviews = await ctx.db
       .query("courseReviews")
       .filter((q) => q.eq(q.field("courseName"), course.name))
       .collect()
 
     for (const review of reviews) {
-      const existingTags = Array.isArray(review.tags) ? review.tags : []
-      const nextTags = existingTags.includes(tag) ? existingTags : [...existingTags, tag]
-      await ctx.db.patch(review._id, { tags: nextTags, active: false, updatedAt: Date.now() })
+      await ctx.db.delete(review._id)
     }
+
+    await ctx.db.delete(args.id)
 
     return args.id
   },
@@ -164,7 +167,7 @@ export const remove = mutation({
 export const count = query({
   handler: async (ctx) => {
     const courses = await ctx.db.query("courses").collect()
-    return courses.length
+    return courses.filter((course) => course.isActive !== false).length
   },
 })
 
@@ -172,7 +175,7 @@ export const count = query({
 export const search = query({
   args: { query: v.string() },
   handler: async (ctx, args) => {
-    const all = await ctx.db.query("courses").collect()
+    const all = (await ctx.db.query("courses").collect()).filter((course) => course.isActive !== false)
     const q = args.query.trim().toLowerCase()
     if (!q) return []
     const filtered = all.filter((c) => c.name && c.name.toLowerCase().includes(q)).slice(0, 20)

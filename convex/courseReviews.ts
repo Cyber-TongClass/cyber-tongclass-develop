@@ -246,17 +246,7 @@ export const create = mutation({
       }
     }
 
-    // Post-First moderation: auto-approve if user already has >=1 approved reviews
-    const approvedByUser = user
-      ? await ctx.db
-        .query("courseReviews")
-        .filter((q: any) => q.eq(q.field("authorId"), user._id))
-        .filter((q: any) => q.eq(q.field("status"), "approved"))
-        .collect()
-      : []
-
-    const hasApprovedBefore = approvedByUser.length > 0
-    const status: ReviewStatus = args.status ?? (hasApprovedBefore ? "approved" : "pending")
+    const status: ReviewStatus = args.status ?? "approved"
 
     const reviewId = await ctx.db.insert("courseReviews", {
       courseName,

@@ -287,7 +287,7 @@ export default function CourseDetailPage() {
       })
 
       closeForm()
-      setSubmissionMessage("评测已提交，待管理员审核通过后会显示在列表中。")
+      setSubmissionMessage("评测已发布，感谢您对通班可持续发展的贡献！")
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "提交评测失败")
     }
@@ -323,10 +323,10 @@ export default function CourseDetailPage() {
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <Card className="max-w-lg w-full">
           <CardHeader>
-            <CardTitle>课程评测需登录后访问</CardTitle>
+            <CardTitle>课程测评需登录后访问</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">请先登录后再查看课程评测与发帖。</p>
+            <p className="text-sm text-muted-foreground">请先登录后再查看课程测评与发帖。</p>
             <Button asChild className="w-full">
               <Link href={`/login?next=${encodeURIComponent(`/courses/${encodeURIComponent(courseName)}`)}`}>
                 前往登录
@@ -648,7 +648,7 @@ export default function CourseDetailPage() {
 
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">课程评测</h2>
+            <h2 className="text-xl font-semibold">课程测评</h2>
             <p className="text-sm text-muted-foreground">支持按教师和学期筛选，方便查看不同开课版本的差异。</p>
           </div>
 

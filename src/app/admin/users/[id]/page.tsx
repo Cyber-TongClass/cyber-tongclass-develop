@@ -47,6 +47,7 @@ type UserFormData = {
   role: Role
   studentId: string
   password: string
+  photoUrl: string
   personalEmails: string[]
   bio: string
   researchInterests: string[]
@@ -72,6 +73,7 @@ export default function UserFormPage() {
     role: "member",
     studentId: "",
     password: "",
+    photoUrl: "",
     personalEmails: [],
     bio: "",
     researchInterests: [],
@@ -105,6 +107,7 @@ export default function UserFormPage() {
         role: userData.role || "member",
         studentId: userData.studentId || "",
         password: "",
+        photoUrl: userData.realPhoto || userData.avatar || "",
         personalEmails: getUserPersonalEmails(userData),
         bio: userData.bio || "",
         researchInterests: userData.researchInterests || [],
@@ -158,6 +161,8 @@ export default function UserFormPage() {
           cohort: formData.cohort,
           role: formData.role,
           studentId: formData.studentId.trim(),
+          avatar: formData.photoUrl.trim() || undefined,
+          realPhoto: formData.photoUrl.trim() || undefined,
           password: formData.password,
           personalEmails: sanitizePersonalEmails(formData.personalEmails),
           bio: formData.bio.trim() || undefined,
@@ -182,6 +187,8 @@ export default function UserFormPage() {
         cohort: formData.cohort,
         role: formData.role,
         studentId: formData.studentId.trim(),
+        avatar: formData.photoUrl.trim() || undefined,
+        realPhoto: formData.photoUrl.trim() || undefined,
         personalEmails: sanitizePersonalEmails(formData.personalEmails),
         bio: formData.bio.trim(),
         researchInterests: formData.researchInterests.map((item) => item.trim()).filter(Boolean),
@@ -359,6 +366,30 @@ export default function UserFormPage() {
                   />
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="photoUrl">头像照片链接</Label>
+              <Input
+                id="photoUrl"
+                type="url"
+                value={formData.photoUrl}
+                onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
+                placeholder="https://example.com/profile-photo.jpg"
+              />
+              <p className="text-xs text-muted-foreground">
+                管理员维护统一头像链接，保存时会同时写入 `realPhoto` 和 `avatar`。
+              </p>
+              {formData.photoUrl.trim() ? (
+                <div className="flex items-center gap-4 rounded-md border border-border/70 bg-muted/20 p-4">
+                  <img
+                    src={formData.photoUrl}
+                    alt="头像预览"
+                    className="h-20 w-20 rounded-full object-cover bg-muted"
+                  />
+                  <p className="text-sm text-muted-foreground break-all">{formData.photoUrl}</p>
+                </div>
+              ) : null}
             </div>
 
             <div className="space-y-2 md:col-span-2">

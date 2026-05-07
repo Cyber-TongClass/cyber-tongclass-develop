@@ -16,7 +16,7 @@ const featuredSlides = [
       "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1600&q=80",
   },
   {
-    title: "课程评测系统升级上线",
+    title: "课程测评系统升级上线",
     description: "支持按课程聚合、评分排序与检索，帮助成员快速筛选课程经验。",
     category: "系统更新",
     href: "/resources",

@@ -200,6 +200,8 @@ export default function ReviewsPage() {
 
   const coursesData = useCourses()
   const courses: Course[] = coursesData || []
+  const tongClassCourses = courses.filter((course) => course.isTongClassCourse)
+  const otherCourses = courses.filter((course) => !course.isTongClassCourse)
   const allReviewsData = useAllCourseReviews()
   const allReviews: CourseReview[] = allReviewsData || []
   const reviews = [...allReviews].sort((a, b) => b.createdAt - a.createdAt)
@@ -335,7 +337,7 @@ export default function ReviewsPage() {
     const label = status === "approved" ? "通过" : "拒绝"
     await confirm({
       title: `确认${label}评测`,
-      description: `确定要${label}这条课程评测吗？`,
+      description: `确定要${label}这条课程测评吗？`,
       confirmLabel: label,
       onConfirm: async () => {
         if (status === "approved") {
@@ -416,8 +418,8 @@ export default function ReviewsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">评测审核</h1>
-          <p className="mt-1 text-gray-500">管理课程目录与课程评测内容</p>
+          <h1 className="text-2xl font-bold text-gray-900">课程测评</h1>
+          <p className="mt-1 text-gray-500">管理课程目录与课程测评内容</p>
         </div>
         <div className="flex gap-2">
           <Dialog>
@@ -429,7 +431,7 @@ export default function ReviewsPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>导入课程评测数据</DialogTitle>
+                <DialogTitle>导入课程测评数据</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
@@ -459,7 +461,7 @@ export default function ReviewsPage() {
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>手动添加课程评测</DialogTitle>
+                <DialogTitle>手动添加课程测评</DialogTitle>
               </DialogHeader>
               <form className="space-y-4" onSubmit={handleManualAddReview}>
                 <div className="space-y-2">
@@ -793,63 +795,146 @@ export default function ReviewsPage() {
             添加课程
           </Button>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>课程名称</TableHead>
-                <TableHead>课程分组</TableHead>
-                <TableHead>评测数</TableHead>
-                <TableHead>平均分</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courses.map((course) => (
-                <TableRow key={course._id}>
-                  <TableCell className="font-medium">{course.name}</TableCell>
-                  <TableCell>
-                    <Badge className={course.isTongClassCourse ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-700"}>
-                      {course.isTongClassCourse ? "通班培养方案课程" : "其他课程"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{course.reviewCount}</TableCell>
-                  <TableCell>{course.averageRating.toFixed(1)}</TableCell>
-                  <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditCourseDialog(course)}>
-                          <Pencil className="mr-1 h-4 w-4" />
-                          编辑
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() =>
-                            confirm({
-                              title: "确认删除课程",
-                              description: `将删除课程「${course.name}」，并可能影响关联的评测数据。此操作不可撤销。`,
-                              confirmLabel: "删除",
-                              variant: "danger",
-                              onConfirm: async () => {
-                                try {
-                                  await deleteCourse({ id: course._id as any })
-                                  showAdminToast("success", `已删除课程：${course.name}`)
-                                } catch (err) {
-                                  showAdminToast("error", `删除失败：${err instanceof Error ? err.message : String(err)}`)
-                                }
-                              },
-                            })
-                          }
-                        >
-                          <Trash2 className="mr-1 h-4 w-4" />
-                          删除
-                        </Button>
-                      </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent className="space-y-8">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">通班培养方案课程</h3>
+                <p className="text-sm text-gray-500 mt-1">由管理员维护的培养方案课程列表。</p>
+              </div>
+              <Badge className="bg-blue-100 text-blue-800">{tongClassCourses.length} 门</Badge>
+            </div>
+            <div className="overflow-hidden rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>课程名称</TableHead>
+                    <TableHead>评测数</TableHead>
+                    <TableHead>平均分</TableHead>
+                    <TableHead className="text-right">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tongClassCourses.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-8 text-center text-gray-500">
+                        暂无通班培养方案课程
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    tongClassCourses.map((course) => (
+                      <TableRow key={course._id}>
+                        <TableCell className="font-medium">{course.name}</TableCell>
+                        <TableCell>{course.reviewCount}</TableCell>
+                        <TableCell>{course.averageRating.toFixed(1)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => openEditCourseDialog(course)}>
+                              <Pencil className="mr-1 h-4 w-4" />
+                              编辑
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() =>
+                                confirm({
+                                  title: "确认删除课程",
+                                  description: `你确定要删除“${course.name}”这门课程吗？删除后，该课程及其全部关联评测将从后台和课程测评页面中移除，且无法恢复。`,
+                                  confirmLabel: "确定删除",
+                                  variant: "danger",
+                                  onConfirm: async () => {
+                                    try {
+                                      await deleteCourse({ id: course._id as any })
+                                      showAdminToast("success", `已删除课程：${course.name}`)
+                                    } catch (err) {
+                                      showAdminToast("error", `删除失败：${err instanceof Error ? err.message : String(err)}`)
+                                    }
+                                  },
+                                })
+                              }
+                            >
+                              <Trash2 className="mr-1 h-4 w-4" />
+                              删除
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">其他课程</h3>
+                <p className="text-sm text-gray-500 mt-1">由成员补充、可供讨论和评测的其他课程。</p>
+              </div>
+              <Badge className="bg-slate-100 text-slate-700">{otherCourses.length} 门</Badge>
+            </div>
+            <div className="overflow-hidden rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>课程名称</TableHead>
+                    <TableHead>评测数</TableHead>
+                    <TableHead>平均分</TableHead>
+                    <TableHead className="text-right">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {otherCourses.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-8 text-center text-gray-500">
+                        暂无其他课程
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    otherCourses.map((course) => (
+                      <TableRow key={course._id}>
+                        <TableCell className="font-medium">{course.name}</TableCell>
+                        <TableCell>{course.reviewCount}</TableCell>
+                        <TableCell>{course.averageRating.toFixed(1)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => openEditCourseDialog(course)}>
+                              <Pencil className="mr-1 h-4 w-4" />
+                              编辑
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() =>
+                                confirm({
+                                  title: "确认删除课程",
+                                  description: `你确定要删除“${course.name}”这门课程吗？删除后，该课程及其全部关联评测将从后台和课程测评页面中移除，且无法恢复。`,
+                                  confirmLabel: "确定删除",
+                                  variant: "danger",
+                                  onConfirm: async () => {
+                                    try {
+                                      await deleteCourse({ id: course._id as any })
+                                      showAdminToast("success", `已删除课程：${course.name}`)
+                                    } catch (err) {
+                                      showAdminToast("error", `删除失败：${err instanceof Error ? err.message : String(err)}`)
+                                    }
+                                  },
+                                })
+                              }
+                            >
+                              <Trash2 className="mr-1 h-4 w-4" />
+                              删除
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

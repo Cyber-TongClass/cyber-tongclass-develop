@@ -24,10 +24,10 @@ import { useAuth } from "@/lib/hooks/use-auth"
 const navItems = [
   { href: "/admin", label: "仪表盘", icon: LayoutDashboard },
   { href: "/admin/users", label: "用户管理", icon: Users },
+  { href: "/admin/reviews", label: "课程测评", icon: Star },
   { href: "/admin/publications", label: "成果管理", icon: BookOpen },
   { href: "/admin/news", label: "新闻管理", icon: FileText },
   { href: "/admin/events", label: "活动管理", icon: Calendar },
-  { href: "/admin/reviews", label: "评测审核", icon: Star },
 ]
 
 export default function AdminLayout({
@@ -113,7 +113,7 @@ export default function AdminLayout({
           <CardContent className="space-y-4">
             <p className="text-sm text-gray-600">如需访问该功能，请联系超级管理员。</p>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/admin/reviews">前往评测审核</Link>
+              <Link href="/admin/reviews">前往课程测评</Link>
             </Button>
           </CardContent>
         </Card>

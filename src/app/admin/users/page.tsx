@@ -136,7 +136,10 @@ export default function UsersPage() {
             <TableBody>
               {filteredUsers.map((user) => (
                 <TableRow key={user._id}>
-                  <TableCell className="font-medium">{user.englishName}</TableCell>
+                  <TableCell className="font-medium">
+                    {user.chineseName}
+                    {user.englishName ? ` ${user.englishName}` : ""}
+                  </TableCell>
                   <TableCell>{user.username}</TableCell>
                   <TableCell className="text-gray-500">{user.email}</TableCell>
                   <TableCell>{organizationLabels[user.organization] || user.organization}</TableCell>

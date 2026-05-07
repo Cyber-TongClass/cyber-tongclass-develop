@@ -78,7 +78,7 @@
 - `/admin/users` 用户管理
 - `/admin/news` 新闻管理
 - `/admin/events` 活动管理
-- `/admin/reviews` 评测审核
+- `/admin/reviews` 课程测评
 - 数据导入功能
 
 ### Agent 4: 部署与运维 ✅
@@ -211,7 +211,7 @@
 - [x] 完成活动页日历视图（按日期展示彩色 event block，可跳转详情）
 - [x] 完成本地可用注册/登录/会话/设置流程（`src/lib/mock-auth.ts`）
 - [x] 导航栏登录态切换（登录按钮 ⇄ 头像菜单）并加入资源页登录门禁
-- [x] 管理后台高危操作二次确认弹窗（用户/新闻/活动/评测删除与评测审核）
+- [x] 管理后台高危操作二次确认弹窗（用户/新闻/活动/评测删除与课程测评）
 - [x] 补充路由：`/users`、`/users/[id]`（兼容 alias）、`/forgot-password`、`/admin/settings`
 - [x] 去除 About 页 emoji，占位统一为图标
 

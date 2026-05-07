@@ -90,7 +90,7 @@ export default function AdminDashboard() {
     pendingReviews.slice(0, 10).forEach((review: any) => {
       nextActivities.push({
         key: `review-${review._id}`,
-        action: "提交课程评测",
+        action: "提交课程测评",
         user: review.isAnonymous ? "匿名用户" : review.authorId || "用户",
         timestamp: review.createdAt,
       })
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
       { href: "/admin/users", label: "用户管理", icon: Users },
       { href: "/admin/news", label: "新闻管理", icon: FileText },
       { href: "/admin/events", label: "活动管理", icon: Calendar },
-      { href: "/admin/reviews", label: "评测审核", icon: Star },
+      { href: "/admin/reviews", label: "课程测评", icon: Star },
     ],
     []
   )

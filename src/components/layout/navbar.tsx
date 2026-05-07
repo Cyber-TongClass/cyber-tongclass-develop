@@ -19,14 +19,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useState } from "react"
 
 const navigation = [
+  { name: "关于通班", href: "/about" },
   { name: "动态", href: "/news" },
   { name: "成员", href: "/members" },
   { name: "成果", href: "/publications" },
-  { name: "课程", href: "/courses", auth: true },
   { name: "资源", href: "/resources" },
+  { name: "课程", href: "/courses", auth: true },
+  { name: "活动", href: "/events", auth: true },
   { name: "内网", href: "/intranet", auth: true },
-  { name: "活动", href: "/events" },
-  { name: "关于", href: "/about" },
 ]
 
 export function Navbar() {

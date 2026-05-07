@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { useUpdatePasswordWithCurrent, useUpdateUser } from "@/lib/api"
@@ -10,11 +11,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { MarkdownSplitEditor } from "@/components/markdown/markdown-split-editor"
 import { getUserLinks, getUserPersonalEmails, sanitizePersonalEmails, sanitizeUserLinks } from "@/lib/user-profile"
 import { RESEARCH_DIRECTIONS } from "@/lib/research-directions"
 import type { UserLink } from "@/types"
 import { User, CheckCircle, XCircle } from "lucide-react"
+
+const MarkdownSplitEditor = dynamic(
+  () => import("@/components/markdown/markdown-split-editor").then((mod) => mod.MarkdownSplitEditor),
+  {
+    ssr: false,
+    loading: () => <p className="text-sm text-muted-foreground">编辑器加载中...</p>,
+  }
+)
 
 export default function SettingsPage() {
   const router = useRouter()

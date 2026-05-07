@@ -76,8 +76,14 @@ export default function CourseDirectoryPage() {
   const filteredCourses = courses
     .filter((course) => course.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
-      if (sortBy === "rating") return b.averageRating - a.averageRating
-      if (sortBy === "reviews") return b.reviewCount - a.reviewCount
+      if (sortBy === "rating") {
+        if (b.averageRating !== a.averageRating) return b.averageRating - a.averageRating
+        return a.createdAt - b.createdAt
+      }
+      if (sortBy === "reviews") {
+        if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount
+        return a.createdAt - b.createdAt
+      }
       return a.name.localeCompare(b.name, "zh-CN")
     })
 
@@ -92,7 +98,7 @@ export default function CourseDirectoryPage() {
             <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
               <BookOpen className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">课程评测</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">课程测评</h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl">先创建课程，再进入课程详情页发布评测。</p>
         </div>
@@ -145,7 +151,7 @@ export default function CourseDirectoryPage() {
                 </DialogHeader>
                 <form className="space-y-4" onSubmit={handleCreateCourse}>
                   <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                    Students may only create real Peking University courses outside the Tong Class curriculum. Please keep entries serious and accurate; administrators may edit or remove inappropriate courses.
+                    同学们可以且仅可补充通班培养方案以外的课程。请务必认真、如实填写，仅添加北京大学真实开设的课程；如存在不准确、不恰当或不符合要求的内容，管理员保留修改或删除的权利。
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="course-name">课程名称</Label>
@@ -191,7 +197,7 @@ export default function CourseDirectoryPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {tongClassCourses.map((course) => (
                     <CourseListCard key={course._id} course={course} />
                   ))}
@@ -215,7 +221,7 @@ export default function CourseDirectoryPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {otherCourses.map((course) => (
                     <CourseListCard key={course._id} course={course} />
                   ))}
@@ -231,25 +237,27 @@ export default function CourseDirectoryPage() {
 
 function CourseListCard({ course }: { course: Course }) {
   return (
-    <Link href={`/courses/${encodeURIComponent(course.name)}`}>
-      <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30 cursor-pointer">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{course.name}</h3>
-              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                  <span className="font-medium">{course.averageRating.toFixed(1)}</span>
-                  <span>({course.reviewCount}条评测)</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>{course.reviewCount} 条评测</span>
-                </div>
-              </div>
+    <Link href={`/courses/${encodeURIComponent(course.name)}`} className="block h-full">
+      <Card className="group h-full border-border/50 transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg cursor-pointer">
+        <CardContent className="flex min-h-[188px] flex-col p-6">
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <h3 className="line-clamp-2 text-lg font-semibold leading-7 text-foreground transition-colors group-hover:text-primary">
+              {course.name}
+            </h3>
+            <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+          </div>
+
+          <div className="mt-auto space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+              <span className="font-medium text-foreground">{course.averageRating.toFixed(1)}</span>
+              <span>综合评分</span>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MessageSquare className="h-4 w-4" />
+              <span className="font-medium text-foreground">{course.reviewCount}</span>
+              <span>条评测</span>
+            </div>
           </div>
         </CardContent>
       </Card>
