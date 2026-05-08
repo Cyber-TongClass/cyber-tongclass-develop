@@ -121,7 +121,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">管理后台</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900">管理后台</h1>
         <p className="text-gray-500 mt-1">欢迎使用通班网站管理系统</p>
       </div>
 
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.users}</div>
+            <div className="text-2xl font-extrabold">{stats.users}</div>
             <p className="text-xs text-gray-500 mt-1">数据库账户数量</p>
           </CardContent>
         </Card>

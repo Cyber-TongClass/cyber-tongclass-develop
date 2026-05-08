@@ -26,7 +26,6 @@ const navigation = [
   { name: "资源", href: "/resources" },
   { name: "课程", href: "/courses", auth: true },
   { name: "活动", href: "/events", auth: true },
-  { name: "内网", href: "/intranet", auth: true },
 ]
 
 export function Navbar() {
@@ -57,13 +56,13 @@ export function Navbar() {
   const currentUserPhoto = currentUser?.realPhoto || currentUser?.avatar
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/40 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="container-custom flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <Image src="/logo.png" alt="Tong Class logo" width={36} height={36} className="h-9 w-9 rounded-md" priority />
           <div className="hidden sm:block leading-tight">
-            <p className="text-base font-semibold text-foreground">通用人工智能实验班</p>
-            <p className="text-xs text-muted-foreground">Tong Class</p>
+            <p className="text-base font-semibold text-slate-900">通用人工智能实验班</p>
+            <p className="text-xs text-slate-500">Tong Class</p>
           </div>
         </Link>
 
@@ -73,10 +72,10 @@ export function Navbar() {
               key={item.name}
               href={resolveHref(item.href, item.auth)}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                "px-4 py-3 text-sm font-medium border-b-2 transition-colors",
                 pathname === item.href
-                  ? "text-primary bg-primary/5"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  ? "text-[hsl(350,55%,35%)] border-[hsl(350,55%,35%)]"
+                  : "text-slate-500 hover:text-slate-900 border-transparent"
               )}
             >
               {item.name}
@@ -92,10 +91,10 @@ export function Navbar() {
                 placeholder="搜索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-48 lg:w-64 h-9 bg-muted/50 border-0 focus:bg-muted focus:ring-1 focus:ring-primary"
+                className="w-48 lg:w-64 h-9 bg-slate-100/50 border-0 focus:bg-slate-100 focus:ring-1 focus:ring-primary"
               />
               {!searchQuery && (
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 pointer-events-none" />
               )}
             </form>
           </div>
@@ -109,7 +108,7 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="hidden md:flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted text-sm font-semibold text-foreground"
+                  className="hidden md:flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-sm font-semibold text-slate-900"
                 >
                   {currentUserPhoto ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -182,10 +181,10 @@ export function Navbar() {
                     href={resolveHref(item.href, item.auth)}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
-                      "px-4 py-3 text-sm font-medium rounded-md transition-colors",
+                      "px-4 py-3 text-sm font-medium border-l-[3px] transition-colors",
                       pathname === item.href
-                        ? "text-primary bg-primary/5"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        ? "text-[hsl(350,55%,35%)] border-[hsl(350,55%,35%)]"
+                        : "text-slate-500 hover:text-slate-900 border-transparent"
                     )}
                   >
                     {item.name}
@@ -197,21 +196,21 @@ export function Navbar() {
                     <Link
                       href={currentUserProfileHref}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-4 py-3 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      className="px-4 py-3 text-sm font-medium rounded-md text-slate-500 hover:text-slate-900 border-transparent"
                     >
                       个人主页
                     </Link>
                     <Link
                       href="/my-publications"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-4 py-3 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      className="px-4 py-3 text-sm font-medium rounded-md text-slate-500 hover:text-slate-900 border-transparent"
                     >
                       个人学术
                     </Link>
                     <Link
                       href="/settings"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-4 py-3 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      className="px-4 py-3 text-sm font-medium rounded-md text-slate-500 hover:text-slate-900 border-transparent"
                     >
                       账户设置
                     </Link>
@@ -219,7 +218,7 @@ export function Navbar() {
                       <Link
                         href="/admin"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="px-4 py-3 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        className="px-4 py-3 text-sm font-medium rounded-md text-slate-500 hover:text-slate-900 border-transparent"
                       >
                         管理后台
                       </Link>
@@ -251,7 +250,7 @@ export function Navbar() {
       </div>
 
       {isSearchOpen && (
-        <div className="md:hidden border-t border-border p-4 bg-background">
+        <div className="md:hidden border-t border-slate-200 p-4 bg-white">
           <form onSubmit={handleSearch}>
             <div className="relative">
               <Input
@@ -263,7 +262,7 @@ export function Navbar() {
                 autoFocus
               />
               {!searchQuery && (
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 pointer-events-none" />
               )}
             </div>
           </form>

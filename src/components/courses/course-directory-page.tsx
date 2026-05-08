@@ -67,8 +67,8 @@ export default function CourseDirectoryPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-slate-600">Loading...</p>
       </div>
     )
   }
@@ -91,24 +91,22 @@ export default function CourseDirectoryPage() {
   const otherCourses = filteredCourses.filter((course) => !course.isTongClassCourse)
 
   return (
-    <div className="min-h-screen bg-background">
-      <section className="bg-primary/5 border-b border-border">
-        <div className="container-custom py-12 md:py-16">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">课程测评</h1>
+    <div className="min-h-screen bg-white">
+      <section className="bg-primary relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 relative">
+          <div className="absolute left-4 sm:left-6 lg:left-8 top-1/2 -translate-y-1/2 text-[5rem] md:text-[8rem] lg:text-[10rem] font-extrabold uppercase tracking-[0.15em] text-white/5 select-none pointer-events-none whitespace-nowrap leading-none" aria-hidden="true">COURSES</div>
+          <div className="mb-4 relative">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">课程测评</h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl">通班内部的课程测评系统，汇集了历年来同学们的课程评价与反馈。欢迎同学们积极分享自己的课程体验，提交测评或按要求创建课程，但请不要将此网页内的内部资源分享到公开渠道哦～</p>
+          <p className="text-lg text-white/70 max-w-2xl relative relative">通班内部的课程测评系统，汇集了历年来同学们的课程评价与反馈。欢迎同学们积极分享自己的课程体验，提交测评或按要求创建课程，但请不要将此网页内的内部资源分享到公开渠道哦～</p>
         </div>
       </section>
 
-      <section className="border-b border-border bg-white sticky top-16 z-40">
+      <section className="border-b border-slate-200 bg-white sticky top-16 z-40">
         <div className="container-custom py-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
               <Input
                 type="search"
                 placeholder="搜索课程名称..."
@@ -157,7 +155,7 @@ export default function CourseDirectoryPage() {
                     <Label htmlFor="course-name">课程名称</Label>
                     <Input id="course-name" value={courseName} onChange={(e) => setCourseName(e.target.value)} required />
                   </div>
-                  <p className="text-sm text-muted-foreground">课程创建后，任意成员可在课程详情页补充不同教师、不同学期的具体评测。</p>
+                  <p className="text-sm text-slate-600">课程创建后，任意成员可在课程详情页补充不同教师、不同学期的具体评测。</p>
                   {createError && <p className="text-sm text-red-600">{createError}</p>}
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => { setCreateOpen(false); resetForm() }}>
@@ -172,27 +170,28 @@ export default function CourseDirectoryPage() {
         </div>
       </section>
 
-      <section className="container-custom py-8">
+      <section className="bg-[hsl(211,30%,97%)] py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {filteredCourses.length === 0 ? (
           <div className="text-center py-16">
-            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">未找到相关课程</h3>
-            <p className="text-muted-foreground">可点击“添加课程”创建后再发布评测</p>
+            <BookOpen className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 mb-2">未找到相关课程</h3>
+            <p className="text-slate-600">可点击“添加课程”创建后再发布评测</p>
           </div>
         ) : (
           <div className="space-y-10">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-semibold text-foreground">通班培养方案课程</h2>
-                  <p className="text-sm text-muted-foreground mt-1">通班核心课程仅由管理员维护，包含专业基础课、专业核心课、专业选修课、公共必修课等。</p>
+                  <h2 className="text-2xl font-extrabold text-slate-900">通班培养方案课程</h2>
+                  <p className="text-sm text-slate-600 mt-1">通班核心课程仅由管理员维护，包含专业基础课、专业核心课、专业选修课、公共必修课等。</p>
                 </div>
-                <span className="text-sm text-muted-foreground">{tongClassCourses.length} 门</span>
+                <span className="text-sm text-slate-600">{tongClassCourses.length} 门</span>
               </div>
 
               {tongClassCourses.length === 0 ? (
-                <Card className="border-dashed border-border/70 bg-muted/20">
-                  <CardContent className="py-8 text-sm text-muted-foreground">
+                <Card className="border-dashed border-slate-200/70 bg-slate-100/20">
+                  <CardContent className="py-8 text-sm text-slate-600">
                     当前没有匹配的通班培养方案课程。
                   </CardContent>
                 </Card>
@@ -208,15 +207,15 @@ export default function CourseDirectoryPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-semibold text-foreground">其他课程</h2>
-                  <p className="text-sm text-muted-foreground mt-1">用户可自行补充和讨论的其他课程。</p>
+                  <h2 className="text-2xl font-extrabold text-slate-900">其他课程</h2>
+                  <p className="text-sm text-slate-600 mt-1">用户可自行补充和讨论的其他课程。</p>
                 </div>
-                <span className="text-sm text-muted-foreground">{otherCourses.length} 门</span>
+                <span className="text-sm text-slate-600">{otherCourses.length} 门</span>
               </div>
 
               {otherCourses.length === 0 ? (
-                <Card className="border-dashed border-border/70 bg-muted/20">
-                  <CardContent className="py-8 text-sm text-muted-foreground">
+                <Card className="border-dashed border-slate-200/70 bg-slate-100/20">
+                  <CardContent className="py-8 text-sm text-slate-600">
                     当前没有匹配的其他课程。
                   </CardContent>
                 </Card>
@@ -230,6 +229,7 @@ export default function CourseDirectoryPage() {
             </div>
           </div>
         )}
+        </div>
       </section>
     </div>
   )
@@ -238,24 +238,24 @@ export default function CourseDirectoryPage() {
 function CourseListCard({ course }: { course: Course }) {
   return (
     <Link href={`/courses/${encodeURIComponent(course.name)}`} className="block h-full">
-      <Card className="group h-full border-border/50 transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg cursor-pointer">
+      <Card className="group h-full border-slate-200/50 transition-shadow duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer">
         <CardContent className="flex min-h-[188px] flex-col p-6">
           <div className="mb-5 flex items-start justify-between gap-3">
-            <h3 className="line-clamp-2 text-lg font-semibold leading-7 text-foreground transition-colors group-hover:text-primary">
+            <h3 className="line-clamp-2 text-lg font-extrabold leading-7 text-slate-900 transition-colors group-hover:text-primary">
               {course.name}
             </h3>
-            <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+            <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-600 transition-colors group-hover:text-primary" />
           </div>
 
           <div className="mt-auto space-y-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
               <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-              <span className="font-medium text-foreground">{course.averageRating.toFixed(1)}</span>
+              <span className="font-medium text-slate-900">{course.averageRating.toFixed(1)}</span>
               <span>综合评分</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
               <MessageSquare className="h-4 w-4" />
-              <span className="font-medium text-foreground">{course.reviewCount}</span>
+              <span className="font-medium text-slate-900">{course.reviewCount}</span>
               <span>条评测</span>
             </div>
           </div>

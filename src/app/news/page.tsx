@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Search, Newspaper, Calendar, User, Clock } from "lucide-react"
+import { Search, Newspaper, User, Clock } from "lucide-react"
+
+const MONTH_ABBRS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
   SelectContent,
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { formatDate, truncate } from "@/lib/utils"
 import { useNews } from "@/lib/api"
 import type { News } from "@/types"
 
@@ -79,32 +79,38 @@ export default function NewsPage() {
 
   const sortedMonths = Object.keys(groupedNews).sort((a, b) => b.localeCompare(a))
 
+  const years = React.useMemo(() => {
+    const yearSet = new Set<string>()
+    sortedMonths.forEach((m) => yearSet.add(m.slice(0, 4)))
+    return Array.from(yearSet).sort((a, b) => b.localeCompare(a))
+  }, [sortedMonths])
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-primary/5 border-b border-border">
-        <div className="container-custom py-12 md:py-16">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-              <Newspaper className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+      <section className="bg-primary relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 relative">
+          <div className="absolute left-4 sm:left-6 lg:left-8 top-1/2 -translate-y-1/2 text-[5rem] md:text-[8rem] lg:text-[10rem] font-extrabold uppercase tracking-[0.15em] text-white/5 select-none pointer-events-none whitespace-nowrap leading-none" aria-hidden="true">
+            NEWS
+          </div>
+          <div className="mb-4 relative">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">
               新闻动态
             </h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl">
+          <p className="text-lg text-white/70 max-w-2xl relative relative">
             了解通班的最新动态、回顾通班精彩纷呈的活动。
           </p>
         </div>
       </section>
 
       {/* Filters Section */}
-      <section className="border-b border-border bg-white sticky top-16 z-40">
+      <section className="border-b border-slate-200 bg-white sticky top-16 z-40">
         <div className="container-custom py-4">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
               <Input
                 type="search"
                 placeholder="搜索新闻标题..."
@@ -171,90 +177,99 @@ export default function NewsPage() {
           </div>
 
           {/* Results count */}
-          <div className="mt-4 text-sm text-muted-foreground">
+          <div className="mt-4 text-sm text-slate-500">
             显示 {filteredNews.length} 条新闻
           </div>
         </div>
       </section>
 
       {/* News Timeline */}
-      <section className="container-custom py-8">
+      <section className="px-4 sm:px-6 lg:px-8 py-16 md:py-24 bg-slate-100">
+        <div className="max-w-4xl mx-auto">
         {isLoading ? (
           <div className="text-center py-16">
-            <Newspaper className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
-            <p className="text-muted-foreground">加载中...</p>
+            <Newspaper className="h-12 w-12 text-slate-400 mx-auto mb-4 animate-pulse" />
+            <p className="text-slate-500">加载中...</p>
           </div>
         ) : filteredNews.length === 0 ? (
           <div className="text-center py-16">
-            <Newspaper className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
+            <Newspaper className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-extrabold text-slate-900 mb-2">
               未找到匹配新闻
             </h3>
-            <p className="text-muted-foreground">
+            <p className="text-slate-500">
               尝试调整筛选条件或搜索关键词
             </p>
           </div>
         ) : (
-          <div className="space-y-12">
-            {sortedMonths.map((month) => (
-              <div key={month}>
-                {/* Month Header */}
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                    <Calendar className="h-5 w-5" />
-                    {month}
-                  </div>
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-sm text-muted-foreground">
-                    {groupedNews[month].length} 条
-                  </span>
+          <div className="space-y-20">
+            {years.map((year) => (
+              <div key={year} className="grid grid-cols-[72px_1fr] md:grid-cols-[96px_1fr] gap-6 md:gap-10">
+                {/* Year sidebar */}
+                <div className="text-5xl md:text-6xl font-extrabold text-slate-300 leading-none pt-1 select-none">
+                  {year}
                 </div>
 
-                {/* News List */}
-                <div className="space-y-6">
-                  {groupedNews[month].map((item) => (
-                    <Link
-                      key={item._id}
-                      href={item.sourceUrl || `/news/${item._id}`}
-                      target={item.sourceUrl ? "_blank" : undefined}
-                      rel={item.sourceUrl ? "noopener noreferrer" : undefined}
-                    >
-                      <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary">
-                                  {item.category}
-                                </span>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {new Date(item.publishedAt).toLocaleDateString("zh-CN")}
-                                </span>
-                              </div>
-                              <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors line-clamp-1">
-                                {item.title}
-                              </CardTitle>
-                            </div>
+                {/* Month blocks */}
+                <div className="space-y-12">
+                  {sortedMonths
+                    .filter((m) => m.startsWith(year))
+                    .map((month) => {
+                      const monthIndex = parseInt(month.slice(5, 7), 10) - 1
+                      return (
+                        <div key={month}>
+                          <div className="mb-4">
+                            <span className="text-xl font-extrabold uppercase tracking-widest text-[hsl(350,55%,35%)]">
+                              {MONTH_ABBRS[monthIndex]}
+                            </span>
+                            <span className="text-xs text-slate-400 ml-1">
+                              {groupedNews[month].length} 条
+                            </span>
                           </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {item.content}
-                          </p>
-                          <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-                            <User className="h-3 w-3" />
-                            <span>{item.authorName || "匿名"}</span>
+
+                          <div className="space-y-4">
+                            {groupedNews[month].map((item) => (
+                              <Link
+                                key={item._id}
+                                href={item.sourceUrl || `/news/${item._id}`}
+                                target={item.sourceUrl ? "_blank" : undefined}
+                                rel={item.sourceUrl ? "noopener noreferrer" : undefined}
+                              >
+                                <div className="group bg-white p-6 shadow-sm hover:bg-slate-50 border-l-[3px] border-transparent hover:border-primary transition-all duration-200">
+                                  <div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <span className="px-2.5 py-0.5 text-xs font-medium tracking-wide uppercase rounded-full bg-primary text-white">
+                                        {item.category}
+                                      </span>
+                                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {new Date(item.publishedAt).toLocaleDateString("zh-CN")}
+                                      </span>
+                                    </div>
+                                    <h3 className="text-lg font-extrabold text-slate-900 group-hover:text-primary transition-colors line-clamp-1">
+                                      {item.title}
+                                    </h3>
+                                    <p className="text-sm text-slate-600 line-clamp-2 mt-2">
+                                      {item.content}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-3 text-xs text-slate-400">
+                                      <User className="h-3 w-3" />
+                                      <span>{item.authorName || "匿名"}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
                           </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
+                        </div>
+                      )
+                    })}
                 </div>
               </div>
             ))}
           </div>
         )}
+        </div>
       </section>
     </div>
   )

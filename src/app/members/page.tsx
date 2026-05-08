@@ -65,13 +65,13 @@ export default function MembersPage() {
   // Show loading state while fetching
   if (!usersData) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-white">
         <div className="container-custom py-12">
           <div className="animate-pulse">
-            <div className="h-64 bg-muted rounded-lg mb-8"></div>
+            <div className="h-64 bg-slate-100 rounded-lg mb-8"></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-48 bg-muted rounded-lg"></div>
+                <div key={i} className="h-48 bg-slate-100 rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -113,31 +113,29 @@ export default function MembersPage() {
   const cohorts = [...getYearCohortOptions(), "mascot" as const]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-primary/5 border-b border-border">
-        <div className="container-custom py-12 md:py-16">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-              <UsersIcon className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+      <section className="bg-primary relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 relative">
+          <div className="absolute left-4 sm:left-6 lg:left-8 top-1/2 -translate-y-1/2 text-[5rem] md:text-[8rem] lg:text-[10rem] font-extrabold uppercase tracking-[0.15em] text-white/5 select-none pointer-events-none whitespace-nowrap leading-none" aria-hidden="true">MEMBERS</div>
+          <div className="mb-4">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">
               班级成员
             </h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl">
+          <p className="text-lg text-white/70 max-w-2xl relative">
             北京大学与清华大学通用人工智能实验班成员主页，涵盖学生和往届毕业生的研究方向、学术成果等。
           </p>
         </div>
       </section>
 
       {/* Filters Section */}
-      <section className="border-b border-border bg-white sticky top-16 z-40">
+      <section className="border-b border-slate-200 bg-white sticky top-16 z-40">
         <div className="container-custom py-4">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
               <Input
                 type="search"
                 placeholder="搜索成员..."
@@ -210,21 +208,22 @@ export default function MembersPage() {
           </div>
 
           {/* Results count */}
-          <div className="mt-4 text-sm text-muted-foreground">
+          <div className="mt-4 text-sm text-slate-600">
             显示 {filteredUsers.length} 位成员
           </div>
         </div>
       </section>
 
       {/* Members Grid */}
-      <section className="container-custom py-8">
+      <section className="bg-[hsl(211,30%,97%)] py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {filteredUsers.length === 0 ? (
           <div className="text-center py-16">
-            <UsersIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
+            <UsersIcon className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 mb-2">
               未找到匹配成员
             </h3>
-            <p className="text-muted-foreground">
+            <p className="text-slate-600">
               尝试调整筛选条件或搜索关键词
             </p>
           </div>
@@ -232,11 +231,11 @@ export default function MembersPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredUsers.map((user) => (
               <Link key={user._id} href={`/members/${getProfileSlug(user)}`}>
-                <Card className="group h-full hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/30">
+                <Card className="group h-full bg-white shadow-sm hover:bg-slate-50 border-l-[3px] border-transparent hover:border-primary transition-all duration-200 rounded-none border-0">
                   <CardContent className="p-6">
                     {/* Avatar */}
                     <div className="flex justify-center mb-4">
-                      <div className="h-20 w-20 rounded-full overflow-hidden bg-muted ring-4 ring-primary/10 group-hover:ring-primary/30 transition-all flex items-center justify-center">
+                      <div className="h-20 w-20 rounded-full overflow-hidden bg-[hsl(211,40%,97%)] ring-2 ring-primary/10 group-hover:ring-primary/40 transition-all flex items-center justify-center">
                         {user.realPhoto || user.avatar ? (
                           <img
                             src={(user.realPhoto || user.avatar) as string}
@@ -244,7 +243,7 @@ export default function MembersPage() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <span className="text-2xl font-semibold text-primary">
+                          <span className="text-2xl font-extrabold text-primary">
                             {getInitials(user.englishName || user.username || "U")}
                           </span>
                         )}
@@ -252,11 +251,11 @@ export default function MembersPage() {
                     </div>
 
                     {/* Name */}
-                    <h3 className="text-lg font-semibold text-center text-foreground group-hover:text-primary transition-colors">
+                    <h3 className="text-lg font-extrabold text-center text-slate-900 group-hover:text-primary transition-colors">
                       {user.englishName}
                     </h3>
                     {/* Organization & Cohort */}
-                    <div className="flex items-center justify-center gap-2 mt-2 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 mt-2 text-sm text-slate-600">
                       {user.organization === "pku" ? (
                         <School className="h-4 w-4" />
                       ) : (
@@ -275,13 +274,13 @@ export default function MembersPage() {
                         {(getUserDirections(user).length > 0 ? getUserDirections(user) : user.researchInterests || []).slice(0, 3).map((interest) => (
                           <span
                             key={interest}
-                            className="px-2 py-0.5 text-xs rounded-full bg-primary/5 text-primary/80 border border-primary/10"
+                            className="px-2 py-0.5 text-xs rounded-full bg-[hsl(211,40%,97%)] text-primary/80 border border-primary/10"
                           >
                             {getUserDirections(user).includes(interest) ? getResearchDirectionLabel(interest) : interest}
                           </span>
                         ))}
                         {(getUserDirections(user).length > 0 ? getUserDirections(user).length : user.researchInterests?.length || 0) > 3 && (
-                          <span className="px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600">
                             +{(getUserDirections(user).length > 0 ? getUserDirections(user).length : user.researchInterests?.length || 0) - 3}
                           </span>
                         )}
@@ -293,6 +292,7 @@ export default function MembersPage() {
             ))}
           </div>
         )}
+        </div>
       </section>
     </div>
   )

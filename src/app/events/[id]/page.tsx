@@ -62,8 +62,8 @@ export default async function EventDetailPage({
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container-custom py-8 md:py-12">
+      <div className="min-h-screen bg-white">
+        <div className="container-custom py-16 md:py-24">
           <Button variant="ghost" asChild className="mb-6 -ml-3 gap-2">
             <Link href="/events">
               <ArrowLeft className="h-4 w-4" />
@@ -71,8 +71,8 @@ export default async function EventDetailPage({
             </Link>
           </Button>
           <div className="max-w-3xl mx-auto text-center py-16">
-            <h2 className="text-2xl font-semibold text-foreground mb-2">活动不存在</h2>
-            <p className="text-muted-foreground">该活动可能已被删除或 ID 无效。</p>
+            <h2 className="text-2xl font-extrabold text-slate-900 mb-2">活动不存在</h2>
+            <p className="text-slate-600">该活动可能已被删除或 ID 无效。</p>
           </div>
         </div>
       </div>
@@ -83,8 +83,8 @@ export default async function EventDetailPage({
   const colorStyle = eventTypeStyles[eventType]
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container-custom py-8 md:py-12">
+    <div className="min-h-screen bg-white">
+      <div className="container-custom py-16 md:py-24">
         <Button variant="ghost" asChild className="mb-6 -ml-3 gap-2">
           <Link href="/events">
             <ArrowLeft className="h-4 w-4" />
@@ -100,9 +100,9 @@ export default async function EventDetailPage({
               </span>
             </div>
 
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-6">{event.title}</h1>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-6">{event.title}</h1>
 
-            <div className="flex flex-wrap gap-6 text-muted-foreground pb-6 border-b border-border">
+            <div className="flex flex-wrap gap-6 text-slate-600 pb-6 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
                 <span>{formatDate(event.date)}</span>
@@ -136,7 +136,7 @@ export default async function EventDetailPage({
           {event.description && (
             <Card className="border-0 shadow-sm">
               <CardContent className="pt-6">
-                <div className="text-sm leading-7 text-foreground whitespace-pre-wrap break-words">{event.description}</div>
+                <div className="text-sm leading-7 text-slate-900 whitespace-pre-wrap break-words">{event.description}</div>
               </CardContent>
             </Card>
           )}

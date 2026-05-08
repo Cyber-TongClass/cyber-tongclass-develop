@@ -210,7 +210,7 @@ export default function MyPublicationEditorPage() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-slate-600">Loading...</p>
       </div>
     )
   }
@@ -296,7 +296,7 @@ export default function MyPublicationEditorPage() {
                   <Label htmlFor="category">领域</Label>
                   <select
                     id="category"
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                     value={formData.category}
                     onChange={(event) => handleCategoryChange(event.target.value)}
                     required
@@ -321,7 +321,7 @@ export default function MyPublicationEditorPage() {
                   <Label htmlFor="subCategory">子领域</Label>
                   <select
                     id="subCategory"
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                     value={formData.subCategory}
                     onChange={(event) => setFormData((previous) => ({ ...previous, subCategory: event.target.value }))}
                   >

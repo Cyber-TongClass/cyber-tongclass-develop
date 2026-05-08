@@ -69,12 +69,12 @@ export default function CourseReviewsPage() {
   }, [allReviews, mode, query, selectedInstructor, selectedTag])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <section className="bg-white border-b">
         <div className="container-custom py-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">课程测评</h1>
-            <p className="text-sm text-muted-foreground">默认显示最新/热门评测。可搜索、按教师筛选或按标签过滤，也可发布新评测。</p>
+            <h1 className="text-2xl font-extrabold">课程测评</h1>
+            <p className="text-sm text-slate-600">默认显示最新/热门评测。可搜索、按教师筛选或按标签过滤，也可发布新评测。</p>
           </div>
           <div className="flex items-center gap-2">
             <Dialog>
@@ -94,10 +94,10 @@ export default function CourseReviewsPage() {
         </div>
       </section>
 
-      <section className="container-custom py-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="flex items-center gap-3 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
             <Input className="pl-10" placeholder="搜索课程名、教师或评测内容" value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
           <div>
@@ -122,17 +122,17 @@ export default function CourseReviewsPage() {
 
         <div className="space-y-4">
           {filtered.length === 0 ? (
-            <p className="text-muted-foreground">当前暂无符合条件的评测。</p>
+            <p className="text-slate-600">当前暂无符合条件的评测。</p>
           ) : (
             filtered.map((r: any) => (
               <Card key={r._id} className="border">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <div>
-                      <div className="text-lg font-semibold">{r.courseName} · {r.instructor}</div>
-                      <div className="text-sm text-muted-foreground">评分: {r.overallRating} · {new Date(r.createdAt).toLocaleString()}</div>
+                      <div className="text-lg font-extrabold">{r.courseName} · {r.instructor}</div>
+                      <div className="text-sm text-slate-600">评分: {r.overallRating} · {new Date(r.createdAt).toLocaleString()}</div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Star className="h-4 w-4 text-amber-500" /> {r.overallRating}
                     </div>
                   </CardTitle>

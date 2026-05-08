@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>重置密码</CardTitle>
@@ -75,8 +75,8 @@ export default function ForgotPasswordPage() {
                 placeholder="学号邮箱"
               />
               {requiresTurnstile && (
-                <div className="rounded-md border p-3 bg-muted/30">
-                  <p className="text-xs text-muted-foreground mb-2">请先完成人机验证</p>
+                <div className="rounded-md border p-3 bg-slate-100/30">
+                  <p className="text-xs text-slate-600 mb-2">请先完成人机验证</p>
                   <TurnstileWidget onVerify={setTurnstileToken} />
                 </div>
               )}

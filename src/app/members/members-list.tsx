@@ -88,7 +88,7 @@ export function MembersList() {
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
           <Input
             placeholder="搜索成员..."
             value={searchQuery}
@@ -100,7 +100,7 @@ export function MembersList() {
           <select
             value={selectedOrganization}
             onChange={(e) => setSelectedOrganization(e.target.value)}
-            className="flex h-10 w-full md:w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-full md:w-[180px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="all">全部学校</option>
             <option value="pku">北京大学</option>
@@ -109,7 +109,7 @@ export function MembersList() {
           <select
             value={selectedCohort}
             onChange={(e) => setSelectedCohort(e.target.value)}
-            className="flex h-10 w-full md:w-[140px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-full md:w-[140px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="all">全部年级</option>
             {cohortOptions.map((cohort) => (
@@ -122,7 +122,7 @@ export function MembersList() {
       </div>
 
       {/* Results count */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-slate-600">
         共 {sortedMembers.length} 位成员
       </div>
 
@@ -155,7 +155,7 @@ export function MembersList() {
                       {member.researchInterests.slice(0, 3).map((interest) => (
                         <span
                           key={interest}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/5 text-primary"
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(211,40%,97%)] text-primary"
                         >
                           {interest}
                         </span>
@@ -169,9 +169,9 @@ export function MembersList() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Users className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">未找到成员</h3>
-          <p className="text-muted-foreground">请尝试调整搜索条件</p>
+          <Users className="h-12 w-12 text-slate-600 mb-4" />
+          <h3 className="text-lg font-extrabold text-slate-900 mb-2">未找到成员</h3>
+          <p className="text-slate-600">请尝试调整搜索条件</p>
         </div>
       )}
     </div>

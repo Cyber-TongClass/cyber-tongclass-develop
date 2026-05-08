@@ -476,7 +476,7 @@ export default function RegisterClient() {
                                 <Label htmlFor="organization">Organization</Label>
                                 <select
                                     id="organization"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={organization}
                                     onChange={(e) => setOrganization(e.target.value as Organization)}
                                     required
@@ -484,14 +484,14 @@ export default function RegisterClient() {
                                 >
                                     <option value="pku">PKU Tong Class</option>
                                 </select>
-                                <p className="text-xs text-muted-foreground">THU registration is temporarily unavailable.</p>
+                                <p className="text-xs text-slate-600">THU registration is temporarily unavailable.</p>
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="cohort">Cohort / Year</Label>
                                 <select
                                     id="cohort"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={cohort}
                                     onChange={(e) => setCohort(parseCohortValue(e.target.value))}
                                     required
@@ -516,7 +516,7 @@ export default function RegisterClient() {
                                     onChange={(e) => setStudentId(e.target.value)}
                                     required
                                 />
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-slate-600">
                                     Your student ID from Peking University or Tsinghua University
                                 </p>
                             </div>
@@ -534,7 +534,7 @@ export default function RegisterClient() {
                                         type="text"
                                         value={studentId}
                                         readOnly
-                                        className="bg-muted text-muted-foreground"
+                                        className="bg-slate-100 text-slate-600"
                                     />
                                     <select
                                         value={emailDomain}
@@ -543,14 +543,14 @@ export default function RegisterClient() {
                                             setIsEmailStepVerified(false)
                                             setEmailVerificationProof("")
                                         }}
-                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        className="flex h-10 rounded-md border border-input bg-white px-3 py-2 text-sm"
                                     >
                                         <option value="@stu.pku.edu.cn">@stu.pku.edu.cn</option>
                                         <option value="@pku.edu.cn">@pku.edu.cn</option>
                                         <option value="@alumni.pku.edu.cn">@alumni.pku.edu.cn</option>
                                     </select>
                                 </div>
-                                <p className="text-xs text-muted-foreground">Current target email: {getExpectedEmailHint()}</p>
+                                <p className="text-xs text-slate-600">Current target email: {getExpectedEmailHint()}</p>
                             </div>
 
                             <div className="space-y-3">
@@ -568,8 +568,8 @@ export default function RegisterClient() {
                                 </Button>
 
                                 {requiresTurnstile && (
-                                    <div className="rounded-md border p-3 bg-muted/30">
-                                        <p className="text-xs text-muted-foreground mb-2">
+                                    <div className="rounded-md border p-3 bg-slate-100/30">
+                                        <p className="text-xs text-slate-600 mb-2">
                                             Additional safety verification is required before sending another code.
                                         </p>
                                         <TurnstileWidget onVerify={setTurnstileToken} />
@@ -598,7 +598,7 @@ export default function RegisterClient() {
                                         </div>
                                     </>
                                 )}
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-slate-600">
                                     Click the verification link in email first. If link fails, use the code input above.
                                 </p>
                             </div>
@@ -648,7 +648,7 @@ export default function RegisterClient() {
                                         onChange={(e) => setEnglishName(e.target.value)}
                                         required
                                     />
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-slate-600">
                                         This will be displayed on your public profile.
                                     </p>
                                 </div>
@@ -663,7 +663,7 @@ export default function RegisterClient() {
                                         onChange={(e) => setChineseName(e.target.value)}
                                         required
                                     />
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-slate-600">
                                         This will be shown together with your English name.
                                     </p>
                                 </div>
@@ -679,7 +679,7 @@ export default function RegisterClient() {
                                     onChange={(e) => setUsername(e.target.value)}
                                     required
                                 />
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-slate-600">
                                     Used for login, not displayed publicly.
                                 </p>
                             </div>
@@ -687,7 +687,7 @@ export default function RegisterClient() {
                             <div className="space-y-2">
                                 <Label>Personal Emails (Optional)</Label>
                                 <PersonalEmailsInput emails={personalEmails} onChange={setPersonalEmails} />
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-slate-600">
                                     Your school email, which includes your student ID, is kept on the account to protect your identity and is not displayed on your public profile. By default, only the personal email addresses you provide are shown publicly. However, if you wish to display your school email, you may add it here.
                                 </p>
                             </div>
@@ -696,7 +696,7 @@ export default function RegisterClient() {
                                 <Label htmlFor="bio">Bio (Optional)</Label>
                                 <textarea
                                     id="bio"
-                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     placeholder="Tell us about yourself..."
                                     value={bio}
                                     onChange={(e) => setBio(e.target.value)}
@@ -705,8 +705,8 @@ export default function RegisterClient() {
 
                             <div className="space-y-2">
                                 <Label>Research Interests (Optional)</Label>
-                                <div className="rounded-md border border-border/70 p-3">
-                                    <p className="mb-3 text-xs text-muted-foreground">
+                                <div className="rounded-md border border-slate-200/70 p-3">
+                                    <p className="mb-3 text-xs text-slate-600">
                                         Select broad research directions for member filtering. Free-form interests can be added below.
                                     </p>
                                     <div className="grid gap-2 sm:grid-cols-2">
@@ -759,7 +759,7 @@ export default function RegisterClient() {
                             <div className="space-y-2">
                                 <Label>Profile Links (Optional)</Label>
                                 <UserLinksInput links={links} onChange={setLinks} />
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-slate-600">
                                     Choose from preset link types like Homepage, Google Scholar, GitHub, X, Xiaohongshu, LinkedIn, or use Custom for anything else.
                                 </p>
                             </div>
@@ -793,7 +793,7 @@ export default function RegisterClient() {
                 </CardFooter>
 
                 <CardFooter className="pt-0">
-                    <p className="text-sm text-center text-muted-foreground w-full">
+                    <p className="text-sm text-center text-slate-600 w-full">
                         Already have an account?{" "}
                         <Link href="/login" className="text-primary hover:underline font-medium">
                             Sign In

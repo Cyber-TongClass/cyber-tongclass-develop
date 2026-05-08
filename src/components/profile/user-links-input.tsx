@@ -51,20 +51,20 @@ export function UserLinksInput({ links, onChange }: UserLinksInputProps) {
   return (
     <div className="space-y-2">
       {links.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+        <div className="rounded-md border border-dashed border-slate-200 px-3 py-4 text-sm text-slate-600">
           No profile links added yet.
         </div>
       ) : (
         <div className="space-y-3">
           {links.map((link, index) => (
-            <div key={index} className="rounded-md border border-border p-3">
+            <div key={index} className="rounded-md border border-slate-200 p-3">
               <div className="grid gap-3 md:grid-cols-[180px_1fr]">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Type</label>
+                  <label className="text-sm font-medium text-slate-900">Type</label>
                   <select
                     value={link.type}
                     onChange={(event) => handleTypeChange(index, event.target.value as UserLinkType)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
                   >
                     {USER_LINK_TYPE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -75,7 +75,7 @@ export function UserLinksInput({ links, onChange }: UserLinksInputProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Label</label>
+                  <label className="text-sm font-medium text-slate-900">Label</label>
                   <Input
                     value={link.label}
                     onChange={(event) => handleUpdate(index, "label", event.target.value)}
@@ -84,7 +84,7 @@ export function UserLinksInput({ links, onChange }: UserLinksInputProps) {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-foreground">URL</label>
+                  <label className="text-sm font-medium text-slate-900">URL</label>
                   <div className="flex gap-2">
                     <Input
                       value={link.url}

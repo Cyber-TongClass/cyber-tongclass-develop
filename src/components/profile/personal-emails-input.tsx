@@ -24,7 +24,7 @@ export function PersonalEmailsInput({ emails, onChange }: PersonalEmailsInputPro
   return (
     <div className="space-y-2">
       {emails.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+        <div className="rounded-md border border-dashed border-slate-200 px-3 py-4 text-sm text-slate-600">
           No personal email added yet.
         </div>
       ) : (

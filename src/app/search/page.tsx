@@ -199,10 +199,10 @@ function SearchContent() {
   }, {} as Record<string, SearchResult[]>)
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container-custom py-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">搜索</h1>
+          <h1 className="text-3xl font-extrabold mb-6">搜索</h1>
           
           <form onSubmit={handleSearch} className="flex gap-2 mb-8">
             <Input
@@ -219,7 +219,7 @@ function SearchContent() {
 
           {hasSearched && (
             <div className="mb-4">
-              <p className="text-muted-foreground">
+              <p className="text-slate-600">
                 {results.length === 0
                   ? "未找到相关结果"
                   : `找到 ${results.length} 个相关结果`}
@@ -229,7 +229,7 @@ function SearchContent() {
 
           {Object.entries(groupedResults).map(([type, items]) => (
             <div key={type} className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <h2 className="text-xl font-extrabold mb-4 flex items-center gap-2">
                 <span>{getTypeLabel(type)}</span>
                 <Badge variant="secondary">{items.length}</Badge>
               </h2>
@@ -238,16 +238,16 @@ function SearchContent() {
                   <Link
                     key={`${result.type}-${result.id}`}
                     href={result.url}
-                    className="block p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                    className="block p-4 rounded-lg border border-slate-200 hover:bg-slate-100/50 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="text-muted-foreground mt-0.5">{result.icon}</div>
+                      <div className="text-slate-600 mt-0.5">{result.icon}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-medium truncate">{result.title}</h3>
                           <Badge className={getTypeColor(result.type)}>{getTypeLabel(result.type)}</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{result.description}</p>
+                        <p className="text-sm text-slate-600 line-clamp-2">{result.description}</p>
                       </div>
                     </div>
                   </Link>
@@ -263,13 +263,13 @@ function SearchContent() {
 
 function SearchLoading() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container-custom py-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">搜索</h1>
+          <h1 className="text-3xl font-extrabold mb-6">搜索</h1>
           <div className="animate-pulse space-y-4">
-            <div className="h-12 bg-muted rounded-lg"></div>
-            <div className="h-96 bg-muted rounded-lg"></div>
+            <div className="h-12 bg-slate-100 rounded-lg"></div>
+            <div className="h-96 bg-slate-100 rounded-lg"></div>
           </div>
         </div>
       </div>

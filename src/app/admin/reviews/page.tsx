@@ -418,7 +418,7 @@ export default function ReviewsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">课程测评</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">课程测评</h1>
           <p className="mt-1 text-gray-500">管理课程目录与课程测评内容</p>
         </div>
         <div className="flex gap-2">
@@ -468,7 +468,7 @@ export default function ReviewsPage() {
                   <Label htmlFor="manual-course">课程</Label>
                   <select
                     id="manual-course"
-                    className="h-10 w-full rounded-md border border-input bg-background px-3"
+                    className="h-10 w-full rounded-md border border-input bg-white px-3"
                     value={reviewForm.courseName}
                     onChange={(event) =>
                       setReviewForm((previous) => ({ ...previous, courseName: event.target.value }))
@@ -510,7 +510,7 @@ export default function ReviewsPage() {
                   <div className="space-y-2">
                     <Label>年份</Label>
                     <select
-                      className="h-10 w-full rounded-md border border-input bg-background px-3"
+                      className="h-10 w-full rounded-md border border-input bg-white px-3"
                       value={reviewForm.semesterYear}
                       onChange={(event) =>
                         setReviewForm((previous) => ({ ...previous, semesterYear: event.target.value }))
@@ -526,7 +526,7 @@ export default function ReviewsPage() {
                   <div className="space-y-2">
                     <Label>学期</Label>
                     <select
-                      className="h-10 w-full rounded-md border border-input bg-background px-3"
+                      className="h-10 w-full rounded-md border border-input bg-white px-3"
                       value={reviewForm.semesterTerm}
                       onChange={(event) =>
                         setReviewForm((previous) => ({
@@ -546,7 +546,7 @@ export default function ReviewsPage() {
                     <Label htmlFor="manual-status">状态</Label>
                     <select
                       id="manual-status"
-                      className="h-10 w-full rounded-md border border-input bg-background px-3"
+                      className="h-10 w-full rounded-md border border-input bg-white px-3"
                       value={reviewForm.status}
                       onChange={(event) =>
                         setReviewForm((previous) => ({
@@ -564,10 +564,10 @@ export default function ReviewsPage() {
 
                 <div className="space-y-2">
                   <Label>总体评价（1-10，10 为非常推荐）</Label>
-                  <div className="rounded-lg border border-border/70 px-4 py-4">
+                  <div className="rounded-lg border border-slate-200/70 px-4 py-4">
                     <div className="mb-3 flex items-center justify-between">
                       <Badge className={getRatingBadgeClass(reviewForm.overallRating)}>{reviewForm.overallRating}/10</Badge>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-slate-600">
                         {reviewForm.overallRating >= 8 ? "非常推荐" : reviewForm.overallRating >= 6 ? "可以考虑" : "谨慎选择"}
                       </span>
                     </div>
@@ -593,7 +593,7 @@ export default function ReviewsPage() {
                     <Label htmlFor="manual-attendance">是否签到</Label>
                     <select
                       id="manual-attendance"
-                      className="h-10 w-full rounded-md border border-input bg-background px-3"
+                      className="h-10 w-full rounded-md border border-input bg-white px-3"
                       value={reviewForm.attendanceRequired}
                       onChange={(event) =>
                         setReviewForm((previous) => ({
@@ -620,7 +620,7 @@ export default function ReviewsPage() {
                       }
                       placeholder="1-5"
                     />
-                    <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.workload}</p>
+                    <p className="text-xs text-slate-600">{FIVE_POINT_HINTS.workload}</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="manual-pace">授课进度</Label>
@@ -633,7 +633,7 @@ export default function ReviewsPage() {
                       onChange={(event) => setReviewForm((previous) => ({ ...previous, pace: event.target.value }))}
                       placeholder="1-5"
                     />
-                    <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.pace}</p>
+                    <p className="text-xs text-slate-600">{FIVE_POINT_HINTS.pace}</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="manual-grading">给分情况</Label>
@@ -651,7 +651,7 @@ export default function ReviewsPage() {
                       }
                       placeholder="1-5"
                     />
-                    <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.gradingFairness}</p>
+                    <p className="text-xs text-slate-600">{FIVE_POINT_HINTS.gradingFairness}</p>
                   </div>
                 </div>
 
@@ -688,7 +688,7 @@ export default function ReviewsPage() {
                     <Label htmlFor="manual-study-method">推荐学习方法</Label>
                     <select
                       id="manual-study-method"
-                      className="h-10 w-full rounded-md border border-input bg-background px-3"
+                      className="h-10 w-full rounded-md border border-input bg-white px-3"
                       value={reviewForm.recommendedStudyMethod}
                       onChange={(event) =>
                         setReviewForm((previous) => ({
@@ -753,7 +753,7 @@ export default function ReviewsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500">待审核</p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-2xl font-extrabold text-yellow-600">
                   {reviews.filter((review) => review.status === "pending").length}
                 </p>
               </div>
@@ -799,7 +799,7 @@ export default function ReviewsPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-semibold text-gray-900">通班培养方案课程</h3>
+                <h3 className="text-base font-extrabold text-gray-900">通班培养方案课程</h3>
                 <p className="text-sm text-gray-500 mt-1">由管理员维护的培养方案课程列表。</p>
               </div>
               <Badge className="bg-blue-100 text-blue-800">{tongClassCourses.length} 门</Badge>
@@ -869,7 +869,7 @@ export default function ReviewsPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-semibold text-gray-900">其他课程</h3>
+                <h3 className="text-base font-extrabold text-gray-900">其他课程</h3>
                 <p className="text-sm text-gray-500 mt-1">由成员补充、可供讨论和评测的其他课程。</p>
               </div>
               <Badge className="bg-slate-100 text-slate-700">{otherCourses.length} 门</Badge>
@@ -995,7 +995,7 @@ export default function ReviewsPage() {
 
               <div>
                 <Label>目标课程</Label>
-                <select className="h-10 rounded-md border border-input bg-background px-3 w-full" value={assignTargetCourse} onChange={(e) => setAssignTargetCourse(e.target.value)}>
+                <select className="h-10 rounded-md border border-input bg-white px-3 w-full" value={assignTargetCourse} onChange={(e) => setAssignTargetCourse(e.target.value)}>
                   <option value="">请选择课程</option>
                   {courses.map((c) => (
                     <option key={c._id} value={c.name}>{c.name}</option>
@@ -1037,7 +1037,7 @@ export default function ReviewsPage() {
                   onChange={(e) => setTagEditFrom(e.target.value)}
                   placeholder="例如: shuike（输入并保存即可创建新标签）"
                 />
-                <p className="text-xs text-muted-foreground mt-1">填写新标签名并保存，即可创建新的标签。</p>
+                <p className="text-xs text-slate-600 mt-1">填写新标签名并保存，即可创建新的标签。</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {tagChoices.map((item: { name: string }) => (
                     <Button
@@ -1056,7 +1056,7 @@ export default function ReviewsPage() {
               <div>
                 <Label>操作</Label>
                 <select
-                  className="h-10 rounded-md border border-input bg-background px-3 w-full"
+                  className="h-10 rounded-md border border-input bg-white px-3 w-full"
                   value={tagEditAction}
                   onChange={(e) => setTagEditAction(e.target.value as "rename" | "delete" | "setColor")}
                 >
@@ -1074,7 +1074,7 @@ export default function ReviewsPage() {
                       type="color"
                       value={tagEditColor}
                       onChange={(e) => setTagEditColor(e.target.value)}
-                      className="h-10 w-12 rounded border border-input bg-background"
+                      className="h-10 w-12 rounded border border-input bg-white"
                     />
                     <Input value={tagEditColor} onChange={(e) => setTagEditColor(e.target.value)} />
                   </div>

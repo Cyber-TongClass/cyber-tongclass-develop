@@ -73,7 +73,7 @@ export default function VerifyEmailClient() {
     }, [token, purpose])
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+        <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
             <Card className="w-full max-w-lg">
                 <CardHeader>
                     <CardTitle>Email Verification</CardTitle>

@@ -30,14 +30,14 @@ export default function IntranetPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-slate-600">Loading...</p>
       </div>
     )
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -46,7 +46,7 @@ export default function IntranetPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">Please sign in with your student ID to access internal resources.</p>
+            <p className="text-sm text-slate-600">Please sign in with your student ID to access internal resources.</p>
             <Button asChild className="w-full">
               <Link href={`/login?next=${encodeURIComponent("/intranet")}`}>Sign In</Link>
             </Button>
@@ -57,22 +57,21 @@ export default function IntranetPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <section className="bg-primary/5 border-b border-border">
-        <div className="container-custom py-12 md:py-16">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-              <Lock className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">内部网站</h1>
+    <div className="min-h-screen bg-white">
+      <section className="bg-primary relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 relative">
+          <div className="absolute left-4 sm:left-6 lg:left-8 top-1/2 -translate-y-1/2 text-[5rem] md:text-[8rem] lg:text-[10rem] font-extrabold uppercase tracking-[0.15em] text-white/5 select-none pointer-events-none whitespace-nowrap leading-none" aria-hidden="true">INTRANET</div>
+          <div className="mb-4">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">内部网站</h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl">
+          <p className="text-lg text-white/70 max-w-2xl relative">
             这是一个近面向通班成员的内部网站，包含讨论区、内部资源和私密链接等。请不要将此网页内的内部资源分享到公开渠道哦～
           </p>
         </div>
       </section>
 
-      <section className="container-custom py-8">
+      <section className="bg-[hsl(211,30%,97%)] py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid gap-4 md:grid-cols-3">
           {intranetSections.map((section) => {
             const Icon = section.icon
@@ -85,11 +84,12 @@ export default function IntranetPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">{section.description}</p>
+                  <p className="text-sm text-slate-600">{section.description}</p>
                 </CardContent>
               </Card>
             )
           })}
+        </div>
         </div>
       </section>
     </div>

@@ -110,7 +110,7 @@ export default function EditEventPage() {
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">活动不存在</h1>
+          <h1 className="text-2xl font-extrabold">活动不存在</h1>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -128,7 +128,7 @@ export default function EditEventPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{isCreateMode ? "创建活动" : "编辑活动"}</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">{isCreateMode ? "创建活动" : "编辑活动"}</h1>
           <p className="text-gray-500 mt-1">{isCreateMode ? "填写并创建新活动" : "修改活动信息"}</p>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function EditEventPage() {
                 <Label htmlFor="type">活动类型</Label>
                 <select
                   id="type"
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 >

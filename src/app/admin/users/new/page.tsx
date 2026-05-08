@@ -95,7 +95,7 @@ export default function AdminUserCreatePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">新建用户</h1>
+        <h1 className="text-2xl font-extrabold text-gray-900">新建用户</h1>
         <p className="text-gray-500 mt-1">填写基础信息后，系统会自动生成随机初始密码。请在创建后及时告知用户，并提醒其首次登录后修改密码。</p>
       </div>
 
@@ -114,9 +114,9 @@ export default function AdminUserCreatePage() {
                 <Label>邮箱用户名</Label>
                 <div className="flex items-center gap-2">
                   <Input value={studentId} readOnly placeholder="自动使用学号" />
-                  <span className="text-sm text-muted-foreground">@</span>
+                  <span className="text-sm text-slate-600">@</span>
                   <select
-                    className="h-10 rounded-md border border-input bg-background px-3"
+                    className="h-10 rounded-md border border-input bg-white px-3"
                     value={emailDomain}
                     onChange={(e) => setEmailDomain(e.target.value)}
                   >
@@ -125,7 +125,7 @@ export default function AdminUserCreatePage() {
                     <option value="alumni.pku.edu.cn">alumni.pku.edu.cn</option>
                   </select>
                 </div>
-                <p className="text-xs text-muted-foreground">邮箱会自动生成（不需输入 @ 域名）。</p>
+                <p className="text-xs text-slate-600">邮箱会自动生成（不需输入 @ 域名）。</p>
               </div>
             </div>
 
@@ -153,7 +153,7 @@ export default function AdminUserCreatePage() {
                     重新生成
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">系统将保存该初始密码的哈希值；请复制明文密码发送给用户本人。创建成功后页面不会自动跳转，便于你先记录密码。</p>
+                <p className="text-xs text-slate-600">系统将保存该初始密码的哈希值；请复制明文密码发送给用户本人。创建成功后页面不会自动跳转，便于你先记录密码。</p>
               </div>
             </div>
 
@@ -161,7 +161,7 @@ export default function AdminUserCreatePage() {
               <div className="space-y-2">
                 <Label>组织</Label>
                 <select
-                  className="h-10 w-full rounded-md border border-input bg-background px-3"
+                  className="h-10 w-full rounded-md border border-input bg-white px-3"
                   value={organization}
                   onChange={(e) => setOrganization(e.target.value as "pku" | "thu")}
                 >
@@ -175,7 +175,7 @@ export default function AdminUserCreatePage() {
               <div className="space-y-2">
                 <Label>年级</Label>
                 <select
-                  className="h-10 w-full rounded-md border border-input bg-background px-3"
+                  className="h-10 w-full rounded-md border border-input bg-white px-3"
                   value={cohortToSelectValue(cohort)}
                   onChange={(e) => setCohort(parseCohortValue(e.target.value))}
                 >
@@ -191,7 +191,7 @@ export default function AdminUserCreatePage() {
             <div className="space-y-2">
               <Label>角色</Label>
               <select
-                className="h-10 w-full rounded-md border border-input bg-background px-3"
+                className="h-10 w-full rounded-md border border-input bg-white px-3"
                 value={role}
                 onChange={(e) => setRole(e.target.value as "member" | "admin" | "super_admin")}
               >
