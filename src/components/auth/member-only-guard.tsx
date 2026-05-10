@@ -22,14 +22,14 @@ export function MemberOnlyGuard({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-slate-600">Loading...</p>
       </div>
     )
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -38,7 +38,7 @@ export function MemberOnlyGuard({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="text-sm text-slate-600">{description}</p>
             <Button asChild className="w-full">
               <Link href={`/login?next=${encodeURIComponent(pathname || "/")}`}>前往登录</Link>
             </Button>

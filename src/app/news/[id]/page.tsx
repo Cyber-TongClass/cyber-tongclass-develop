@@ -18,14 +18,14 @@ export default function NewsDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-slate-600">Loading...</p>
       </div>
     )
   }
 
   if (!news) {
     return (
-      <div className="container-custom py-8 md:py-12">
+      <div className="container-custom py-16 md:py-24">
         <Button variant="ghost" asChild className="mb-6 -ml-3 gap-2">
           <Link href="/news">
             <ArrowLeft className="h-4 w-4" />
@@ -33,15 +33,15 @@ export default function NewsDetailPage() {
           </Link>
         </Button>
         <div className="max-w-4xl mx-auto text-center py-16">
-          <h2 className="text-2xl font-semibold text-foreground mb-2">新闻不存在</h2>
-          <p className="text-muted-foreground">该新闻可能已被删除。</p>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">新闻不存在</h2>
+          <p className="text-slate-600">该新闻可能已被删除。</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container-custom py-8 md:py-12">
+    <div className="container-custom py-16 md:py-24">
       <Button variant="ghost" asChild className="mb-6 -ml-3 gap-2">
         <Link href="/news">
           <ArrowLeft className="h-4 w-4" />
@@ -53,15 +53,15 @@ export default function NewsDetailPage() {
         <div className="space-y-4 mb-8">
           <div className="flex items-center gap-3">
             <span className="px-3 py-1 text-sm font-medium rounded-full bg-primary/10 text-primary">{news.category}</span>
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
+            <span className="text-sm text-slate-600 flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               {new Date(news.publishedAt).toLocaleDateString("zh-CN")}
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight">{news.title}</h1>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight">{news.title}</h1>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-slate-600">
             <User className="h-4 w-4" />
             <span>{news.authorName || "匿名"}</span>
           </div>

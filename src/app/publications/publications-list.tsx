@@ -72,7 +72,7 @@ export function PublicationsList() {
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
           <Input
             placeholder="搜索作者或题目..."
             value={searchQuery}
@@ -84,7 +84,7 @@ export function PublicationsList() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="flex h-10 w-full md:w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-full md:w-[180px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {categories.map((cat) => (
               <option key={cat.value} value={cat.value}>
@@ -95,7 +95,7 @@ export function PublicationsList() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="flex h-10 w-full md:w-[120px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-full md:w-[120px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="all">全部年份</option>
             {years.map((year) => (
@@ -107,7 +107,7 @@ export function PublicationsList() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "year" | "title")}
-            className="flex h-10 w-full md:w-[140px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-full md:w-[140px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="year">按年份</option>
             <option value="title">按标题</option>
@@ -116,33 +116,33 @@ export function PublicationsList() {
       </div>
 
       {/* Results count */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-slate-600">
         共 {sortedPublications.length} 篇论文
       </div>
 
       {/* Latest Works */}
       {latestPublications.length > 0 && (
         <section>
-          <h2 className="text-2xl font-bold text-foreground mb-4">Latest Works</h2>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-4">Latest Works</h2>
           <div className="grid gap-6">
             {latestPublications.map((pub) => (
               <Link key={pub._id} href={`/publications/${pub._id}`}>
-                <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer card-hover">
+                <Card className="border-0 border-b border-primary/20 shadow-sm hover:bg-slate-50 transition-colors duration-300 cursor-pointer">
                   <CardContent className="p-5">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2">
+                        <h3 className="text-lg font-extrabold text-slate-900 mb-2 line-clamp-2">
                           {pub.title}
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-sm text-slate-600 mb-2">
                           {pub.authors.join(", ")}
                         </p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-3 text-xs text-slate-600">
                           <span className="font-medium text-primary">{pub.venue}</span>
                           <span>·</span>
                           <span>{pub.year}</span>
                           <span>·</span>
-                          <span className="px-2 py-0.5 rounded-full bg-primary/5 text-primary">
+                          <span className="px-2 py-0.5 rounded-full bg-[hsl(211,50%,93%)] text-primary">
                             {pub.category}
                           </span>
                         </div>
@@ -171,26 +171,26 @@ export function PublicationsList() {
       {/* Archive */}
       {archivePublications.length > 0 && (
         <section>
-          <h2 className="text-2xl font-bold text-foreground mb-4">Archive</h2>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-4">Archive</h2>
           <div className="grid gap-6">
             {archivePublications.map((pub) => (
               <Link key={pub._id} href={`/publications/${pub._id}`}>
-                <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer card-hover">
+                <Card className="border-0 border-b border-primary/20 shadow-sm hover:bg-slate-50 transition-colors duration-300 cursor-pointer">
                   <CardContent className="p-5">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2">
+                        <h3 className="text-lg font-extrabold text-slate-900 mb-2 line-clamp-2">
                           {pub.title}
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-sm text-slate-600 mb-2">
                           {pub.authors.join(", ")}
                         </p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-3 text-xs text-slate-600">
                           <span className="font-medium text-primary">{pub.venue}</span>
                           <span>·</span>
                           <span>{pub.year}</span>
                           <span>·</span>
-                          <span className="px-2 py-0.5 rounded-full bg-primary/5 text-primary">
+                          <span className="px-2 py-0.5 rounded-full bg-[hsl(211,50%,93%)] text-primary">
                             {pub.category}
                           </span>
                         </div>
@@ -219,9 +219,9 @@ export function PublicationsList() {
       {/* Empty state */}
       {sortedPublications.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">未找到成果</h3>
-          <p className="text-muted-foreground">请尝试调整搜索条件</p>
+          <FileText className="h-12 w-12 text-slate-600 mb-4" />
+          <h3 className="text-lg font-extrabold text-slate-900 mb-2">未找到成果</h3>
+          <p className="text-slate-600">请尝试调整搜索条件</p>
         </div>
       )}
     </div>

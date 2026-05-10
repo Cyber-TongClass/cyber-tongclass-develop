@@ -39,7 +39,7 @@ const MarkdownRenderer = dynamic(
   () => import("@/components/markdown/markdown-renderer").then((mod) => mod.MarkdownRenderer),
   {
     ssr: false,
-    loading: () => <p className="text-sm text-muted-foreground">内容加载中...</p>,
+    loading: () => <p className="text-sm text-slate-600">内容加载中...</p>,
   }
 )
 
@@ -47,7 +47,7 @@ const MarkdownSplitEditor = dynamic(
   () => import("@/components/markdown/markdown-split-editor").then((mod) => mod.MarkdownSplitEditor),
   {
     ssr: false,
-    loading: () => <p className="text-sm text-muted-foreground">编辑器加载中...</p>,
+    loading: () => <p className="text-sm text-slate-600">编辑器加载中...</p>,
   }
 )
 
@@ -321,21 +321,21 @@ export default function CourseDetailPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-slate-600">Loading...</p>
       </div>
     )
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <Card className="max-w-lg w-full">
           <CardHeader>
             <CardTitle>课程测评需登录后访问</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">请先登录后再查看课程测评与发帖。</p>
+            <p className="text-sm text-slate-600">请先登录后再查看课程测评与发帖。</p>
             <Button asChild className="w-full">
               <Link href={`/login?next=${encodeURIComponent(`/courses/${encodeURIComponent(courseName)}`)}`}>
                 前往登录
@@ -349,10 +349,10 @@ export default function CourseDetailPage() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-2">课程不存在</h2>
-          <p className="text-muted-foreground mb-4">该课程可能已被删除或不存在</p>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">课程不存在</h2>
+          <p className="text-slate-600 mb-4">该课程可能已被删除或不存在</p>
           <Link href="/courses">
             <Button>返回课程列表</Button>
           </Link>
@@ -362,8 +362,8 @@ export default function CourseDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container-custom py-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <Button variant="ghost" asChild className="mb-6 -ml-3">
           <Link href="/courses">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -374,8 +374,8 @@ export default function CourseDetailPage() {
         <div className="mb-8 space-y-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">{course.name}</h1>
-              <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900">{course.name}</h1>
+              <p className="mt-3 max-w-2xl text-sm text-slate-600">
                 同一门课程不同教师、不同学期的体验可能差异很大。建议先按教师或学期筛选，再结合结构化指标和长评测综合判断。
               </p>
             </div>
@@ -402,8 +402,8 @@ export default function CourseDetailPage() {
                     ))}
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{course.averageRating.toFixed(1)}</p>
-                    <p className="text-sm text-muted-foreground">总体评价均分（1-10）</p>
+                    <p className="text-2xl font-extrabold">{course.averageRating.toFixed(1)}</p>
+                    <p className="text-sm text-slate-600">总体评价均分（1-10）</p>
                   </div>
                 </div>
               </CardContent>
@@ -411,13 +411,13 @@ export default function CourseDetailPage() {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-2xl font-bold">{course.reviewCount}</p>
-                <p className="text-sm text-muted-foreground">已通过审核的评测数量</p>
+                <p className="text-sm text-slate-600">已通过审核的评测数量</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <p className="text-2xl font-bold">{teacherOptions.length}</p>
-                <p className="text-sm text-muted-foreground">已收录教师数量</p>
+                <p className="text-sm text-slate-600">已收录教师数量</p>
               </CardContent>
             </Card>
           </div>
@@ -496,10 +496,10 @@ export default function CourseDetailPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>总体评价（1-10，10 为非常推荐，1 为非常不推荐）</Label>
-                  <div className="rounded-lg border border-border/70 px-4 py-4">
+                  <div className="rounded-lg border border-slate-200/70 px-4 py-4">
                     <div className="mb-3 flex items-center justify-between">
                       <Badge className={getRatingBadgeClass(formState.overallRating)}>{formState.overallRating}/10</Badge>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-slate-600">
                         {formState.overallRating >= 8 ? "非常推荐" : formState.overallRating >= 6 ? "可以考虑" : "谨慎选择"}
                       </span>
                     </div>
@@ -519,7 +519,7 @@ export default function CourseDetailPage() {
                   <Label htmlFor="attendance-required">是否签到</Label>
                   <select
                     id="attendance-required"
-                    className="w-full h-10 rounded-md border border-input bg-background px-3"
+                    className="w-full h-10 rounded-md border border-input bg-white px-3"
                     value={formState.attendanceRequired}
                     onChange={(event) =>
                       setFormState((previous) => ({
@@ -537,7 +537,7 @@ export default function CourseDetailPage() {
                   <Label htmlFor="workload">任务量</Label>
                   <select
                     id="workload"
-                    className="w-full h-10 rounded-md border border-input bg-background px-3"
+                    className="w-full h-10 rounded-md border border-input bg-white px-3"
                     value={formState.workload}
                     onChange={(event) => setFormState((previous) => ({ ...previous, workload: event.target.value }))}
                   >
@@ -548,13 +548,13 @@ export default function CourseDetailPage() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.workload}</p>
+                  <p className="text-xs text-slate-600">{FIVE_POINT_HINTS.workload}</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pace">授课进度</Label>
                   <select
                     id="pace"
-                    className="w-full h-10 rounded-md border border-input bg-background px-3"
+                    className="w-full h-10 rounded-md border border-input bg-white px-3"
                     value={formState.pace}
                     onChange={(event) => setFormState((previous) => ({ ...previous, pace: event.target.value }))}
                   >
@@ -565,13 +565,13 @@ export default function CourseDetailPage() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.pace}</p>
+                  <p className="text-xs text-slate-600">{FIVE_POINT_HINTS.pace}</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="grading-fairness">给分情况</Label>
                   <select
                     id="grading-fairness"
-                    className="w-full h-10 rounded-md border border-input bg-background px-3"
+                    className="w-full h-10 rounded-md border border-input bg-white px-3"
                     value={formState.gradingFairness}
                     onChange={(event) => setFormState((previous) => ({ ...previous, gradingFairness: event.target.value }))}
                   >
@@ -582,7 +582,7 @@ export default function CourseDetailPage() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-muted-foreground">{FIVE_POINT_HINTS.gradingFairness}</p>
+                  <p className="text-xs text-slate-600">{FIVE_POINT_HINTS.gradingFairness}</p>
                 </div>
               </div>
 
@@ -611,7 +611,7 @@ export default function CourseDetailPage() {
                   <Label htmlFor="recommended-study-method">推荐学习方法</Label>
                   <select
                     id="recommended-study-method"
-                    className="w-full h-10 rounded-md border border-input bg-background px-3"
+                    className="w-full h-10 rounded-md border border-input bg-white px-3"
                     value={formState.recommendedStudyMethod}
                     onChange={(event) =>
                       setFormState((previous) => ({
@@ -632,7 +632,7 @@ export default function CourseDetailPage() {
 
               <div className="space-y-2">
                 <Label>Markdown 长评测</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-600">
                   可自由写教学方式、学习方法、考试形式、选课建议、给学弟学妹的话等。
                 </p>
                 <MarkdownSplitEditor
@@ -669,15 +669,15 @@ export default function CourseDetailPage() {
 
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">课程测评</h2>
-            <p className="text-sm text-muted-foreground">支持按教师和学期筛选，方便查看不同开课版本的差异。</p>
+            <h2 className="text-xl font-extrabold">课程测评</h2>
+            <p className="text-sm text-slate-600">支持按教师和学期筛选，方便查看不同开课版本的差异。</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">教师</p>
+              <p className="text-xs text-slate-600">教师</p>
               <select
-                className="h-10 rounded-md border border-input bg-background px-3"
+                className="h-10 rounded-md border border-input bg-white px-3"
                 value={teacherFilter}
                 onChange={(event) => setTeacherFilter(event.target.value)}
               >
@@ -690,9 +690,9 @@ export default function CourseDetailPage() {
               </select>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">年份</p>
+              <p className="text-xs text-slate-600">年份</p>
               <select
-                className="h-10 rounded-md border border-input bg-background px-3"
+                className="h-10 rounded-md border border-input bg-white px-3"
                 value={yearFilter}
                 onChange={(event) => setYearFilter(event.target.value)}
               >
@@ -705,9 +705,9 @@ export default function CourseDetailPage() {
               </select>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">学期</p>
+              <p className="text-xs text-slate-600">学期</p>
               <select
-                className="h-10 rounded-md border border-input bg-background px-3"
+                className="h-10 rounded-md border border-input bg-white px-3"
                 value={termFilter}
                 onChange={(event) => setTermFilter(event.target.value as typeof termFilter)}
               >
@@ -720,7 +720,7 @@ export default function CourseDetailPage() {
               </select>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">排序</p>
+              <p className="text-xs text-slate-600">排序</p>
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
                 <SelectTrigger className="w-[120px]">
                   <SelectValue placeholder="排序" />
@@ -738,7 +738,7 @@ export default function CourseDetailPage() {
         </div>
 
         {sortedReviews.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground">
+          <div className="py-12 text-center text-slate-600">
             <MessageSquare className="mx-auto mb-4 h-12 w-12 opacity-50" />
             <p>当前筛选条件下还没有评测。</p>
           </div>
@@ -752,7 +752,7 @@ export default function CourseDetailPage() {
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-lg font-semibold text-foreground">{review.instructor}</span>
+                          <span className="text-lg font-extrabold text-slate-900">{review.instructor}</span>
                           <Badge variant="outline">{getSemesterLabel(review.semesterYear, review.semesterTerm)}</Badge>
                           <Badge className={getRatingBadgeClass(review.overallRating)}>{review.overallRating}/10</Badge>
                         </div>
@@ -796,13 +796,13 @@ export default function CourseDetailPage() {
                             </Button>
                           </>
                         )}
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-slate-600">
                           {getSemesterShortLabel(review.semesterYear, review.semesterTerm)} · {reviewAuthor(review)}
                         </div>
                       </div>
                     </div>
 
-                    <div className="rounded-md border border-border/60 bg-muted/10 p-4">
+                    <div className="rounded-md border border-slate-200/60 bg-slate-100/10 p-4">
                       <MarkdownRenderer content={review.content} />
                     </div>
                   </CardContent>

@@ -172,14 +172,14 @@ export function MarkdownSplitEditor({
   return (
     <div className={cn("space-y-3", className)}>
       {showToolbar && (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-background/60 p-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-white/60 p-2">
           <Button type="button" size="sm" variant="outline" onClick={() => replaceSelection("**", "**", "bold")}>B</Button>
           <Button type="button" size="sm" variant="outline" onClick={() => replaceSelection("*", "*", "italic")}>I</Button>
           <Button type="button" size="sm" variant="outline" onClick={() => replaceSelection("~~", "~~", "delete")}>S</Button>
           <div className="mx-1 h-5 w-px bg-border" />
           <select
             aria-label="Insert heading"
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            className="h-8 rounded-md border border-input bg-white px-2 text-sm"
             defaultValue=""
             onChange={(event) => {
               const level = Number(event.target.value)
@@ -212,7 +212,7 @@ export function MarkdownSplitEditor({
       <div className={cn("grid grid-cols-1 gap-4", viewMode === "split" && "lg:grid-cols-2")}>
         {showSource && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">{sourceLabel}</p>
+            <p className="text-sm font-medium text-slate-900">{sourceLabel}</p>
             <div className={cn("relative rounded-md border bg-slate-950/95", minHeightClassName)}>
               <pre
                 ref={sourcePreviewRef}
@@ -249,8 +249,8 @@ export function MarkdownSplitEditor({
 
         {showPreview && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">{previewLabel}</p>
-            <div className={cn("overflow-auto rounded-md border bg-muted/20 p-4", minHeightClassName, previewClassName)}>
+            <p className="text-sm font-medium text-slate-900">{previewLabel}</p>
+            <div className={cn("overflow-auto rounded-md border bg-slate-100/20 p-4", minHeightClassName, previewClassName)}>
               <MarkdownRenderer content={value} emptyFallback="在左侧输入 Markdown 后，这里会实时预览。" />
             </div>
           </div>

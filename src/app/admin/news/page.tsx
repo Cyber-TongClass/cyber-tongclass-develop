@@ -93,7 +93,7 @@ export default function NewsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">新闻管理</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">新闻管理</h1>
           <p className="text-gray-500 mt-1">管理网站新闻内容</p>
         </div>
         <Button asChild className="bg-blue-900 hover:bg-blue-800">

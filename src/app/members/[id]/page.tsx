@@ -32,7 +32,7 @@ export default function MemberDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-slate-600">Loading...</div>
       </div>
     )
   }
@@ -40,13 +40,13 @@ export default function MemberDetailPage() {
   if (!member) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Member not found</div>
+        <div className="text-slate-600">Member not found</div>
       </div>
     )
   }
 
   return (
-    <div className="container-custom py-8 md:py-12">
+    <div className="container-custom py-16 md:py-24">
       <Button variant="ghost" asChild className="mb-6 -ml-3 gap-2">
         <Link href="/members">
           <ArrowLeft className="h-4 w-4" />
@@ -69,9 +69,9 @@ export default function MemberDetailPage() {
               </div>
               <CardTitle className="text-2xl">{member.englishName}</CardTitle>
               {member.chineseName ? (
-                <p className="text-sm text-muted-foreground mt-1">{member.chineseName}</p>
+                <p className="text-sm text-slate-600 mt-1">{member.chineseName}</p>
               ) : null}
-              <p className="text-muted-foreground flex items-center justify-center gap-2">
+              <p className="text-slate-600 flex items-center justify-center gap-2">
                 {member.organization === "pku" ? <School className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}
                 {member.organization === "pku" ? "PKU Tong Class" : "THU Tong Class"} · {getCohortClassLabel(member.cohort)}
               </p>
@@ -83,7 +83,7 @@ export default function MemberDetailPage() {
                     <a
                       key={email}
                       href={`mailto:${email}`}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                      className="flex items-center gap-2 text-sm text-slate-600 hover:text-primary transition-colors"
                     >
                       <Mail className="h-4 w-4" />
                       {email}
@@ -94,7 +94,7 @@ export default function MemberDetailPage() {
 
               {researchDirections.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <h4 className="text-sm font-extrabold mb-2 flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
                     Research Areas
                   </h4>
@@ -102,7 +102,7 @@ export default function MemberDetailPage() {
                     {researchDirections.map((direction: string) => (
                       <span
                         key={direction}
-                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/5 text-primary"
+                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(211,40%,97%)] text-primary"
                       >
                         {getResearchDirectionLabel(direction)}
                       </span>
@@ -113,12 +113,12 @@ export default function MemberDetailPage() {
 
               {member.researchInterests && member.researchInterests.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">Research Interests</h4>
+                  <h4 className="text-sm font-extrabold mb-2">Research Interests</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {member.researchInterests.map((interest: string) => (
                       <span
                         key={interest}
-                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600"
                       >
                         {interest}
                       </span>
@@ -129,7 +129,7 @@ export default function MemberDetailPage() {
 
               {profileLinks.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <h4 className="text-sm font-extrabold flex items-center gap-2">
                     <ExternalLink className="h-4 w-4" />
                     Links
                   </h4>
@@ -140,10 +140,10 @@ export default function MemberDetailPage() {
                         href={normalizeUrl(item.url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-sm"
+                        className="flex items-center justify-between p-2 rounded-md bg-slate-100/50 hover:bg-slate-100 transition-colors text-sm"
                       >
                         <span>{item.label}</span>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        <ExternalLink className="h-3 w-3 text-slate-600" />
                       </a>
                     ))}
                   </div>
@@ -151,11 +151,11 @@ export default function MemberDetailPage() {
               )}
 
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Bio</h4>
+                <h4 className="text-sm font-extrabold">Bio</h4>
                 {member.bio ? (
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{member.bio}</p>
+                  <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{member.bio}</p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No bio yet.</p>
+                  <p className="text-sm text-slate-600">No bio yet.</p>
                 )}
               </div>
             </CardContent>
@@ -188,21 +188,21 @@ export default function MemberDetailPage() {
                     <Link
                       key={pub._id}
                       href={`/publications/${pub._id}`}
-                      className="block p-4 rounded-lg border border-border hover:border-primary/30 hover:bg-primary/5 transition-all"
+                      className="block p-4 rounded-lg border border-slate-200 hover:border-primary/30 hover:bg-[hsl(211,40%,97%)] transition-all"
                     >
-                      <h4 className="font-semibold text-foreground mb-1 line-clamp-2">{pub.title}</h4>
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <h4 className="font-extrabold text-slate-900 mb-1 line-clamp-2">{pub.title}</h4>
+                      <p className="text-sm text-slate-600 mb-2">
                         {pub.authors.map((author, index) => {
                           const isCurrentUser = author === member.englishName
                           return (
                             <React.Fragment key={index}>
                               {index > 0 && ", "}
-                              <span className={isCurrentUser ? "font-bold text-muted-foreground" : ""}>{author}</span>
+                              <span className={isCurrentUser ? "font-extrabold text-slate-600" : ""}>{author}</span>
                             </React.Fragment>
                           )
                         })}
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3 text-xs text-slate-600">
                         <span className="font-medium text-primary">{pub.venue}</span>
                         <span>·</span>
                         <span>{pub.year}</span>
@@ -213,7 +213,7 @@ export default function MemberDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-8">No publications yet.</p>
+                <p className="text-slate-600 text-center py-8">No publications yet.</p>
               )}
             </CardContent>
           </Card>

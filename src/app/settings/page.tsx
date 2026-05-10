@@ -21,7 +21,7 @@ const MarkdownSplitEditor = dynamic(
   () => import("@/components/markdown/markdown-split-editor").then((mod) => mod.MarkdownSplitEditor),
   {
     ssr: false,
-    loading: () => <p className="text-sm text-muted-foreground">编辑器加载中...</p>,
+    loading: () => <p className="text-sm text-slate-600">编辑器加载中...</p>,
   }
 )
 
@@ -252,7 +252,7 @@ export default function SettingsPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-slate-600">Loading...</div>
       </div>
     )
   }
@@ -284,7 +284,7 @@ export default function SettingsPage() {
         </div>
       )}
       <div className="max-w-3xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900">Account Settings</h1>
 
         {successMessage && (
           <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md">
@@ -309,7 +309,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label>Official Photo</Label>
-              <div className="flex items-center gap-4 rounded-md border border-border/70 bg-muted/20 p-4">
+              <div className="flex items-center gap-4 rounded-md border border-slate-200/70 bg-slate-100/20 p-4">
                 <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                   {currentUser.realPhoto || currentUser.avatar ? (
                     <img src={currentUser.realPhoto || currentUser.avatar} alt="Official profile photo" className="h-full w-full object-cover" />
@@ -317,7 +317,7 @@ export default function SettingsPage() {
                     <User className="h-8 w-8 text-gray-400" />
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-600">
                   Profile photos are managed from official records and cannot be changed here.
                 </p>
               </div>
@@ -342,7 +342,7 @@ export default function SettingsPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="e.g., chenyinghan"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-600">
                 Your public profile URL will be /members/{username || "username"}.
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function SettingsPage() {
                 disabled
                 placeholder="English name on file"
               />
-              <p className="text-xs text-muted-foreground">Names are managed by administrators.</p>
+              <p className="text-xs text-slate-600">Names are managed by administrators.</p>
             </div>
 
             <div className="space-y-2">
@@ -371,7 +371,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>Personal Emails</Label>
               <PersonalEmailsInput emails={personalEmails} onChange={setPersonalEmails} />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-600">
                 Your school email, which includes your student ID, is kept on the account to protect your identity and is not displayed on your public profile. By default, only the personal email addresses you provide are shown publicly. However, if you wish to display your school email, you may add it here.
               </p>
             </div>
@@ -380,7 +380,7 @@ export default function SettingsPage() {
               <Label htmlFor="bio">Bio</Label>
               <textarea
                 id="bio"
-                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 placeholder="Tell us about yourself..."
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
@@ -413,8 +413,8 @@ export default function SettingsPage() {
 
             <div className="space-y-2">
               <Label>Research Interests</Label>
-              <div className="rounded-md border border-border/70 p-3">
-                <p className="mb-3 text-xs text-muted-foreground">
+              <div className="rounded-md border border-slate-200/70 p-3">
+                <p className="mb-3 text-xs text-slate-600">
                   Select broad research directions for member filtering. Free-form interests can be added below.
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -466,7 +466,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>Profile Links</Label>
               <UserLinksInput links={links} onChange={setLinks} />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-600">
                 Use preset link types like Homepage, Google Scholar, ORCID, GitHub, X, Xiaohongshu, LinkedIn, or add custom links.
               </p>
             </div>
@@ -533,23 +533,23 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex justify-between py-2 border-b">
-              <span className="text-muted-foreground">Email</span>
+              <span className="text-slate-600">Email</span>
               <span className="font-medium">{currentUser.email}</span>
             </div>
             <div className="flex justify-between py-2 border-b">
-              <span className="text-muted-foreground">Username</span>
+              <span className="text-slate-600">Username</span>
               <span className="font-medium">{currentUser.username}</span>
             </div>
             <div className="flex justify-between py-2 border-b">
-              <span className="text-muted-foreground">Profile URL</span>
+              <span className="text-slate-600">Profile URL</span>
               <span className="font-medium">/members/{currentUser.username || currentUser._id}</span>
             </div>
             <div className="flex justify-between py-2 border-b">
-              <span className="text-muted-foreground">Student ID</span>
+              <span className="text-slate-600">Student ID</span>
               <span className="font-medium">{currentUser.studentId}</span>
             </div>
             <div className="flex justify-between py-2 border-b">
-              <span className="text-muted-foreground">Role</span>
+              <span className="text-slate-600">Role</span>
               <span className="font-medium capitalize">{currentUser.role.replace("_", " ")}</span>
             </div>
           </CardContent>

@@ -56,7 +56,7 @@ export default function NewEventPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">创建活动</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">创建活动</h1>
           <p className="text-gray-500 mt-1">填写并创建新活动</p>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function NewEventPage() {
                 <Label htmlFor="type">活动类型</Label>
                 <select
                   id="type"
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 >

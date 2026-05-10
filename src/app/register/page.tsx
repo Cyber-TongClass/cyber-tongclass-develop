@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>公开注册已停用</CardTitle>
@@ -13,7 +13,7 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-slate-600">
             如需开通账号，请联系管理员。已有账号的同学可直接使用学号和密码登录，并在登录后前往个人设置修改密码。
           </p>
           <div className="flex flex-wrap gap-3">

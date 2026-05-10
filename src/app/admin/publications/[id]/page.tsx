@@ -240,7 +240,7 @@ export default function AdminPublicationEditorPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{isCreateMode ? "新建成果" : "编辑成果"}</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">{isCreateMode ? "新建成果" : "编辑成果"}</h1>
           <p className="text-gray-500 mt-1">{isCreateMode ? "创建新的学术成果记录" : "修改已有学术成果记录"}</p>
         </div>
       </div>
@@ -255,7 +255,7 @@ export default function AdminPublicationEditorPage() {
               <Label htmlFor="userId">归属用户</Label>
               <select
                 id="userId"
-                className="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                 value={formData.userId}
                 onChange={(event) => setFormData((previous) => ({ ...previous, userId: event.target.value }))}
                 required
@@ -298,7 +298,7 @@ export default function AdminPublicationEditorPage() {
                 <Label htmlFor="category">领域</Label>
                 <select
                   id="category"
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                   value={formData.category}
                   onChange={(event) => handleCategoryChange(event.target.value)}
                   required
@@ -323,7 +323,7 @@ export default function AdminPublicationEditorPage() {
                 <Label htmlFor="subCategory">子领域</Label>
                 <select
                   id="subCategory"
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                   value={formData.subCategory}
                   onChange={(event) => setFormData((previous) => ({ ...previous, subCategory: event.target.value }))}
                 >

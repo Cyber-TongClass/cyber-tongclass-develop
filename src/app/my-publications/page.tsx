@@ -91,7 +91,7 @@ export default function MyPublicationsPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-slate-600">Loading...</p>
       </div>
     )
   }
@@ -105,7 +105,7 @@ export default function MyPublicationsPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">个人学术</h1>
+            <h1 className="text-3xl font-extrabold text-gray-900">个人学术</h1>
             <p className="text-gray-500 mt-1">管理你发布的学术成果（新增、编辑、删除）</p>
           </div>
           <Button asChild className="bg-blue-900 hover:bg-blue-800">

@@ -45,7 +45,7 @@ export function EventsList() {
                 <CardTitle className="text-xl">{event.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col md:flex-row md:items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex flex-col md:flex-row md:items-center gap-3 text-sm text-slate-600">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     {event.date}
@@ -64,7 +64,7 @@ export function EventsList() {
                   )}
                 </div>
                 {event.description && (
-                  <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
+                  <p className="mt-3 text-sm text-slate-600 line-clamp-2">
                     {event.description}
                   </p>
                 )}
@@ -76,9 +76,9 @@ export function EventsList() {
 
       {events.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">暂无活动</h3>
-          <p className="text-muted-foreground">敬请期待 upcoming events</p>
+          <Calendar className="h-12 w-12 text-slate-600 mb-4" />
+          <h3 className="text-lg font-extrabold text-slate-900 mb-2">暂无活动</h3>
+          <p className="text-slate-600">敬请期待 upcoming events</p>
         </div>
       )}
     </div>

@@ -19,7 +19,7 @@ export default function LoginPage() {
 
 function LoginPageShell() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
       <Loader2 className="h-6 w-6 animate-spin text-primary" />
     </div>
   )
@@ -56,12 +56,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-primary">通用人工智能实验班</h1>
-            <p className="text-muted-foreground mt-1">Tong Class Official Website</p>
+            <h1 className="text-3xl font-extrabold text-primary">通用人工智能实验班</h1>
+            <p className="text-slate-600 mt-1">Tong Class Official Website</p>
           </Link>
         </div>
 
@@ -136,14 +136,14 @@ function LoginForm() {
                 )}
               </Button>
               
-              <p className="text-sm text-center text-muted-foreground">
+              <p className="text-sm text-center text-slate-600">
                 如需开通账号，请联系管理员统一创建。
               </p>
             </CardFooter>
           </form>
         </Card>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
+        <p className="text-center text-sm text-slate-600 mt-6">
           <Link href="/" className="hover:underline">
             ← 返回首页
           </Link>

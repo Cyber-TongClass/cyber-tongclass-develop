@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/hooks/use-auth"
 
@@ -199,6 +199,9 @@ export default function AdminLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
+              <SheetHeader className="sr-only">
+                <SheetTitle>管理菜单</SheetTitle>
+              </SheetHeader>
               <SidebarContent />
             </SheetContent>
           </Sheet>

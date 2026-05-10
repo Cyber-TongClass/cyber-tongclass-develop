@@ -228,7 +228,7 @@ export default function UserFormPage() {
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">用户不存在</h1>
+          <h1 className="text-2xl font-extrabold">用户不存在</h1>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -246,16 +246,16 @@ export default function UserFormPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{isCreateMode ? "新建用户" : "编辑用户"}</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">{isCreateMode ? "新建用户" : "编辑用户"}</h1>
           <p className="text-gray-500 mt-1">{isCreateMode ? "创建成员或管理员账号" : "修改用户信息与角色权限"}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="border-border/60 shadow-sm">
+        <Card className="border-slate-200/60 shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">{isCreateMode ? "用户注册信息" : "用户信息"}</CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-600">
               {isCreateMode ? "学校邮箱需与组织和学号匹配，创建后可立即登录。" : "保存后会立即同步到用户列表。"}
             </p>
           </CardHeader>
@@ -336,7 +336,7 @@ export default function UserFormPage() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
-                <p className="text-xs text-muted-foreground">建议格式：{expectedEmailHint}</p>
+                <p className="text-xs text-slate-600">建议格式：{expectedEmailHint}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">角色</Label>
@@ -390,7 +390,7 @@ export default function UserFormPage() {
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     minLength={8}
                   />
-                  <p className="text-xs text-muted-foreground">仅超级管理员可直接重置他人密码，无需原密码。</p>
+                  <p className="text-xs text-slate-600">仅超级管理员可直接重置他人密码，无需原密码。</p>
                 </div>
               )}
             </div>
@@ -404,17 +404,17 @@ export default function UserFormPage() {
                 onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
                 placeholder="https://example.com/profile-photo.jpg"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-600">
                 管理员维护统一头像链接，保存时会同时写入 `realPhoto` 和 `avatar`。
               </p>
               {formData.photoUrl.trim() ? (
-                <div className="flex items-center gap-4 rounded-md border border-border/70 bg-muted/20 p-4">
+                <div className="flex items-center gap-4 rounded-md border border-slate-200/70 bg-slate-100/20 p-4">
                   <img
                     src={formData.photoUrl}
                     alt="头像预览"
-                    className="h-20 w-20 rounded-full object-cover bg-muted"
+                    className="h-20 w-20 rounded-full object-cover bg-slate-100"
                   />
-                  <p className="text-sm text-muted-foreground break-all">{formData.photoUrl}</p>
+                  <p className="text-sm text-slate-600 break-all">{formData.photoUrl}</p>
                 </div>
               ) : null}
             </div>
@@ -425,14 +425,14 @@ export default function UserFormPage() {
                 emails={formData.personalEmails}
                 onChange={(personalEmails) => setFormData({ ...formData, personalEmails })}
               />
-              <p className="text-xs text-muted-foreground">学校邮箱用于账号身份识别，不会在成员主页公开展示。</p>
+              <p className="text-xs text-slate-600">学校邮箱用于账号身份识别，不会在成员主页公开展示。</p>
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="bio">Bio</Label>
               <textarea
                 id="bio"
-                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 placeholder="Tell us about this user..."
