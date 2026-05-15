@@ -26,6 +26,7 @@ const navigation = [
   { name: "资源", href: "/resources" },
   { name: "课程", href: "/courses", auth: true },
   { name: "活动", href: "/events", auth: true },
+  { name: "内网", href: "/intranet", auth: true, loggedInOnly: true },
 ]
 
 export function Navbar() {
@@ -67,7 +68,9 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-1">
-          {navigation.map((item) => (
+          {navigation
+            .filter((item) => !(item as any).loggedInOnly || isAuthenticated)
+            .map((item) => (
             <Link
               key={item.name}
               href={resolveHref(item.href, item.auth)}
@@ -175,7 +178,9 @@ export function Navbar() {
                 <SheetTitle className="text-left">菜单</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col space-y-2 mt-4">
-                {navigation.map((item) => (
+                {navigation
+                  .filter((item) => !(item as any).loggedInOnly || isAuthenticated)
+                  .map((item) => (
                   <Link
                     key={item.name}
                     href={resolveHref(item.href, item.auth)}

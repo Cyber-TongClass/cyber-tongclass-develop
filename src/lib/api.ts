@@ -220,6 +220,72 @@ export function useNewsCount(args?: { category?: string }) {
   return useQuery(api.news.count, args || {})
 }
 
+// ==================== 内网相关 ====================
+
+export function useTreeholePosts(args?: { search?: string }) {
+  return useQuery(api.treehole.list, args || {})
+}
+
+export function useTreeholePostById(id?: string | null) {
+  return useQuery(api.treehole.getById, id ? ({ id: id as any } as any) : "skip")
+}
+
+export function useAdminTreeholePosts(args?: { actorId?: string | null; search?: string }) {
+  return useQuery(
+    api.treehole.listAdmin,
+    args?.actorId ? ({ actorId: args.actorId as any, search: args.search } as any) : "skip"
+  )
+}
+
+export function useAdminTreeholePostById(id?: string | null, actorId?: string | null) {
+  return useQuery(
+    api.treehole.getByIdAdmin,
+    id && actorId ? ({ id: id as any, actorId: actorId as any } as any) : "skip"
+  )
+}
+
+export function useCreateTreeholePost() {
+  return useMutation(api.treehole.createPost)
+}
+
+export function useCreateTreeholeReply() {
+  return useMutation(api.treehole.createReply)
+}
+
+export function useDeleteTreeholePost() {
+  return useMutation(api.treehole.removePost)
+}
+
+export function useDeleteTreeholeReply() {
+  return useMutation(api.treehole.removeReply)
+}
+
+export function useFeedbackEntries() {
+  return useQuery(api.feedback.list)
+}
+
+export function useAdminFeedbackEntries(args?: { actorId?: string | null; search?: string }) {
+  return useQuery(
+    api.feedback.listAdmin,
+    args?.actorId ? ({ actorId: args.actorId as any, search: args.search } as any) : "skip"
+  )
+}
+
+export function useMonthlyFeedbackExport(month?: string | null, actorId?: string | null) {
+  return useQuery(
+    api.feedback.exportMonthlyForAdmin,
+    month && actorId ? ({ month, actorId: actorId as any } as any) : "skip"
+  )
+}
+
+export function useCreateFeedbackEntry() {
+  return useMutation(api.feedback.create)
+}
+
+export function useDeleteFeedbackEntry() {
+  return useMutation(api.feedback.remove)
+}
+
 // ==================== 活动相关 ====================
 
 export function useEvents(args?: { fromDate?: string; toDate?: string; skip?: number; limit?: number }) {

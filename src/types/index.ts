@@ -106,6 +106,9 @@ export interface News {
   title: string
   content: string // Markdown
   sourceUrl?: string
+  coverImageUrl?: string
+  showOnHomepage?: boolean
+  homepageSubtitle?: string
   authorId: string
   authorName?: string // Custom author name
   category: string
@@ -129,6 +132,68 @@ export interface Event {
   color: string // For calendar display
   createdAt: number
   updatedAt: number
+}
+
+export interface TreeholePostSummary {
+  _id: string
+  title: string
+  content: string
+  isAnonymous: boolean
+  authorId: string
+  publicAuthorName: string
+  realAuthorName: string
+  anonymousAlias?: string
+  replyCount: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface TreeholeReply {
+  _id: string
+  postId: string
+  content: string
+  isAnonymous: boolean
+  authorId: string
+  publicAuthorName: string
+  realAuthorName: string
+  anonymousAlias?: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface TreeholePostDetail {
+  post: TreeholePostSummary
+  replies: TreeholeReply[]
+}
+
+export interface AdminTreeholePostSummary extends TreeholePostSummary {
+  authorOrganization?: "pku" | "thu"
+  authorCohort?: number | "mascot"
+}
+
+export interface AdminTreeholePostDetail {
+  post: AdminTreeholePostSummary
+  replies: Array<TreeholeReply & {
+    authorOrganization?: "pku" | "thu"
+    authorCohort?: number | "mascot"
+  }>
+}
+
+export interface FeedbackEntry {
+  _id: string
+  title: string
+  content: string
+  isAnonymous: boolean
+  authorId: string
+  publicAuthorName: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface AdminFeedbackEntry extends FeedbackEntry {
+  realAuthorName: string
+  authorOrganization?: "pku" | "thu"
+  authorCohort?: number | "mascot"
 }
 
 // Auth types

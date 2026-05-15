@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { useConfirmDialog } from "@/components/ui/confirm-dialog"
 import { MoreHorizontal, Plus, Search, Filter, Trash2, Edit, Eye, Send, XCircle } from "lucide-react"
 import { useAllNews, useDeleteNews, useUpdateNews } from "@/lib/api"
+import { NEWS_CATEGORY_OPTIONS } from "@/lib/news"
 
 const statusLabels: Record<string, string> = {
   published: "已发布",
@@ -45,11 +46,6 @@ export default function NewsPage() {
   const newsList = newsData || []
   const deleteNewsMutation = useDeleteNews()
   const updateNewsMutation = useUpdateNews()
-
-  const categoryLabels = useMemo(() => {
-    const categories = Array.from(new Set(newsList.map((item: any) => item.category))).sort((a: string, b: string) => a.localeCompare(b))
-    return Object.fromEntries(categories.map((category: string) => [category, category]))
-  }, [newsList])
 
   const filteredNews = newsList
     .filter((news: any) => {
@@ -79,11 +75,11 @@ export default function NewsPage() {
       title: `确认${actionLabel}新闻`,
       description: `确定要${actionLabel}《${news.title}》吗？`,
       confirmLabel: actionLabel,
-      onConfirm: async () => {
+          onConfirm: async () => {
         await updateNewsMutation({
           id: news._id,
           isPublished: nextStatus === "published",
-          publishedAt: nextStatus === "published" ? Date.now() : news.publishedAt,
+          publishedAt: nextStatus === "published" ? news.publishedAt || Date.now() : news.publishedAt,
         })
       },
     })
@@ -125,9 +121,9 @@ export default function NewsPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={() => setCategoryFilter(null)}>全部分类</DropdownMenuItem>
-                {Object.entries(categoryLabels).map(([key, label]) => (
-                  <DropdownMenuItem key={key} onClick={() => setCategoryFilter(key)}>
-                    {label}
+                {NEWS_CATEGORY_OPTIONS.map((category) => (
+                  <DropdownMenuItem key={category} onClick={() => setCategoryFilter(category)}>
+                    {category}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -156,7 +152,6 @@ export default function NewsPage() {
               <TableRow>
                 <TableHead>标题</TableHead>
                 <TableHead>分类</TableHead>
-                <TableHead>作者</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead>发布时间</TableHead>
                 <TableHead>创建时间</TableHead>
@@ -172,7 +167,6 @@ export default function NewsPage() {
                     <TableCell>
                       <Badge className="bg-slate-100 text-slate-800">{news.category}</Badge>
                     </TableCell>
-                    <TableCell>{news.authorName || "匿名"}</TableCell>
                     <TableCell>
                       <Badge className={statusColors[status]}>{statusLabels[status]}</Badge>
                     </TableCell>

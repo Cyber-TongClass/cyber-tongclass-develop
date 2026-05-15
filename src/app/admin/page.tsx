@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, FileText, Calendar, Star, BarChart3, BookOpen } from "lucide-react"
+import { Users, FileText, Calendar, Star, BarChart3, BookOpen, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { useUsers, useNews, useEvents, useCourseListWithReviews, usePendingReviews } from "@/lib/api"
 
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
       nextActivities.push({
         key: `news-${item._id}`,
         action: item.isPublished ? "发布新闻" : "保存新闻草稿",
-        user: item.authorName || "匿名",
+        user: "管理员",
         timestamp: item.updatedAt,
       })
     })
@@ -114,6 +114,8 @@ export default function AdminDashboard() {
       { href: "/admin/news", label: "新闻管理", icon: FileText },
       { href: "/admin/events", label: "活动管理", icon: Calendar },
       { href: "/admin/reviews", label: "课程测评", icon: Star },
+      { href: "/admin/treehole", label: "树洞管理", icon: MessageSquare },
+      { href: "/admin/feedback", label: "反馈管理", icon: FileText },
     ],
     []
   )

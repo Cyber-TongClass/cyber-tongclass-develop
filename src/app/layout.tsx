@@ -7,12 +7,12 @@ import { ConvexAuthClientProvider } from "@/lib/convex-client"
 
 export const metadata: Metadata = {
   title: "通班官方网站 | Tong Class",
-  description: "北京大学 & 清华大学 人工智能创新人才培养项目官方网站",
+  description: "北京大学 & 清华大学 通用人工智能实验班官方网站",
   keywords: ["人工智能", "通班", "PKU", "THU", "AI", "Machine Learning"],
   authors: [{ name: "Tong Class" }],
   openGraph: {
     title: "通班官方网站 | Tong Class",
-    description: "北京大学 & 清华大学 人工智能创新人才培养项目官方网站",
+    description: "北京大学 & 清华大学 通用人工智能实验班官方网站",
     url: "https://tongclass.ac.cn",
     siteName: "Tong Class",
     locale: "zh_CN",

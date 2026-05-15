@@ -10,24 +10,39 @@ import { ArrowLeft, Save } from "lucide-react"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { useCreateNews } from "@/lib/api"
 import { MarkdownSplitEditor } from "@/components/markdown/markdown-split-editor"
+import { formatNewsDateInputValue, NEWS_CATEGORY_OPTIONS, parseNewsDateInputValue, type NewsCategory } from "@/lib/news"
 
-const categoryOptions = ["学术成果", "课程安排", "活动预告", "活动回顾", "通知公告"]
 const statusOptions = [
   { value: "draft", label: "草稿" },
   { value: "published", label: "已发布" },
 ]
+
+type NewsFormState = {
+  title: string
+  category: NewsCategory
+  status: "draft" | "published"
+  publishedDate: string
+  sourceUrl: string
+  coverImageUrl: string
+  showOnHomepage: boolean
+  homepageSubtitle: string
+  content: string
+}
 
 export default function NewNewsPage() {
   const router = useRouter()
   const { currentUser } = useAuth()
   const createNews = useCreateNews()
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<NewsFormState>({
     title: "",
-    category: "学术成果",
-    author: "",
+    category: NEWS_CATEGORY_OPTIONS[0],
     status: "draft",
+    publishedDate: formatNewsDateInputValue(Date.now()),
     sourceUrl: "",
+    coverImageUrl: "",
+    showOnHomepage: false,
+    homepageSubtitle: "",
     content: "",
   })
 
@@ -35,15 +50,22 @@ export default function NewNewsPage() {
     e.preventDefault()
 
     try {
+      if (formData.showOnHomepage && !formData.coverImageUrl.trim()) {
+        window.alert("勾选首页轮播时，请同时填写封面图链接。")
+        return
+      }
+
       await createNews({
         title: formData.title,
         category: formData.category,
         content: formData.content,
         sourceUrl: formData.sourceUrl || undefined,
+        coverImageUrl: formData.coverImageUrl || undefined,
+        showOnHomepage: formData.showOnHomepage,
+        homepageSubtitle: formData.homepageSubtitle || undefined,
         authorId: currentUser?._id as any,
-        authorName: formData.author,
         isPublished: formData.status === "published",
-        publishedAt: formData.status === "published" ? Date.now() : undefined,
+        publishedAt: parseNewsDateInputValue(formData.publishedDate),
       })
 
       router.push("/admin/news")
@@ -86,9 +108,9 @@ export default function NewNewsPage() {
                   id="category"
                   className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as NewsCategory })}
                 >
-                  {categoryOptions.map((cat) => (
+                  {NEWS_CATEGORY_OPTIONS.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
@@ -96,21 +118,12 @@ export default function NewNewsPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="author">作者</Label>
-                <Input
-                  id="author"
-                  value={formData.author}
-                  onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="status">状态</Label>
                 <select
                   id="status"
                   className="w-full h-10 px-3 rounded-md border border-input bg-white focus:outline-none focus:ring-2 focus:ring-ring"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as "draft" | "published" })}
                 >
                   {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -118,6 +131,15 @@ export default function NewNewsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="publishedDate">展示日期</Label>
+                <Input
+                  id="publishedDate"
+                  type="date"
+                  value={formData.publishedDate}
+                  onChange={(e) => setFormData({ ...formData, publishedDate: e.target.value })}
+                />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="sourceUrl">Original Source URL</Label>
@@ -128,6 +150,43 @@ export default function NewNewsPage() {
                   value={formData.sourceUrl}
                   onChange={(e) => setFormData({ ...formData, sourceUrl: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="coverImageUrl">封面图链接</Label>
+                <Input
+                  id="coverImageUrl"
+                  type="url"
+                  placeholder="https://example.com/news-cover.jpg"
+                  value={formData.coverImageUrl}
+                  onChange={(e) => setFormData({ ...formData, coverImageUrl: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">请填写可公开访问的图片直链。新闻列表页会按固定比例裁切显示。</p>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="homepageSubtitle">首页轮播副标题（选填）</Label>
+                <Input
+                  id="homepageSubtitle"
+                  value={formData.homepageSubtitle}
+                  onChange={(e) => setFormData({ ...formData, homepageSubtitle: e.target.value })}
+                  placeholder="用于首页轮播主标题下方的小字说明"
+                />
+              </div>
+              <div className="md:col-span-2 flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
+                <input
+                  id="showOnHomepage"
+                  type="checkbox"
+                  checked={formData.showOnHomepage}
+                  onChange={(e) => setFormData({ ...formData, showOnHomepage: e.target.checked })}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="showOnHomepage" className="cursor-pointer">
+                    在首页轮播展示
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    勾选后，这条已发布新闻会出现在首页顶部轮播中，标签使用分类，背景图使用封面图链接。
+                  </p>
+                </div>
               </div>
             </div>
             <div className="space-y-2">

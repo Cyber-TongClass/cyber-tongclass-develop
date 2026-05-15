@@ -2,54 +2,82 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ArrowRight, BookOpen, Users, FileText, Award, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-const featuredSlides = [
-  {
-    title: "通班学术周启动：跨校联合研究论坛",
-    description: "聚焦多模态模型与具身智能，邀请北大与清华导师联合分享最新研究进展。",
-    category: "学术活动",
-    href: "/news/1",
-    image:
-      "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=1600&q=80",
-  },
-  {
-    title: "课程测评系统升级上线",
-    description: "支持按课程聚合、评分排序与检索，帮助成员快速筛选课程经验。",
-    category: "系统更新",
-    href: "/resources",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80",
-  },
-  {
-    title: "最新成果发布：高效推理系统获顶会录用",
-    description: "通班学生在AI Systems方向取得新突破，论文入选OSDI相关研讨会。",
-    category: "成果发布",
-    href: "/publications",
-    image:
-      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1600&q=80",
-  },
-]
+import { useNews } from "@/lib/api"
 
 export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0)
+  const newsItems = useNews({ limit: 50 })
+  const featuredSlides = useMemo(() => {
+    if (!newsItems) return []
+
+    return [...newsItems]
+      .filter((item) => item.showOnHomepage && item.coverImageUrl)
+      .sort((a, b) => b.publishedAt - a.publishedAt)
+      .map((item) => {
+        const normalizedContent = item.content.trim()
+        const shouldOpenOriginalDirectly =
+          !!item.sourceUrl && (!normalizedContent || normalizedContent === "暂无内容")
+
+        return {
+          id: item._id,
+          title: item.title,
+          description: item.homepageSubtitle?.trim() || "",
+          category: item.category,
+          href: shouldOpenOriginalDirectly ? item.sourceUrl! : `/news/${item._id}`,
+          isExternal: shouldOpenOriginalDirectly,
+          image: item.coverImageUrl!,
+        }
+      })
+  }, [newsItems])
 
   useEffect(() => {
+    if (featuredSlides.length <= 1) return
+
     const timer = window.setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % featuredSlides.length)
     }, 5000)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [featuredSlides])
+
+  useEffect(() => {
+    if (activeSlide >= featuredSlides.length) {
+      setActiveSlide(0)
+    }
+  }, [activeSlide, featuredSlides.length])
 
   return (
     <div className="flex flex-col">
-      <section className="relative w-full h-[360px] md:h-[480px] overflow-hidden border-b border-slate-200">
+      <section className="relative w-full h-[360px] md:h-[480px] overflow-hidden border-b border-slate-200 bg-slate-950">
+        {featuredSlides.length === 0 ? (
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800" />
+            <div className="container-custom relative h-full flex items-center">
+              <div className="max-w-2xl text-white">
+                <p className="inline-flex mb-4 text-xs tracking-wide uppercase bg-white/20 px-3 py-1 rounded-full">
+                  首页轮播
+                </p>
+                <h1 className="text-3xl md:text-5xl font-extrabold leading-tight mb-4">欢迎来到北大通班</h1>
+                <p className="text-white/90 text-base md:text-lg mb-6">
+                  当前还没有勾选“在首页轮播展示”的已发布动态。你可以在后台新闻管理中为动态开启首页轮播。
+                </p>
+                <Button asChild size="lg" className="gap-2">
+                  <Link href="/news">
+                    查看动态 <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
         {featuredSlides.map((slide, idx) => (
           <div
-            key={slide.title}
-            className={`absolute inset-0 transition-opacity duration-700 ${idx === activeSlide ? "opacity-100" : "opacity-0"}`}
+            key={slide.id}
+            className={`absolute inset-0 transition-opacity duration-700 ${
+              idx === activeSlide ? "opacity-100 pointer-events-auto z-10" : "opacity-0 pointer-events-none z-0"
+            }`}
           >
             <div
               className="absolute inset-0 bg-cover bg-center"
@@ -63,22 +91,30 @@ export default function HomePage() {
                   {slide.category}
                 </p>
                 <h1 className="text-3xl md:text-5xl font-extrabold leading-tight mb-4">{slide.title}</h1>
-                <p className="text-white/90 text-base md:text-lg mb-6">{slide.description}</p>
+                {slide.description ? (
+                  <p className="text-white/90 text-base md:text-lg mb-6">{slide.description}</p>
+                ) : null}
                 <Button asChild size="lg" className="gap-2">
-                  <Link href={slide.href}>
-                    查看详情 <ArrowRight className="h-4 w-4" />
-                  </Link>
+                  {slide.isExternal ? (
+                    <a href={slide.href} target="_blank" rel="noopener noreferrer">
+                      查看详情 <ArrowRight className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <Link href={slide.href}>
+                      查看详情 <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  )}
                 </Button>
               </div>
             </div>
           </div>
         ))}
 
-        <div className="absolute left-4 right-4 bottom-4 flex items-center justify-between">
+        <div className="absolute left-4 right-4 bottom-4 z-20 flex items-center justify-between">
           <div className="flex gap-2">
             {featuredSlides.map((slide, idx) => (
               <button
-                key={slide.title}
+                key={slide.id}
                 onClick={() => setActiveSlide(idx)}
                 className={`h-2.5 rounded-full transition-all ${idx === activeSlide ? "w-8 bg-white" : "w-2.5 bg-white/50"}`}
                 aria-label={`切换到第 ${idx + 1} 张`}
@@ -90,6 +126,7 @@ export default function HomePage() {
               variant="secondary"
               size="icon"
               className="bg-white/20 text-white hover:bg-white/30 border border-white/30"
+              disabled={featuredSlides.length <= 1}
               onClick={() => setActiveSlide((prev) => (prev - 1 + featuredSlides.length) % featuredSlides.length)}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -98,6 +135,7 @@ export default function HomePage() {
               variant="secondary"
               size="icon"
               className="bg-white/20 text-white hover:bg-white/30 border border-white/30"
+              disabled={featuredSlides.length <= 1}
               onClick={() => setActiveSlide((prev) => (prev + 1) % featuredSlides.length)}
             >
               <ChevronRight className="h-4 w-4" />
@@ -110,8 +148,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="absolute left-4 sm:left-6 lg:left-8 top-1/2 -translate-y-1/2 text-[5rem] md:text-[8rem] lg:text-[10rem] font-extrabold uppercase tracking-[0.15em] text-[hsl(35,40%,55%)]/10 select-none pointer-events-none whitespace-nowrap leading-none" aria-hidden="true">TONG CLASS</div>
           <div className="max-w-3xl mx-auto text-center space-y-6 relative">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-balance tracking-tight text-slate-900">人工智能创新人才培养</h2>
-            <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto">北京大学 & 清华大学 联合培养项目</p>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-balance tracking-tight text-slate-900">通用人工智能实验班</h2>
+            <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto">北京大学 & 清华大学</p>
             <p className="text-slate-500">北京大学与清华大学于2021年联合创立，致力于培养具有国际视野的下一代人工智能领军人才</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button asChild size="lg" className="gap-2">
@@ -173,14 +211,14 @@ export default function HomePage() {
             ].map((feature) => (
               <div
                 key={feature.title}
-                className="group overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
+                className="overflow-hidden bg-white shadow-sm"
               >
                 <div className="aspect-[3/2] w-full bg-slate-100 overflow-hidden relative">
                   <Image
                     src={feature.image}
                     alt={feature.title}
                     fill
-                    className={`${feature.fit || "object-cover"} group-hover:scale-105 transition-transform duration-500`}
+                    className={feature.fit || "object-cover"}
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />

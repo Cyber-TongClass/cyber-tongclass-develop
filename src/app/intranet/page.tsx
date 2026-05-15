@@ -1,61 +1,31 @@
 "use client"
 
-import Link from "next/link"
-import { Lock, MessageSquare, Shield, Link as LinkIcon } from "lucide-react"
-import { useAuth } from "@/lib/hooks/use-auth"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileText, Link as LinkIcon, MessageSquare } from "lucide-react"
+import { IntranetSectionCard } from "@/components/intranet/intranet-section-card"
+import { INTRANET_WPS_URL } from "@/lib/intranet"
 
 const intranetSections = [
   {
-    title: "Anonymous Board",
-    description: "Member-only anonymous discussions. Moderation and abuse controls should be finished before launch.",
+    title: "通班树洞",
+    description: "面向通班成员的内部讨论区。可以实名或匿名发帖、回复，交流学习生活中的想法、困惑......",
     icon: MessageSquare,
+    href: "/intranet/treehole",
   },
   {
-    title: "Internal Notes",
-    description: "Private notes and references that are useful to members but should not be indexed publicly.",
-    icon: Shield,
+    title: "意见反馈",
+    description: "用于收集同学们对通班学习、科研、课程、活动、组织运行等方面的建议，管理员会定期收集整理并向院办/管委会汇报。",
+    icon: FileText,
+    href: "/intranet/feedback",
   },
   {
-    title: "Private Links",
-    description: "Access-controlled links for shared tools, documents, and workflows.",
+    title: "通班工作 WPS",
+    description: "想参与通班自治委员会工作的同学，可在这里申请加入通班 WPS workspace，获得历年学生工作材料资源。",
     icon: LinkIcon,
+    href: "/intranet/wps",
   },
 ]
 
 export default function IntranetPage() {
-  const { isAuthenticated, isLoading } = useAuth()
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-slate-600">Loading...</p>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5" />
-              Member-only Intranet
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600">Please sign in with your student ID to access internal resources.</p>
-            <Button asChild className="w-full">
-              <Link href={`/login?next=${encodeURIComponent("/intranet")}`}>Sign In</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-white">
       <section className="bg-primary relative overflow-hidden">
@@ -65,31 +35,24 @@ export default function IntranetPage() {
             <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">内部网站</h1>
           </div>
           <p className="text-lg text-white/70 max-w-2xl relative">
-            这是一个近面向通班成员的内部网站，包含讨论区、内部资源和私密链接等。请不要将此网页内的内部资源分享到公开渠道哦～
+            这是一个仅面向通班成员的内部网站，包含内部论坛、意见反馈、内部工具和协作入口等内容。请不要将此网页的内部资源分享到公开渠道哦～
           </p>
         </div>
       </section>
 
       <section className="bg-[hsl(211,30%,97%)] py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          {intranetSections.map((section) => {
-            const Icon = section.icon
-            return (
-              <Card key={section.title}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Icon className="h-5 w-5 text-primary" />
-                    {section.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600">{section.description}</p>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {intranetSections.map((section) => (
+              <IntranetSectionCard
+                key={section.title}
+                href={section.href}
+                title={section.title}
+                description={section.description}
+                icon={section.icon}
+              />
+            ))}
+          </div>
         </div>
       </section>
     </div>

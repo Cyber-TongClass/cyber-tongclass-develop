@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Search, Newspaper, User, Clock } from "lucide-react"
+import { Search, Newspaper, Clock } from "lucide-react"
 
 const MONTH_ABBRS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 import { Input } from "@/components/ui/input"
@@ -16,31 +16,22 @@ import {
 } from "@/components/ui/select"
 import { useNews } from "@/lib/api"
 import type { News } from "@/types"
+import { NEWS_CATEGORY_OPTIONS } from "@/lib/news"
 
 // 新闻分类
 const categories = [
   { value: "all", label: "全部分类" },
-  { value: "学术成果", label: "学术成果" },
-  { value: "课程安排", label: "课程安排" },
-  { value: "活动预告", label: "活动预告" },
-  { value: "活动回顾", label: "活动回顾" },
-  { value: "通知公告", label: "通知公告" },
+  ...NEWS_CATEGORY_OPTIONS.map((category) => ({ value: category, label: category })),
 ]
 
 export default function NewsPage() {
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedCategory, setSelectedCategory] = React.useState("all")
-  const [selectedAuthor, setSelectedAuthor] = React.useState("all")
 
   // Fetch news from Convex
   const newsData = useNews()
   const news: News[] = newsData || []
   const isLoading = !newsData
-
-  // 获取所有唯一作者
-  const authors = Array.from(
-    new Set(news.map((item) => item.authorName).filter((name): name is string => Boolean(name)))
-  )
 
   // 筛选新闻
   const filteredNews = news
@@ -56,13 +47,9 @@ export default function NewsPage() {
       if (selectedCategory !== "all" && item.category !== selectedCategory) {
         return false
       }
-      // 作者筛选
-      if (selectedAuthor !== "all" && item.authorName !== selectedAuthor) {
-        return false
-      }
       return true
     })
-    .sort((a, b) => b.createdAt - a.createdAt)
+    .sort((a, b) => b.publishedAt - a.publishedAt)
 
   // 按时间轴分组
   const groupedNews = React.useMemo(() => {
@@ -139,34 +126,13 @@ export default function NewsPage() {
                 </SelectContent>
               </Select>
 
-              {/* Author Filter */}
-              <Select
-                value={selectedAuthor}
-                onValueChange={setSelectedAuthor}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="选择作者" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部作者</SelectItem>
-                  {authors.map((author) => (
-                    <SelectItem key={author} value={author}>
-                      {author}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
               {/* Clear Filters */}
-              {(selectedCategory !== "all" ||
-                selectedAuthor !== "all" ||
-                searchQuery) && (
+              {(selectedCategory !== "all" || searchQuery) && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => {
                     setSelectedCategory("all")
-                    setSelectedAuthor("all")
                     setSearchQuery("")
                   }}
                 >
@@ -236,7 +202,8 @@ export default function NewsPage() {
                                 rel={item.sourceUrl ? "noopener noreferrer" : undefined}
                               >
                                 <div className="group bg-white p-6 shadow-sm hover:bg-slate-50 border-l-[3px] border-transparent hover:border-primary transition-all duration-200">
-                                  <div>
+                                  <div className="flex flex-col gap-4 md:flex-row md:items-start">
+                                    <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                       <span className="px-2.5 py-0.5 text-xs font-medium tracking-wide uppercase rounded-full bg-primary text-white">
                                         {item.category}
@@ -252,10 +219,16 @@ export default function NewsPage() {
                                     <p className="text-sm text-slate-600 line-clamp-2 mt-2">
                                       {item.content}
                                     </p>
-                                    <div className="flex items-center gap-2 mt-3 text-xs text-slate-400">
-                                      <User className="h-3 w-3" />
-                                      <span>{item.authorName || "匿名"}</span>
                                     </div>
+                                    {item.coverImageUrl ? (
+                                      <div className="h-24 w-full overflow-hidden rounded-md bg-slate-100 md:h-24 md:w-40 md:shrink-0">
+                                        <img
+                                          src={item.coverImageUrl}
+                                          alt={item.title}
+                                          className="h-full w-full object-cover"
+                                        />
+                                      </div>
+                                    ) : null}
                                   </div>
                                 </div>
                               </Link>

@@ -114,6 +114,9 @@ export default defineSchema({
     title: v.string(),
     content: v.string(),
     sourceUrl: v.optional(v.string()),
+    coverImageUrl: v.optional(v.string()),
+    showOnHomepage: v.optional(v.boolean()),
+    homepageSubtitle: v.optional(v.string()),
     authorId: v.id("users"),
     authorName: v.optional(v.string()),
     category: v.string(),
@@ -158,6 +161,37 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_name", ["name"]),
+
+  treeholePosts: defineTable({
+    title: v.string(),
+    content: v.string(),
+    isAnonymous: v.boolean(),
+    authorId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_author", ["authorId"]),
+
+  treeholeReplies: defineTable({
+    postId: v.id("treeholePosts"),
+    content: v.string(),
+    isAnonymous: v.boolean(),
+    authorId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_post", ["postId"])
+    .index("by_author", ["authorId"]),
+
+  feedbackEntries: defineTable({
+    title: v.string(),
+    content: v.string(),
+    isAnonymous: v.boolean(),
+    authorId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_author", ["authorId"]),
 
   // Auth config table (for pre-registered student IDs)
   authConfig: defineTable({

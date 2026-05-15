@@ -2,18 +2,16 @@
 
 import { useState, useMemo } from "react"
 import Link from "next/link"
-import { Search, FileText, Calendar, User } from "lucide-react"
+import { Search, FileText, Calendar } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useNews } from "@/lib/api"
 import type { News } from "@/types"
+import { NEWS_CATEGORY_OPTIONS } from "@/lib/news"
 
 const categories = [
   { value: "all", label: "全部分类" },
-  { value: "学术成果", label: "学术成果" },
-  { value: "课程安排", label: "课程安排" },
-  { value: "活动回顾", label: "活动回顾" },
-  { value: "通知公告", label: "通知公告" },
+  ...NEWS_CATEGORY_OPTIONS.map((category) => ({ value: category, label: category })),
 ]
 
 export function NewsList() {
@@ -122,10 +120,6 @@ export function NewsList() {
                         <p className="text-sm text-slate-600 line-clamp-2 mb-3">
                           {item.content}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-slate-600">
-                          <User className="h-3 w-3" />
-                          {item.authorName}
-                        </div>
                       </CardContent>
                     </Card>
                   </Link>

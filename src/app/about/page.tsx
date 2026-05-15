@@ -154,12 +154,9 @@ export default function AboutPage() {
                   <div className="w-12 h-12 bg-[hsl(211,50%,93%)] text-primary rounded-full flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
                     <Users className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-extrabold text-slate-900 mb-2">Discord 社区</h3>
-                  <p className="text-slate-500 text-sm mb-2">加入社区与同学交流、分享资源</p>
-                  <a href="#" className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
-                    <ExternalLink className="h-3 w-3" />
-                    加入社区
-                  </a>
+                  <h3 className="text-lg font-extrabold text-slate-900 mb-2">微信视频号</h3>
+                  <p className="text-slate-500 text-sm mb-2">观看通班精彩影音内容</p>
+                  <p className="text-sm font-medium text-slate-900">视频号：PKU通班</p>
                 </div>
               </div>
             </div>

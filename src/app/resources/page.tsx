@@ -7,7 +7,7 @@ const publicResources = [
     id: "survival-guide",
     title: "通班生存指南",
     description: "写给北大通班学生的人工智能专业学习指南，涵盖入学指南、课程选择、编程入门、资源推荐、科研入门建议等内容，由历届通班学生参与编写维护。",
-    href: "https://mp.weixin.qq.com/s/VTrU9rTwAmkyUegasjPFNw",
+    href: "https://mp.weixin.qq.com/mp/appmsgalbum?__biz=Mzk1Nzg0MzM0OQ==&action=getalbum&album_id=4091076469172944898&scene=126#wechat_redirect",
     image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=800&q=80",
     external: true,
   },

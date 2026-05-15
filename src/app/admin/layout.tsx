@@ -10,6 +10,7 @@ import {
   BookOpen,
   Calendar,
   Star,
+  MessageSquare,
   Settings,
   LogOut,
   Menu,
@@ -28,6 +29,8 @@ const navItems = [
   { href: "/admin/publications", label: "成果管理", icon: BookOpen },
   { href: "/admin/news", label: "新闻管理", icon: FileText },
   { href: "/admin/events", label: "活动管理", icon: Calendar },
+  { href: "/admin/treehole", label: "树洞管理", icon: MessageSquare },
+  { href: "/admin/feedback", label: "反馈管理", icon: FileText },
 ]
 
 export default function AdminLayout({
@@ -40,7 +43,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { isAuthenticated, isAdmin, isSuperAdmin, isLoading } = useAuth()
 
-  const adminAllowedPrefixes = ["/admin/news", "/admin/events", "/admin/reviews"]
+  const adminAllowedPrefixes = ["/admin/news", "/admin/events", "/admin/reviews", "/admin/treehole", "/admin/feedback"]
   const isAdminAllowed =
     isSuperAdmin || adminAllowedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 
@@ -111,9 +114,9 @@ export default function AdminLayout({
             <CardTitle>管理员后台</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600">作为管理员，你可以管理课程测评、新闻和活动。如需管理成员，请联系超级管理员。</p>
+            <p className="text-sm text-gray-600">作为管理员，你可以管理课程测评、新闻、活动以及内网内容。如需管理成员，请联系超级管理员。</p>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/admin/reviews">前往课程测评、新闻和活动管理</Link>
+              <Link href="/admin/reviews">前往课程测评、新闻、活动和内网管理</Link>
             </Button>
           </CardContent>
         </Card>
