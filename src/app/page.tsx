@@ -254,7 +254,7 @@ export default function HomePage() {
                 date: "2026-03",
                 description: "北京大学2025级通用人工智能实验班建班仪式在通研院举行，朱松纯院长等师长寄语新生。",
                 badgeBg: "bg-[hsl(211,50%,93%)]",
-                image: "https://cdn.jsdelivr.net/gh/Cyber-TongClass/news-assets@main/news%20images/%E5%8C%97%E4%BA%AC%E5%A4%A7%E5%AD%A62025%E7%BA%A7%E9%80%9A%E7%94%A8%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%AE%9E%E9%AA%8C%E7%8F%AD%E5%BB%BA%E7%8F%AD%E4%BB%AA%E5%BC%8F%E5%9C%86%E6%BB%A1%E4%B8%BE%E8%A1%8C/assets/17776187172560.5875476653375152.jpg",
+                image: "https://cdn.jsdelivr.net/gh/Cyber-TongClass/news-assets@main/news%20images/%E5%8C%97%E4%BA%AC%E5%A4%A7%E5%AD%A6%E9%80%9A%E7%94%A8%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%AE%9E%E9%AA%8C%E7%8F%AD_%E9%80%9A%E8%AF%86_%E9%80%9A%E6%99%BA_%E9%80%9A%E7%94%A8/assets/tongtongtong.webp",
               },
               {
                 title: "第三届「AI杯」羽毛球赛顺利举办",
