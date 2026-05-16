@@ -15,9 +15,8 @@ const publicResources = [
     id: "public-links",
     title: "自学资源链接",
     description: "人工智能学习资源汇总，包括课程、书籍、文章、工具等链接，由通班学术部维护更新。",
-    href: "https://mp.weixin.qq.com/s/b5qxIikiS5jG-cHxq7X9cA",
+    href: "/resources/links",
     image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
-    external: true,
   },
   {
     id: "course-reviews",

@@ -3,7 +3,6 @@
 import * as React from "react"
 import Link from "next/link"
 import { Search, FileText, ExternalLink, BookOpen } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -72,7 +71,6 @@ export default function PublicationsPage() {
   const [selectedCategory, setSelectedCategory] = React.useState("all")
   const [sortBy, setSortBy] = React.useState<"year" | "title">("year")
   const [sortOrder, setSortOrder] = React.useState<"desc" | "asc">("desc")
-  const [activeTab, setActiveTab] = React.useState<"latest" | "archive">("latest")
 
   const publicationsData = usePublications()
   const publications: Publication[] = publicationsData || []
@@ -106,19 +104,14 @@ export default function PublicationsPage() {
     return result
   }, [publications, searchQuery, selectedCategory, sortBy, sortOrder])
 
-  const splitIndex = Math.max(6, Math.ceil(filteredPublications.length / 2))
-  const latestPublications = filteredPublications.slice(0, splitIndex)
-  const archivePublications = filteredPublications.slice(splitIndex)
-  const displayPublications = activeTab === "latest" ? latestPublications : archivePublications
-
   const groupedByYear = React.useMemo(() => {
     const groups: Record<number, Publication[]> = {}
-    displayPublications.forEach((pub) => {
+    filteredPublications.forEach((pub) => {
       if (!groups[pub.year]) groups[pub.year] = []
       groups[pub.year].push(pub)
     })
     return Object.entries(groups).sort(([a], [b]) => Number(b) - Number(a))
-  }, [displayPublications])
+  }, [filteredPublications])
 
   return (
     <div className="min-h-screen bg-white">
@@ -199,36 +192,9 @@ export default function PublicationsPage() {
         </div>
       </section>
 
-      <section className="bg-white border-b border-slate-200">
-        <div className="container-custom">
-          <div className="flex gap-8">
-            <button
-              onClick={() => setActiveTab("latest")}
-              className={cn(
-                "py-4 px-1 border-b-2 font-medium text-sm transition-colors",
-                activeTab === "latest" ? "border-primary text-primary" : "border-transparent text-slate-600 hover:text-slate-900"
-              )}
-            >
-              Latest Works
-              <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-xs">{latestPublications.length}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("archive")}
-              className={cn(
-                "py-4 px-1 border-b-2 font-medium text-sm transition-colors",
-                activeTab === "archive" ? "border-primary text-primary" : "border-transparent text-slate-600 hover:text-slate-900"
-              )}
-            >
-              Archive
-              <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 text-xs">{archivePublications.length}</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
       <section className="bg-[hsl(211,30%,97%)] py-16 md:py-24">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {displayPublications.length === 0 ? (
+        {filteredPublications.length === 0 ? (
           <div className="text-center py-16">
             <FileText className="h-12 w-12 text-slate-400 mx-auto mb-4" />
             <h3 className="text-lg font-extrabold text-slate-900 mb-2">未找到相关成果</h3>

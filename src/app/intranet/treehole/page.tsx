@@ -22,7 +22,7 @@ export default function TreeholePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-  const [isAnonymous, setIsAnonymous] = useState(false)
+  const [isAnonymous, setIsAnonymous] = useState(true)
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -113,7 +113,7 @@ export default function TreeholePage() {
                   onChange={(e) => setIsAnonymous(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300"
                 />
-                匿名发布（默认实名）
+                匿名发布（默认匿名）
               </label>
               {error ? <p className="text-sm text-red-600">{error}</p> : null}
               <Button type="submit" className="gap-2" disabled={submitting}>

@@ -88,9 +88,11 @@ function SearchContent() {
       if (
         user.englishName.toLowerCase().includes(q) ||
         user.username.toLowerCase().includes(q) ||
+        user.chineseName?.toLowerCase().includes(q) ||
         user.email.toLowerCase().includes(q) ||
         user.bio?.toLowerCase().includes(q) ||
-        user.researchInterests?.some((interest) => interest.toLowerCase().includes(q))
+        user.researchInterests?.some((interest) => interest.toLowerCase().includes(q)) ||
+        user.researchDirections?.some((d) => d.toLowerCase().includes(q))
       ) {
         newResults.push({
           type: "member",

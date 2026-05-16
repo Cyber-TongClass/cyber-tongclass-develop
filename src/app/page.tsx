@@ -5,11 +5,12 @@ import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import { ArrowRight, BookOpen, Users, FileText, Award, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useNews } from "@/lib/api"
+import { useNews, usePublications } from "@/lib/api"
 
 export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0)
   const newsItems = useNews({ limit: 50 })
+  const publications = usePublications({ limit: 50 })
   const featuredSlides = useMemo(() => {
     if (!newsItems) return []
 
@@ -235,71 +236,76 @@ export default function HomePage() {
 
       <section className="py-16 md:py-24 bg-[hsl(211,30%,97%)]">
         <div className="container-custom">
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-3xl font-extrabold text-slate-900">最新动态</h2>
-              <p className="text-slate-500 mt-1">关注通班最新资讯与学术活动</p>
+              <p className="text-slate-500 mt-1">关注通班最新资讯与学术成果</p>
             </div>
-            <Button variant="ghost" asChild className="gap-2">
-              <Link href="/news">
-                查看全部 <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                title: "2025级通班建班仪式圆满举行",
-                category: "项目进展",
-                date: "2026-03",
-                description: "北京大学2025级通用人工智能实验班建班仪式在通研院举行，朱松纯院长等师长寄语新生。",
-                badgeBg: "bg-[hsl(211,50%,93%)]",
-                image: "https://cdn.jsdelivr.net/gh/Cyber-TongClass/news-assets@main/news%20images/%E5%8C%97%E4%BA%AC%E5%A4%A7%E5%AD%A6%E9%80%9A%E7%94%A8%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%AE%9E%E9%AA%8C%E7%8F%AD_%E9%80%9A%E8%AF%86_%E9%80%9A%E6%99%BA_%E9%80%9A%E7%94%A8/assets/tongtongtong.webp",
-              },
-              {
-                title: "第三届「AI杯」羽毛球赛顺利举办",
-                category: "活动回顾",
-                date: "2026-03",
-                description: "北京大学人工智能研究院第三届师生羽毛球赛在五四羽毛球场举行，70余名师生、6支队伍参赛。",
-                badgeBg: "bg-[hsl(211,50%,93%)]",
-                image: "https://cdn.jsdelivr.net/gh/Cyber-TongClass/news-assets@main/news%20images/%E5%8C%97%E4%BA%AC%E5%A4%A7%E5%AD%A6%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E7%A0%94%E7%A9%B6%E9%99%A2%E7%AC%AC%E4%B8%89%E5%B1%8A_AI%E6%9D%AF_%E7%BE%BD%E6%AF%9B%E7%90%83%E8%B5%9B%E9%A1%BA%E5%88%A9%E4%B8%BE%E5%8A%9E/assets/17776187174370.8517678879431937.jpg",
-              },
-              {
-                title: "2025 AI Tech Day圆满结束",
-                category: "学术活动",
-                date: "2025-10",
-                description: "年度人工智能学生科技节展出91项科研展板与10项Demo，覆盖认知推理、CV、NLP及AI+交叉前沿。",
-                badgeBg: "bg-[hsl(211,50%,93%)]",
-                image: "https://cdn.jsdelivr.net/gh/Cyber-TongClass/news-assets@main/news%20images/%E5%8C%97%E4%BA%AC%E5%A4%A7%E5%AD%A6%E9%80%9A%E7%94%A8%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%AE%9E%E9%AA%8C%E7%8F%AD_%E9%80%9A%E8%AF%86_%E9%80%9A%E6%99%BA_%E9%80%9A%E7%94%A8/assets/17776187946850.7467038505938248.jpg",
-              },
-            ].map((news) => (
-              <div
-                key={news.title}
-                className="group overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
-              >
-                <div className="aspect-video w-full bg-slate-100 overflow-hidden relative">
-                  <Image
-                    src={news.image}
-                    alt={news.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-3 text-sm mb-3">
-                    <span className={`inline-flex text-xs font-medium tracking-wide uppercase text-primary ${news.badgeBg} px-2.5 py-0.5 rounded-full`}>
-                      {news.category}
-                    </span>
-                    <span className="text-slate-400">{news.date}</span>
-                  </div>
-                  <h3 className="text-lg font-extrabold text-slate-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                    {news.title}
-                  </h3>
-                  <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">{news.description}</p>
-                </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* 新闻 */}
+            <div>
+              <h3 className="text-xl font-black uppercase tracking-widest text-[hsl(232,66%,30%)] mb-3" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>新闻</h3>
+              <div className="space-y-2">
+                {newsItems
+                  ?.filter((n) => n.isPublished)
+                  .sort((a, b) => b.publishedAt - a.publishedAt)
+                  .slice(0, 4)
+                  .map((item) => (
+                    <Link
+                      key={item._id}
+                      href={item.sourceUrl || `/news/${item._id}`}
+                      target={item.sourceUrl ? "_blank" : undefined}
+                      rel={item.sourceUrl ? "noopener noreferrer" : undefined}
+                    >
+                      <div className="group bg-white px-4 py-3 shadow-sm hover:bg-slate-50 transition-colors duration-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                            {item.category}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {new Date(item.publishedAt).toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" })}
+                          </span>
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900 group-hover:text-primary transition-colors line-clamp-1">
+                          {item.title}
+                        </h4>
+                      </div>
+                    </Link>
+                  ))}
               </div>
-            ))}
+              <Link href="/news" className="block mt-2 bg-white shadow-sm hover:bg-slate-50 transition-colors duration-200 text-center py-2.5">
+                <span className="text-sm font-bold text-[hsl(232,66%,30%)]">全部动态 →</span>
+              </Link>
+            </div>
+
+            {/* 成果 */}
+            <div>
+              <h3 className="text-xl font-black uppercase tracking-widest text-[hsl(232,66%,30%)] mb-3" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>成果</h3>
+              <div className="space-y-2">
+                {publications
+                  ?.sort((a, b) => b.year - a.year)
+                  .slice(0, 4)
+                  .map((pub) => (
+                    <Link key={pub._id} href={`/publications/${pub._id}`}>
+                      <div className="group bg-white px-4 py-3 shadow-sm hover:bg-slate-50 transition-colors duration-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-bold uppercase text-white bg-primary px-1.5 py-0.5 rounded">
+                            {pub.venue}
+                          </span>
+                          <span className="text-xs text-slate-400">{pub.year}</span>
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900 group-hover:text-[hsl(232,66%,30%)] transition-colors line-clamp-1">
+                          {pub.title}
+                        </h4>
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+              <Link href="/publications" className="block mt-2 bg-white shadow-sm hover:bg-slate-50 transition-colors duration-200 text-center py-2.5">
+                <span className="text-sm font-bold text-[hsl(232,66%,30%)]">全部成果 →</span>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

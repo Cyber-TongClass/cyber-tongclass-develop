@@ -1,12 +1,12 @@
+"use client"
+
+import * as React from "react"
 import Link from "next/link"
 import { ArrowLeft, Calendar, MapPin, Clock, ExternalLink } from "lucide-react"
-import { ConvexHttpClient } from "convex/browser"
-import { api } from "@/../convex/_generated/api"
+import { useParams } from "next/navigation"
+import { useEventById } from "@/lib/api"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import type { Event } from "@/types"
-
-export const dynamic = "force-dynamic"
 
 const eventTypeStyles = {
   "学术讲座": { bg: "bg-blue-500/10", text: "text-blue-600" },
@@ -37,33 +37,22 @@ function formatDate(dateStr: string) {
   })
 }
 
-async function fetchEventById(id: string): Promise<Event | null> {
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-  if (!convexUrl || !id) {
-    return null
-  }
+export default function EventDetailPage() {
+  const params = useParams<{ id: string }>()
+  const event = useEventById(params.id)
 
-  const client = new ConvexHttpClient(convexUrl)
-  try {
-    const event = await client.query(api.events.getById, { id: id as any })
-    return (event as Event | null) ?? null
-  } catch (error) {
-    console.error("Failed to fetch event detail:", error)
-    return null
+  if (event === undefined) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-slate-500">加载中...</p>
+      </div>
+    )
   }
-}
-
-export default async function EventDetailPage({
-  params,
-}: {
-  params: { id: string }
-}) {
-  const event = await fetchEventById(params.id)
 
   if (!event) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="container-custom py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <Button variant="ghost" asChild className="mb-6 -ml-3 gap-2">
             <Link href="/events">
               <ArrowLeft className="h-4 w-4" />
@@ -84,7 +73,7 @@ export default async function EventDetailPage({
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container-custom py-16 md:py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <Button variant="ghost" asChild className="mb-6 -ml-3 gap-2">
           <Link href="/events">
             <ArrowLeft className="h-4 w-4" />
@@ -95,7 +84,7 @@ export default async function EventDetailPage({
         <article className="max-w-4xl mx-auto">
           <header className="mb-8">
             <div className="flex items-center gap-2 mb-4">
-              <span className={`px-3 py-1 text-sm font-medium rounded-full ${colorStyle.bg} ${colorStyle.text} border`}>
+              <span className={`px-3 py-1 text-sm font-medium rounded-full ${colorStyle.bg} ${colorStyle.text}`}>
                 {eventType}
               </span>
             </div>
@@ -134,11 +123,9 @@ export default async function EventDetailPage({
           </header>
 
           {event.description && (
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-6">
-                <div className="text-sm leading-7 text-slate-900 whitespace-pre-wrap break-words">{event.description}</div>
-              </CardContent>
-            </Card>
+            <div className="bg-white p-6 shadow-sm">
+              <div className="text-base leading-relaxed text-slate-700 whitespace-pre-wrap break-words">{event.description}</div>
+            </div>
           )}
 
           <div className="mt-8">

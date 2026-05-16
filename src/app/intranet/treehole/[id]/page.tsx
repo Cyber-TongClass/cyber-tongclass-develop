@@ -28,7 +28,7 @@ export default function TreeholeDetailPage() {
   const { confirm, ConfirmDialog } = useConfirmDialog()
 
   const [replyContent, setReplyContent] = useState("")
-  const [replyAnonymous, setReplyAnonymous] = useState(false)
+  const [replyAnonymous, setReplyAnonymous] = useState(true)
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -167,7 +167,7 @@ export default function TreeholeDetailPage() {
                   onChange={(e) => setReplyAnonymous(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300"
                 />
-                匿名回复（默认实名）
+                匿名回复（默认匿名）
               </label>
               {error ? <p className="text-sm text-red-600">{error}</p> : null}
               <Button type="submit" className="gap-2" disabled={submitting}>
